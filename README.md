@@ -28,6 +28,7 @@ Colab notebooks should remain thin launchers around the scripts in `scripts/`. C
 ## Repository Layout
 
 - `configs/`: YAML configuration for dataset, backbones, training, experiments, and report outputs.
+- `docs/`: Planning notes, research decisions, and sprint reports.
 - `notebooks/`: Colab launcher notebooks.
 - `scripts/`: Command-line entrypoints used locally and from Colab.
 - `src/dl_fusion/`: Reusable Python package.
@@ -35,3 +36,7 @@ Colab notebooks should remain thin launchers around the scripts in `scripts/`. C
 - `outputs/`: Generated features, checkpoints, runs, and report assets. Heavy outputs are gitignored.
 - `report/`: LaTeX report source.
 - `submission/`: Final package/archive staging and YouTube link.
+
+## Planning
+
+The working implementation plan lives in [docs/planning/5-sprint-project-plan.md](docs/planning/5-sprint-project-plan.md).
