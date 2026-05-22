@@ -1,0 +1,21 @@
+backbones:
+  resnet50:
+    enabled: true
+    pretrained: true
+    feature_dim: 2048
+    feature_layer: avgpool
+    finetune_policy: layer4
+
+  mobilenet_v2:
+    enabled: true
+    pretrained: true
+    feature_dim: 1280
+    feature_layer: features
+    finetune_policy: last_feature_blocks
+
+  efficientnet_b0:
+    enabled: true
+    pretrained: true
+    feature_dim: 1280
+    feature_layer: features
+    finetune_policy: last_feature_blocks

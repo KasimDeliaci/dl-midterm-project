@@ -1,0 +1,10 @@
+report:
+  runs_dir: outputs/runs
+  output_tables_dir: outputs/report_assets/tables
+  output_figures_dir: outputs/report_assets/figures
+  primary_metric: macro_f1
+  comparison_metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1_score

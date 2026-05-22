@@ -1,0 +1,16 @@
+training:
+  seed: 42
+  batch_size: 32
+  num_workers: 2
+  epochs: 25
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  optimizer: adamw
+  early_stopping_patience: 5
+  mixed_precision: true
+
+mlp:
+  hidden_dims: [512, 256]
+  dropout: 0.3
+  projection_dim: 512
+  weighted_fusion: learnable_softmax

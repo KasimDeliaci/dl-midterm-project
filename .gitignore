@@ -22,3 +22,30 @@ dist/
 build/
 .vscode/
 .idea/
+
+# Project data and generated artifacts
+data/raw/*
+data/processed/*
+outputs/features/*
+outputs/checkpoints/*
+outputs/runs/*
+outputs/report_assets/*
+report/build/*
+submission/package/*
+submission/archive/*
+
+# Keep intentionally tracked placeholders in generated folders
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!outputs/features/.gitkeep
+!outputs/checkpoints/.gitkeep
+!outputs/runs/.gitkeep
+!outputs/report_assets/
+!outputs/report_assets/tables/
+!outputs/report_assets/tables/.gitkeep
+!outputs/report_assets/figures/
+!outputs/report_assets/figures/.gitkeep
+!report/build/
+!report/build/.gitkeep
+!submission/package/.gitkeep
+!submission/archive/.gitkeep

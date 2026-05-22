@@ -1,0 +1,11 @@
+dataset:
+  name: TBD
+  source: TBD
+  root_dir: data/processed
+  image_size: 224
+  num_classes: null
+  class_names: []
+  splits_dir: data/splits
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
