@@ -1,31 +1,47 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{microtype}
 \usepackage{graphicx}
+\usepackage{subcaption}
 \usepackage{booktabs}
+\usepackage{amsmath}
 \usepackage{hyperref}
-\usepackage{geometry}
-
-\geometry{margin=2.5cm}
+\usepackage[a4paper,margin=2cm,columnsep=0.7cm]{geometry}
 
 \title{Multi-CNN Feature Fusion for Image Classification}
-\author{Kasim Deliaci}
+\author{Kasim Deliaci\\Department of Computer Engineering\\\texttt{kasimdeliaci067@gmail.com}}
 \date{June 2026}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue
+}
 
 \begin{document}
 
+\twocolumn[
 \maketitle
 
-\input{sections/01_introduction}
-\input{sections/02_dataset}
-\input{sections/03_method}
-\input{sections/04_experiments}
-\input{sections/05_results}
-\input{sections/06_discussion}
-\input{sections/07_conclusion}
+\begin{abstract}
+This report studies image classification with feature vectors extracted from ResNet50, MobileNetV2, and EfficientNetB0. The project compares single-backbone representations, pairwise feature fusion, and three-backbone feature fusion under frozen feature extraction and fine-tuning settings. All representations are evaluated with a shared multilayer perceptron classifier using accuracy, precision, recall, and F1-score.
+\end{abstract}
+\vskip 0.3in
+]
 
-\bibliographystyle{plain}
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_dataset}
+\input{sections/04_method}
+\input{sections/05_experiments}
+\input{sections/06_results}
+\input{sections/07_discussion}
+\input{sections/08_conclusion}
+
 \bibliography{references}
+\bibliographystyle{plain}
 
 \end{document}
