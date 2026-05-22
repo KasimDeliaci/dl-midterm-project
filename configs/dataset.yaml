@@ -1,11 +1,36 @@
 dataset:
-  name: TBD
-  source: TBD
+  name: HAM10000
+  full_name: Human Against Machine with 10000 training images
+  source: ISIC Archive / Harvard Dataverse
+  source_url: https://doi.org/10.7910/DVN/DBW86T
+  backup_name: EuroSAT
+  backup_source_url: https://github.com/phelber/eurosat
   root_dir: data/processed
   image_size: 224
-  num_classes: null
-  class_names: []
+  num_classes: 7
+  class_names:
+    - akiec
+    - bcc
+    - bkl
+    - df
+    - nv
+    - mel
+    - vasc
+  class_descriptions:
+    akiec: Actinic keratoses and intraepithelial carcinoma
+    bcc: Basal cell carcinoma
+    bkl: Benign keratosis-like lesions
+    df: Dermatofibroma
+    nv: Melanocytic nevi
+    mel: Melanoma
+    vasc: Vascular lesions
   splits_dir: data/splits
   train_split: 0.7
   val_split: 0.15
   test_split: 0.15
+  split_policy: stratified_grouped_by_lesion_id_when_available
+  primary_metric: macro_f1
+  notes:
+    - Use the standard 10,015-image HAM10000 metadata version for comparability.
+    - Prefer lesion-level grouping when metadata exposes lesion_id to reduce leakage.
+    - Report macro and per-class metrics because class imbalance makes accuracy insufficient.

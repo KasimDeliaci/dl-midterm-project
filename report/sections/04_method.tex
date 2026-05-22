@@ -1,3 +1,7 @@
 \section{The Approach}
 
-TODO: Explain ResNet50, MobileNetV2, EfficientNetB0, feature extraction, concatenation fusion, weighted fusion, MLP classifier, and transfer learning settings.
+The method uses three ImageNet-pretrained CNN backbones: ResNet50, MobileNetV2, and EfficientNetB0. The final classifier of each backbone is removed, and the pooled feature vector is used as the learned representation for each image. The expected feature dimensions are 2048 for ResNet50 and 1280 for both MobileNetV2 and EfficientNetB0.
+
+Two fusion strategies are evaluated. Concatenation fusion joins feature vectors directly. Weighted fusion first projects each backbone feature vector into a shared 512-dimensional latent space, then combines the projected vectors with learnable softmax-normalized weights before passing the fused representation to the MLP classifier. This keeps the project within the required feature-fusion setting while enabling analysis of which backbone contributes most to the final representation.
+
+All single-backbone and fused representations are evaluated using the same MLP classifier. This keeps the classifier fixed so the experiments isolate the effects of backbone choice, fusion strategy, and transfer-learning setting.
