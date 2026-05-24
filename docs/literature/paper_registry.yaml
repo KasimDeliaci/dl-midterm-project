@@ -1,0 +1,11 @@
+papers:
+  - id: tschandl2018ham10000
+    title: The HAM10000 dataset, a large collection of multi-source dermatoscopic images of common pigmented skin lesions
+    year: 2018
+    role: primary_dataset
+    status: cited
+  - id: helber2019eurosat
+    title: "EuroSAT: A Novel Dataset and Deep Learning Benchmark for Land Use and Land Cover Classification"
+    year: 2019
+    role: backup_dataset
+    status: cited

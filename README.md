@@ -27,6 +27,8 @@ Colab notebooks should remain thin launchers around the scripts in `scripts/`. C
 
 ## Repository Layout
 
+- `AGENTS.md`: Short guide for coding agents working in this repo.
+- `PROJECT_FOLDER_STRUCTURE.md`: Repository organization and workflow rationale.
 - `configs/`: YAML configuration for dataset, backbones, training, experiments, and report outputs.
 - `docs/`: Planning notes, research decisions, and sprint reports.
 - `notebooks/`: Colab launcher notebooks.
@@ -40,3 +42,11 @@ Colab notebooks should remain thin launchers around the scripts in `scripts/`. C
 ## Planning
 
 The working implementation plan lives in [docs/planning/5-sprint-project-plan.md](docs/planning/5-sprint-project-plan.md).
+
+Key project-memory files:
+
+- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md)
+- [docs/DECISIONS.md](docs/DECISIONS.md)
+- [docs/EVALUATION_PROTOCOL.md](docs/EVALUATION_PROTOCOL.md)
+- [docs/DATASET_AUDIT.md](docs/DATASET_AUDIT.md)
+- [docs/COMMANDS.md](docs/COMMANDS.md)

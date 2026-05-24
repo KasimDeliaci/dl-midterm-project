@@ -24,6 +24,9 @@ build/
 .vscode/
 .idea/
 
+# Local reference copies
+sample-project/
+
 # Project data and generated artifacts
 data/raw/*
 data/processed/*
