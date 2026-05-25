@@ -19,7 +19,7 @@ This sprint should end with a reproducible dataset manifest and a short research
 - Download and inspect metadata: image IDs, diagnosis labels, lesion IDs, file paths, duplicate/missing images, and class counts.
 - Define the classification target: standard HAM10000 seven-class diagnosis labels.
 - Create a leakage-aware split plan: stratified by class and grouped by `lesion_id` where possible.
-- Create initial configs: `dataset.yaml`, `train.yaml`, `backbones.yaml`, and `experiments.yaml`.
+- Create initial configs: `configs/default.yaml`, `configs/dataset/selected_dataset.yaml`, `configs/backbones/*.yaml`, and `configs/experiments/*.yaml`.
 - Create the LaTeX report skeleton with dataset, method, experiments, results, discussion, and conclusion sections.
 
 ### Decisions
@@ -50,12 +50,20 @@ Sprint 1 is done only if:
 - `configs/dataset/selected_dataset.yaml`
 - `configs/default.yaml`
 - `configs/backbones/resnet50.yaml`
+- `configs/backbones/mobilenet_v2.yaml`
+- `configs/backbones/efficientnet_b0.yaml`
 - `configs/experiments/frozen_feature_matrix.yaml`
+- `configs/experiments/finetune_backbones.yaml`
+- `configs/experiments/finetuned_feature_matrix.yaml`
+- `configs/report_assets.yaml`
 - `src/dl_midterm/data/datasets.py`
+- `src/dl_midterm/data/splits.py`
+- `src/dl_midterm/data/dataloaders.py`
 - `src/dl_midterm/utils/io.py`
 - `scripts/prepare_dataset.py`
+- `scripts/create_splits.py`
 - `notebooks/00_colab_setup.ipynb`
-- `notebooks/01_prepare_dataset.ipynb`
+- `notebooks/01_dataset_prepare.ipynb`
 - `data/splits/train.csv`
 - `data/splits/val.csv`
 - `data/splits/test.csv`
@@ -137,17 +145,22 @@ Sprint 2 is done only if:
 ### Expected Artifacts
 
 - `src/dl_midterm/models/backbones.py`
+- `src/dl_midterm/models/feature_extractors.py`
 - `src/dl_midterm/features/extract.py`
+- `src/dl_midterm/features/cache.py`
+- `src/dl_midterm/features/normalize.py`
 - `src/dl_midterm/models/mlp.py`
 - `src/dl_midterm/training/loops.py`
 - `src/dl_midterm/evaluation/metrics.py`
+- `src/dl_midterm/evaluation/reports.py`
+- `src/dl_midterm/evaluation/plots.py`
 - `scripts/extract_features.py`
 - `scripts/train_mlp.py`
 - `scripts/evaluate_runs.py`
-- `notebooks/02_extract_features.ipynb`
-- `artifacts/features/frozen/resnet50/`
-- `artifacts/features/frozen/mobilenet_v2/`
-- `artifacts/features/frozen/efficientnet_b0/`
+- `notebooks/02_extract_frozen_features.ipynb`
+- `artifacts/features/ham10000/frozen/resnet50/`
+- `artifacts/features/ham10000/frozen/mobilenet_v2/`
+- `artifacts/features/ham10000/frozen/efficientnet_b0/`
 - `artifacts/runs/*_frozen_r50_none_mlp_s42/`
 - `artifacts/runs/*_frozen_mnv2_none_mlp_s42/`
 - `artifacts/runs/*_frozen_effb0_none_mlp_s42/`
@@ -329,12 +342,16 @@ Sprint 4 is done only if:
 ### Expected Artifacts
 
 - `scripts/finetune_backbone.py`
-- `artifacts/checkpoints/backbones/resnet50_best.pt`
-- `artifacts/checkpoints/backbones/mobilenet_v2_best.pt`
-- `artifacts/checkpoints/backbones/efficientnet_b0_best.pt`
-- `artifacts/features/finetuned/resnet50/`
-- `artifacts/features/finetuned/mobilenet_v2/`
-- `artifacts/features/finetuned/efficientnet_b0/`
+- `src/dl_midterm/training/finetune.py`
+- `src/dl_midterm/training/checkpointing.py`
+- `notebooks/03_finetune_backbones.ipynb`
+- `notebooks/04_extract_finetuned_features.ipynb`
+- `artifacts/checkpoints/finetuned_backbones/resnet50_best.pt`
+- `artifacts/checkpoints/finetuned_backbones/mobilenet_v2_best.pt`
+- `artifacts/checkpoints/finetuned_backbones/efficientnet_b0_best.pt`
+- `artifacts/features/ham10000/ft_last_blocks/resnet50/`
+- `artifacts/features/ham10000/ft_last_blocks/mobilenet_v2/`
+- `artifacts/features/ham10000/ft_last_blocks/efficientnet_b0/`
 - `artifacts/runs/*_finetuned_*_mlp_s42/`
 - `artifacts/report_assets/tables/finetuned_all_results.csv`
 - `artifacts/report_assets/tables/frozen_vs_finetuned_results.csv`
