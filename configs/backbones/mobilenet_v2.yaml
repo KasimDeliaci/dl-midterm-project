@@ -1,0 +1,7 @@
+backbone:
+  name: mobilenet_v2
+  enabled: true
+  pretrained: true
+  feature_dim: 1280
+  feature_layer: features
+  finetune_policy: last_feature_blocks

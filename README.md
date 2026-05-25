@@ -20,23 +20,23 @@ Local development uses `uv` for dependency management, code quality, report asse
 
 ```bash
 uv sync
-uv run python scripts/make_report_assets.py --config configs/report.yaml
+uv run python scripts/make_report_assets.py --config configs/report_assets.yaml
 ```
 
-Colab notebooks should remain thin launchers around the scripts in `scripts/`. Core logic belongs in `src/dl_fusion/`.
+Colab notebooks should remain thin launchers around the scripts in `scripts/`. Core logic belongs in `src/dl_midterm/`.
 
 ## Repository Layout
 
 - `AGENTS.md`: Short guide for coding agents working in this repo.
 - `PROJECT_FOLDER_STRUCTURE.md`: Repository organization and workflow rationale.
-- `configs/`: YAML configuration for dataset, backbones, training, experiments, and report outputs.
+- `configs/`: YAML configuration for dataset, backbones, training, experiments, and report artifacts.
 - `docs/`: Planning notes, research decisions, and sprint reports.
 - `notebooks/`: Colab launcher notebooks.
 - `scripts/`: Command-line entrypoints used locally and from Colab.
-- `src/dl_fusion/`: Reusable Python package.
+- `src/dl_midterm/`: Reusable Python package.
 - `data/`: Dataset and split files. Raw and processed data are gitignored.
-- `outputs/`: Generated features, checkpoints, runs, and report assets. Heavy outputs are gitignored.
-- `report/`: LaTeX report source.
+- `artifacts/`: Generated features, checkpoints, runs, and report assets. Heavy artifacts are gitignored.
+- `reports/final_report/`: LaTeX report source.
 - `submission/`: Final package/archive staging and YouTube link.
 
 ## Planning

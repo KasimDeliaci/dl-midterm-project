@@ -10,13 +10,15 @@ Reason: the project needs a reproducible workflow that works locally and in Cola
 
 Decision: keep Colab notebooks as thin launchers around scripts.
 
-Reason: model logic, data handling, and evaluation should live in `src/dl_fusion/` and `scripts/` so experiments are reproducible and maintainable.
+Reason: model logic, data handling, and evaluation should live in `src/dl_midterm/` and `scripts/` so experiments are reproducible and maintainable.
 
 ## 2026-05-22 - Use a flat package for the student-project scope
 
-Decision: keep the reusable package flat under `src/dl_fusion/` rather than creating many nested subpackages.
+Decision: keep the reusable package flat under `src/dl_midterm/` rather than creating many nested subpackages.
 
 Reason: this project needs clear boundaries without turning a midterm assignment into an over-engineered ML platform.
+
+Outcome: superseded on 2026-05-25 after the project scope clarified around dataset preparation, feature caching, fine-tuning, evaluation, and report-asset generation.
 
 ## 2026-05-24 - Select HAM10000 as the primary dataset
 
@@ -41,3 +43,17 @@ Reason: ResNet50, MobileNetV2, and EfficientNetB0 produce different feature dime
 Decision: describe the work as benchmark dermoscopic image classification, not diagnosis or clinical decision support.
 
 Reason: the project is an educational benchmark study and is not validated for clinical use.
+
+## 2026-05-25 - Adopt structured `dl_midterm` package
+
+Decision: organize source code under `src/dl_midterm/` with subpackages for `config`, `data`, `models`, `features`, `training`, `evaluation`, and `utils`.
+
+Reason: the project now has enough distinct responsibilities that a flat module layout would blur boundaries. The nested package keeps implementation maintainable while still avoiding a heavy framework.
+
+Outcome: scripts remain the command-line entrypoints; reusable logic lives in the package submodules.
+
+## 2026-05-25 - Use `artifacts/` for generated experiment outputs
+
+Decision: replace `outputs/` with `artifacts/` for feature caches, checkpoints, run folders, and report-ready tables/figures.
+
+Reason: `artifacts/` better communicates generated, mostly-gitignored experiment products and separates them from source docs/reports.

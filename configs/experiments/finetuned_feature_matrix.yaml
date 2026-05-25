@@ -1,0 +1,23 @@
+experiment_matrix:
+  feature_source: ft_last_blocks
+  classifier: mlp
+  seed: 42
+  fusion_methods:
+    - none
+    - concat
+    - weighted
+  combinations:
+    - backbones: [resnet50]
+      fusion_methods: [none]
+    - backbones: [mobilenet_v2]
+      fusion_methods: [none]
+    - backbones: [efficientnet_b0]
+      fusion_methods: [none]
+    - backbones: [resnet50, mobilenet_v2]
+      fusion_methods: [concat, weighted]
+    - backbones: [resnet50, efficientnet_b0]
+      fusion_methods: [concat, weighted]
+    - backbones: [mobilenet_v2, efficientnet_b0]
+      fusion_methods: [concat, weighted]
+    - backbones: [resnet50, mobilenet_v2, efficientnet_b0]
+      fusion_methods: [concat, weighted]

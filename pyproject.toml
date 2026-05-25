@@ -1,7 +1,7 @@
 [project]
-name = "dl-fusion"
+name = "dl-midterm"
 version = "0.1.0"
-description = "Multi-CNN feature extraction and fusion for image classification."
+description = "Multi-CNN feature extraction and fusion for HAM10000 image classification."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -20,6 +20,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ipykernel>=6.29",
+    "pytest>=8.3",
     "ruff>=0.8",
 ]
 

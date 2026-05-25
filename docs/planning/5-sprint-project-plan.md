@@ -14,7 +14,7 @@ This sprint should end with a reproducible dataset manifest and a short research
 
 ### Main Workstreams
 
-- Set up the uv-managed repo with the agreed structure: `src/dl_fusion/`, `scripts/`, `configs/`, `notebooks/`, `outputs/`, and `report/`.
+- Set up the uv-managed repo with the agreed structure: `src/dl_midterm/`, `scripts/`, `configs/`, `notebooks/`, `artifacts/`, and `reports/final_report/`.
 - Acquire HAM10000 from the official ISIC Archive or a reliable mirrored release, not an unclear Kaggle copy.
 - Download and inspect metadata: image IDs, diagnosis labels, lesion IDs, file paths, duplicate/missing images, and class counts.
 - Define the classification target: standard HAM10000 seven-class diagnosis labels.
@@ -47,24 +47,24 @@ Sprint 1 is done only if:
 
 ### Expected Artifacts
 
-- `configs/dataset.yaml`
-- `configs/train.yaml`
-- `configs/backbones.yaml`
-- `configs/experiments.yaml`
-- `src/dl_fusion/data.py`
-- `src/dl_fusion/utils.py`
+- `configs/dataset/selected_dataset.yaml`
+- `configs/default.yaml`
+- `configs/backbones/resnet50.yaml`
+- `configs/experiments/frozen_feature_matrix.yaml`
+- `src/dl_midterm/data/datasets.py`
+- `src/dl_midterm/utils/io.py`
 - `scripts/prepare_dataset.py`
 - `notebooks/00_colab_setup.ipynb`
 - `notebooks/01_prepare_dataset.ipynb`
 - `data/splits/train.csv`
 - `data/splits/val.csv`
 - `data/splits/test.csv`
-- `outputs/report_assets/tables/class_distribution.csv`
-- `outputs/report_assets/figures/class_distribution.png`
-- `report/main.tex`
-- `report/references.bib`
-- `report/sections/01_introduction.tex`
-- `report/sections/03_dataset.tex`
+- `artifacts/report_assets/tables/class_distribution.csv`
+- `artifacts/report_assets/figures/class_distribution.png`
+- `reports/final_report/main.tex`
+- `reports/final_report/references.bib`
+- `reports/final_report/sections/01_introduction.tex`
+- `reports/final_report/sections/03_dataset.tex`
 
 ### Interim Sprint Report
 
@@ -136,23 +136,23 @@ Sprint 2 is done only if:
 
 ### Expected Artifacts
 
-- `src/dl_fusion/backbones.py`
-- `src/dl_fusion/features.py`
-- `src/dl_fusion/mlp.py`
-- `src/dl_fusion/train.py`
-- `src/dl_fusion/evaluate.py`
+- `src/dl_midterm/models/backbones.py`
+- `src/dl_midterm/features/extract.py`
+- `src/dl_midterm/models/mlp.py`
+- `src/dl_midterm/training/loops.py`
+- `src/dl_midterm/evaluation/metrics.py`
 - `scripts/extract_features.py`
 - `scripts/train_mlp.py`
-- `scripts/evaluate_results.py`
+- `scripts/evaluate_runs.py`
 - `notebooks/02_extract_features.ipynb`
-- `outputs/features/frozen/resnet50/`
-- `outputs/features/frozen/mobilenet_v2/`
-- `outputs/features/frozen/efficientnet_b0/`
-- `outputs/runs/*_frozen_r50_none_mlp_s42/`
-- `outputs/runs/*_frozen_mnv2_none_mlp_s42/`
-- `outputs/runs/*_frozen_effb0_none_mlp_s42/`
-- `outputs/report_assets/tables/single_backbone_frozen_results.csv`
-- `outputs/report_assets/figures/frozen_single_backbone_f1.png`
+- `artifacts/features/frozen/resnet50/`
+- `artifacts/features/frozen/mobilenet_v2/`
+- `artifacts/features/frozen/efficientnet_b0/`
+- `artifacts/runs/*_frozen_r50_none_mlp_s42/`
+- `artifacts/runs/*_frozen_mnv2_none_mlp_s42/`
+- `artifacts/runs/*_frozen_effb0_none_mlp_s42/`
+- `artifacts/report_assets/tables/single_backbone_frozen_results.csv`
+- `artifacts/report_assets/figures/frozen_single_backbone_f1.png`
 
 ### Interim Sprint Report
 
@@ -233,23 +233,23 @@ Sprint 3 is done only if:
 
 ### Expected Artifacts
 
-- `src/dl_fusion/fusion.py`
-- `scripts/run_experiments.py`
+- `src/dl_midterm/models/fusion.py`
+- `scripts/run_experiment_matrix.py`
 - `scripts/make_report_assets.py`
-- `outputs/runs/*_frozen_r50-mnv2_concat_mlp_s42/`
-- `outputs/runs/*_frozen_r50-mnv2_weighted_mlp_s42/`
-- `outputs/runs/*_frozen_r50-effb0_concat_mlp_s42/`
-- `outputs/runs/*_frozen_r50-effb0_weighted_mlp_s42/`
-- `outputs/runs/*_frozen_mnv2-effb0_concat_mlp_s42/`
-- `outputs/runs/*_frozen_mnv2-effb0_weighted_mlp_s42/`
-- `outputs/runs/*_frozen_r50-mnv2-effb0_concat_mlp_s42/`
-- `outputs/runs/*_frozen_r50-mnv2-effb0_weighted_mlp_s42/`
-- `outputs/report_assets/tables/frozen_all_results.csv`
-- `outputs/report_assets/tables/fusion_weight_summary.csv`
-- `outputs/report_assets/tables/per_class_f1_frozen.csv`
-- `outputs/report_assets/figures/frozen_fusion_comparison.png`
-- `outputs/report_assets/figures/frozen_best_confusion_matrix.png`
-- `outputs/report_assets/figures/learned_fusion_weights.png`
+- `artifacts/runs/*_frozen_r50-mnv2_concat_mlp_s42/`
+- `artifacts/runs/*_frozen_r50-mnv2_weighted_mlp_s42/`
+- `artifacts/runs/*_frozen_r50-effb0_concat_mlp_s42/`
+- `artifacts/runs/*_frozen_r50-effb0_weighted_mlp_s42/`
+- `artifacts/runs/*_frozen_mnv2-effb0_concat_mlp_s42/`
+- `artifacts/runs/*_frozen_mnv2-effb0_weighted_mlp_s42/`
+- `artifacts/runs/*_frozen_r50-mnv2-effb0_concat_mlp_s42/`
+- `artifacts/runs/*_frozen_r50-mnv2-effb0_weighted_mlp_s42/`
+- `artifacts/report_assets/tables/frozen_all_results.csv`
+- `artifacts/report_assets/tables/fusion_weight_summary.csv`
+- `artifacts/report_assets/tables/per_class_f1_frozen.csv`
+- `artifacts/report_assets/figures/frozen_fusion_comparison.png`
+- `artifacts/report_assets/figures/frozen_best_confusion_matrix.png`
+- `artifacts/report_assets/figures/learned_fusion_weights.png`
 
 ### Interim Sprint Report
 
@@ -329,20 +329,20 @@ Sprint 4 is done only if:
 ### Expected Artifacts
 
 - `scripts/finetune_backbone.py`
-- `outputs/checkpoints/backbones/resnet50_best.pt`
-- `outputs/checkpoints/backbones/mobilenet_v2_best.pt`
-- `outputs/checkpoints/backbones/efficientnet_b0_best.pt`
-- `outputs/features/finetuned/resnet50/`
-- `outputs/features/finetuned/mobilenet_v2/`
-- `outputs/features/finetuned/efficientnet_b0/`
-- `outputs/runs/*_finetuned_*_mlp_s42/`
-- `outputs/report_assets/tables/finetuned_all_results.csv`
-- `outputs/report_assets/tables/frozen_vs_finetuned_results.csv`
-- `outputs/report_assets/tables/runtime_summary.csv`
-- `outputs/report_assets/tables/per_class_f1_finetuned.csv`
-- `outputs/report_assets/figures/frozen_vs_finetuned_macro_f1.png`
-- `outputs/report_assets/figures/runtime_vs_macro_f1.png`
-- `outputs/report_assets/figures/finetuned_best_confusion_matrix.png`
+- `artifacts/checkpoints/backbones/resnet50_best.pt`
+- `artifacts/checkpoints/backbones/mobilenet_v2_best.pt`
+- `artifacts/checkpoints/backbones/efficientnet_b0_best.pt`
+- `artifacts/features/finetuned/resnet50/`
+- `artifacts/features/finetuned/mobilenet_v2/`
+- `artifacts/features/finetuned/efficientnet_b0/`
+- `artifacts/runs/*_finetuned_*_mlp_s42/`
+- `artifacts/report_assets/tables/finetuned_all_results.csv`
+- `artifacts/report_assets/tables/frozen_vs_finetuned_results.csv`
+- `artifacts/report_assets/tables/runtime_summary.csv`
+- `artifacts/report_assets/tables/per_class_f1_finetuned.csv`
+- `artifacts/report_assets/figures/frozen_vs_finetuned_macro_f1.png`
+- `artifacts/report_assets/figures/runtime_vs_macro_f1.png`
+- `artifacts/report_assets/figures/finetuned_best_confusion_matrix.png`
 
 ### Interim Sprint Report
 
@@ -375,7 +375,7 @@ Expected commits:
 
 ### Goal
 
-Turn experiments into a strong scientific story. This sprint is about evidence, interpretation, report quality, and submission safety: aggregate all metrics, produce final tables/plots, write the LaTeX report, prepare the YouTube presentation, and package code/report/video link according to the assignment.
+Turn experiments into a strong scientific story. This sprint is about evidence, interpretation, report quality, and submission safety: aggregate all metrics, produce final tables/plots, write the LaTeX report, prepare the YouTube presentation, and package code, report, and video link according to the assignment.
 
 The assignment explicitly emphasizes the discussion section and asks which model learned better features, whether fusion helped, which combination was best, model strengths/weaknesses, and which transfer-learning approach was better and how long it took.
 
@@ -436,27 +436,27 @@ Sprint 5 is done only if:
 - All generated figures are readable and referenced in text.
 - PDF compiles cleanly.
 - Git repo can be cloned and basic commands run.
-- Submission archive contains source code, PDF report, relevant outputs/logs/plots, and YouTube link.
+- Submission archive contains source code, PDF report, relevant artifacts/logs/plots, and YouTube link.
 - YouTube presentation video exists before final packaging.
 
 ### Expected Artifacts
 
-- `outputs/report_assets/tables/all_results.csv`
-- `outputs/report_assets/tables/best_models.csv`
-- `outputs/report_assets/tables/fusion_gain_summary.csv`
-- `outputs/report_assets/tables/frozen_vs_finetuned_results.csv`
-- `outputs/report_assets/tables/runtime_summary.csv`
-- `outputs/report_assets/tables/per_class_f1_comparison.csv`
-- `outputs/report_assets/figures/macro_f1_all_experiments.png`
-- `outputs/report_assets/figures/concat_vs_weighted.png`
-- `outputs/report_assets/figures/frozen_vs_finetuned.png`
-- `outputs/report_assets/figures/learned_fusion_weights.png`
-- `outputs/report_assets/figures/runtime_vs_macro_f1.png`
-- `outputs/report_assets/figures/best_confusion_matrix.png`
-- `report/main.tex`
-- `report/references.bib`
-- `report/sections/*.tex`
-- `report/main.pdf`
+- `artifacts/report_assets/tables/all_results.csv`
+- `artifacts/report_assets/tables/best_models.csv`
+- `artifacts/report_assets/tables/fusion_gain_summary.csv`
+- `artifacts/report_assets/tables/frozen_vs_finetuned_results.csv`
+- `artifacts/report_assets/tables/runtime_summary.csv`
+- `artifacts/report_assets/tables/per_class_f1_comparison.csv`
+- `artifacts/report_assets/figures/macro_f1_all_experiments.png`
+- `artifacts/report_assets/figures/concat_vs_weighted.png`
+- `artifacts/report_assets/figures/frozen_vs_finetuned.png`
+- `artifacts/report_assets/figures/learned_fusion_weights.png`
+- `artifacts/report_assets/figures/runtime_vs_macro_f1.png`
+- `artifacts/report_assets/figures/best_confusion_matrix.png`
+- `reports/final_report/main.tex`
+- `reports/final_report/references.bib`
+- `reports/final_report/sections/*.tex`
+- `reports/final_report/main.pdf`
 - `submission/youtube_link.txt`
 - `submission/archive/<required_name>.rar`
 

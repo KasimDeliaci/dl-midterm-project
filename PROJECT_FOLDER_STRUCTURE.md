@@ -7,7 +7,7 @@ GitHub repository
   code + configs + docs + report source + lightweight placeholders
 
 Google Drive / Colab storage
-  HAM10000 images + checkpoints + feature caches + large run outputs
+  HAM10000 images + checkpoints + feature caches + large run artifacts
 
 Colab
   GPU runner that clones the repo and executes scripts
@@ -19,10 +19,10 @@ Markdown docs
 ## Main Rules
 
 - Colab is a runner, not the development environment.
-- Core project logic belongs in `src/dl_fusion/`.
+- Core project logic belongs in `src/dl_midterm/`.
 - Entry points belong in `scripts/`.
 - Reproducible settings belong in `configs/`.
-- Large generated artifacts belong outside Git under `data/`, `outputs/`, or `submission/`.
+- Large generated artifacts belong outside Git under `data/`, `artifacts/`, or `submission/`.
 - Important decisions belong in `docs/DECISIONS.md`.
 
 ## Layout
@@ -38,11 +38,11 @@ dl-assignment/
 ├── .gitignore
 │
 ├── configs/
-│   ├── dataset.yaml
-│   ├── backbones.yaml
-│   ├── train.yaml
-│   ├── experiments.yaml
-│   └── report.yaml
+│   ├── default.yaml
+│   ├── report_assets.yaml
+│   ├── dataset/
+│   ├── backbones/
+│   └── experiments/
 │
 ├── docs/
 │   ├── PROJECT_CONTEXT.md
@@ -56,10 +56,21 @@ dl-assignment/
 │
 ├── notebooks/
 ├── scripts/
-├── src/dl_fusion/
+├── src/
+│   └── dl_midterm/
+│       ├── config/
+│       ├── data/
+│       ├── models/
+│       ├── features/
+│       ├── training/
+│       ├── evaluation/
+│       └── utils/
 ├── data/
-├── outputs/
-├── report/
+├── artifacts/
+├── reports/
+│   ├── final_report/
+│   └── presentation/
+├── tests/
 └── submission/
 ```
 

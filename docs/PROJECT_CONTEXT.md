@@ -25,7 +25,7 @@ The assignment requires:
 - Use `uv` with `pyproject.toml` and `uv.lock`.
 - Use PyTorch and TorchVision.
 - Use Colab for GPU-heavy execution.
-- Keep notebooks as launchers; scripts and `src/dl_fusion/` contain real logic.
+- Keep notebooks as launchers; scripts and `src/dl_midterm/` contain real logic.
 - Cache features so MLP ablations are cheap and reproducible.
 - Avoid medical diagnosis claims; describe the task as benchmark dermoscopic image classification.
 

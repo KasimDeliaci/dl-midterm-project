@@ -1,0 +1,7 @@
+backbone:
+  name: resnet50
+  enabled: true
+  pretrained: true
+  feature_dim: 2048
+  feature_layer: avgpool
+  finetune_policy: layer4

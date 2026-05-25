@@ -1,11 +1,11 @@
-# Outputs Directory
+# Artifacts Directory
 
 Generated artifacts live here and are mostly ignored by Git.
 
 Expected layout:
 
 ```text
-outputs/
+artifacts/
 ├── features/        # cached CNN feature tensors
 ├── checkpoints/     # backbone and MLP checkpoints
 ├── runs/            # one folder per experiment run

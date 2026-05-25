@@ -8,6 +8,6 @@ They should:
 - clone or update the repository,
 - install dependencies with `uv`,
 - run scripts from `scripts/`,
-- copy outputs back to Drive when needed.
+- copy artifacts back to Drive when needed.
 
-Core logic belongs in `src/dl_fusion/`.
+Core logic belongs in `src/dl_midterm/`.
