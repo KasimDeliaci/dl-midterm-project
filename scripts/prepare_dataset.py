@@ -75,6 +75,7 @@ def main() -> None:
 
     split_distribution = _split_distribution(split_result.splits)
     split_distribution.to_csv(tables_dir / "split_class_distribution.csv", index=False)
+    _plot_split_distribution(split_distribution, figures_dir / "split_class_distribution.png")
     for warning in split_result.warnings:
         print(f"WARNING: {warning}")
     print(f"Wrote splits to {dataset_config['splits_dir']}")
@@ -93,6 +94,21 @@ def _plot_class_distribution(distribution: pd.DataFrame, output_path: Path) -> N
     plt.xlabel("HAM10000 class")
     plt.ylabel("Image count")
     plt.title("HAM10000 class distribution")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=160)
+    plt.close()
+
+
+def _plot_split_distribution(distribution: pd.DataFrame, output_path: Path) -> None:
+    pivot = distribution.pivot(index="label", columns="split", values="count").fillna(0)
+    pivot = pivot[["train", "val", "test"]]
+
+    ax = pivot.plot(kind="bar", figsize=(9, 5), color=["#2563eb", "#f59e0b", "#10b981"])
+    ax.set_xlabel("HAM10000 class")
+    ax.set_ylabel("Image count")
+    ax.set_title("HAM10000 split distribution by class")
+    ax.legend(title="Split")
+    plt.xticks(rotation=0)
     plt.tight_layout()
     plt.savefig(output_path, dpi=160)
     plt.close()

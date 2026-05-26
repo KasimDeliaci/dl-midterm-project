@@ -2,8 +2,10 @@
 
 This document is the canonical Sprint 1 dataset audit location for HAM10000.
 
-Sprint 1 dataset preparation code is implemented, but the real HAM10000 files are not present
-locally yet. No dataset statistics, split files, or benchmark results have been fabricated.
+Sprint 1 dataset preparation has been run on the local HAM10000 files. The audit passed:
+metadata rows match the expected 10,015-image benchmark release, every referenced image was
+found, and lesion-aware train/validation/test split generation produced no cross-split lesion
+leakage.
 
 ## Source And Access
 
@@ -45,8 +47,8 @@ are acceptable as long as files are named by `image_id` with `.jpg`, `.jpeg`, or
 - [x] Lesion-level leakage check implemented.
 - [x] Class distribution table export implemented.
 - [x] Class distribution figure export implemented.
-- [ ] Real HAM10000 metadata/images downloaded locally.
-- [ ] Real split files generated from the downloaded dataset.
+- [x] Real HAM10000 metadata/images downloaded locally.
+- [x] Real split files generated from the downloaded dataset.
 
 ## Expected Class Labels
 
@@ -66,6 +68,9 @@ are acceptable as long as files are named by `image_id` with `.jpg`, `.jpeg`, or
 - Per-class F1 and macro-F1 should be prominent in the report.
 - If metadata includes multiple images of the same lesion, splits should group by lesion ID.
 - This project evaluates benchmark classification, not clinical diagnosis.
+- Lesion-aware grouping can move class proportions away from exact `70/15/15`, especially for
+  very small classes such as `df`. This is an acceptable tradeoff because preventing lesion
+  leakage is more important than exact image-level stratification.
 
 ## Implemented Sprint 1 Checks
 
@@ -79,6 +84,8 @@ are acceptable as long as files are named by `image_id` with `.jpg`, `.jpeg`, or
 - exports `data/processed/ham10000_audited_metadata.csv` for repeatable split-only runs,
 - exports `artifacts/report_assets/tables/class_distribution.csv`,
 - exports `artifacts/report_assets/figures/class_distribution.png`,
+- exports `artifacts/report_assets/tables/split_class_distribution.csv`,
+- exports `artifacts/report_assets/figures/split_class_distribution.png`,
 - creates `data/splits/train.csv`, `data/splits/val.csv`, and `data/splits/test.csv` only when blocking audit errors are absent.
 
 `src/dl_midterm/data/splits.py` creates `70/15/15` splits. If complete `lesion_id`
@@ -86,20 +93,79 @@ metadata is available, splitting happens at lesion-group level and leakage is ch
 train/validation/test. If grouped stratification is impossible due to small class/group counts,
 the script keeps group isolation and emits a warning.
 
-## Current Local Status
+## Current Local Audit Result
 
-The local workspace does not currently contain the HAM10000 metadata CSV or raw images. Running:
+Command:
 
 ```bash
 uv run python scripts/prepare_dataset.py --config configs/dataset/selected_dataset.yaml
 ```
 
-currently stops at metadata discovery with:
+Result:
 
 ```text
-FileNotFoundError: HAM10000 metadata CSV was not found. Expected one of:
-data/metadata/HAM10000_metadata.csv, data/metadata/ham10000_metadata.csv, data/metadata/metadata.csv
+Rows: 10015
+Unique image IDs: 10015
+Duplicate image IDs: 0
+Missing images: 0
+Missing labels: 0
+Lesion ID available: True
+Unique lesion IDs: 7470
 ```
 
-Next action: download/extract the official dataset, place metadata under `data/metadata/`, place
-images under `data/raw/`, record the exact license/usage terms here, then rerun the command above.
+Class distribution:
+
+| Label | Count | Percent |
+|---|---:|---:|
+| `akiec` | 327 | 3.2651 |
+| `bcc` | 514 | 5.1323 |
+| `bkl` | 1099 | 10.9735 |
+| `df` | 115 | 1.1483 |
+| `mel` | 1113 | 11.1133 |
+| `nv` | 6705 | 66.9496 |
+| `vasc` | 142 | 1.4179 |
+
+Generated split sizes:
+
+| Split | Images | Unique lesion IDs | Image ratio |
+|---|---:|---:|---:|
+| Train | 6981 | 5229 | 69.71% |
+| Validation | 1532 | 1120 | 15.30% |
+| Test | 1502 | 1121 | 15.00% |
+
+Lesion leakage check:
+
+| Pair | Shared lesion IDs |
+|---|---:|
+| Train / validation | 0 |
+| Train / test | 0 |
+| Validation / test | 0 |
+
+Split class counts:
+
+| Label | Train | Validation | Test |
+|---|---:|---:|---:|
+| `akiec` | 222 | 53 | 52 |
+| `bcc` | 361 | 82 | 71 |
+| `bkl` | 772 | 160 | 167 |
+| `df` | 71 | 24 | 20 |
+| `mel` | 773 | 173 | 167 |
+| `nv` | 4683 | 1018 | 1004 |
+| `vasc` | 99 | 22 | 21 |
+
+The `df` class is the clearest ratio deviation: 71/24/20 images, or about
+61.74%/20.87%/17.39%. This is caused by lesion-level grouping on a small class and should be
+reported as a deliberate leakage-prevention tradeoff, not as a data error.
+
+Generated Sprint 1 outputs:
+
+```text
+data/processed/ham10000_audited_metadata.csv
+data/splits/train.csv
+data/splits/val.csv
+data/splits/test.csv
+artifacts/report_assets/tables/class_distribution.csv
+artifacts/report_assets/tables/split_class_distribution.csv
+artifacts/report_assets/figures/class_distribution.png
+artifacts/report_assets/figures/split_class_distribution.png
+```
