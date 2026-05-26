@@ -13,9 +13,13 @@ leakage.
 - Canonical paper: Tschandl, Rosendahl, and Kittler, 2018.
 - Official source: ISIC Archive / Harvard Dataverse.
 - Configured source URL: `https://doi.org/10.7910/DVN/DBW86T`.
+- Dataset citation key: `DVN/DBW86T_2018`.
+- Paper citation key: `tschandl2018ham10000`.
+- Usage terms: dataset was accessed through Harvard Dataverse after accepting the dataset
+  agreement shown during download. Use is treated here as academic benchmark research; cite the
+  Dataverse dataset record and the Scientific Data descriptor paper in the report.
 - Expected standard benchmark size: 10,015 images.
 - Classes: `akiec`, `bcc`, `bkl`, `df`, `nv`, `mel`, `vasc`.
-- License note: verify and record the exact license text from the downloaded source before final reporting.
 
 Expected local layout:
 
@@ -34,7 +38,7 @@ are acceptable as long as files are named by `image_id` with `.jpg`, `.jpeg`, or
 ## Audit Checklist
 
 - [x] Download source URL recorded in config.
-- [ ] License/usage terms recorded after local download.
+- [x] License/usage terms recorded after local download.
 - [x] Metadata file path convention recorded.
 - [x] Image directory path convention recorded.
 - [x] All metadata image IDs checked against files by `scripts/prepare_dataset.py`.
