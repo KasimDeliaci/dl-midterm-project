@@ -49,13 +49,74 @@ uv run python -c "import yaml; yaml.safe_load(open('configs/dataset/selected_dat
 ## Sprint 2: Frozen Feature Extraction
 
 ```bash
-uv run python scripts/extract_features.py --config configs/dataset/selected_dataset.yaml --source frozen
+uv run python scripts/extract_features.py \
+  --config configs/dataset/selected_dataset.yaml \
+  --default-config configs/default.yaml \
+  --source frozen \
+  --batch-size 64
+```
+
+Expected cache layout:
+
+```text
+artifacts/features/ham10000/frozen/resnet50/{train,val,test}.pt
+artifacts/features/ham10000/frozen/mobilenet_v2/{train,val,test}.pt
+artifacts/features/ham10000/frozen/efficientnet_b0/{train,val,test}.pt
+```
+
+Each backbone directory also receives per-split CSV manifests and `manifest.json`.
+
+For a quick local smoke test without writing full caches:
+
+```bash
+uv run python scripts/extract_features.py \
+  --config configs/dataset/selected_dataset.yaml \
+  --default-config configs/default.yaml \
+  --source frozen \
+  --backbones resnet50 \
+  --limit-per-split 4 \
+  --batch-size 2 \
+  --no-pretrained
 ```
 
 ## Sprint 2: Single-Backbone MLP Baselines
 
 ```bash
-uv run python scripts/train_mlp.py --config configs/experiments/frozen_feature_matrix.yaml --feature-source frozen --fusion none
+uv run python scripts/train_mlp.py \
+  --config configs/experiments/frozen_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source frozen \
+  --fusion none
+```
+
+This trains the three frozen single-backbone baselines from cached features:
+
+- ResNet50 features + MLP
+- MobileNetV2 features + MLP
+- EfficientNetB0 features + MLP
+
+Each run writes:
+
+```text
+artifacts/runs/<run_id>/config_resolved.yaml
+artifacts/runs/<run_id>/metrics.json
+artifacts/runs/<run_id>/history.csv
+artifacts/runs/<run_id>/classification_report.csv
+artifacts/runs/<run_id>/confusion_matrix.png
+artifacts/runs/<run_id>/training_curve.png
+artifacts/runs/<run_id>/model.pt
+```
+
+Class weighting is enabled by default and is computed from the train split cache only. Disable it
+for an ablation with:
+
+```bash
+uv run python scripts/train_mlp.py \
+  --config configs/experiments/frozen_feature_matrix.yaml \
+  --feature-source frozen \
+  --fusion none \
+  --no-class-weights
 ```
 
 ## Sprint 3: Fusion Matrix
@@ -79,6 +140,23 @@ uv run python scripts/evaluate_runs.py --config configs/report_assets.yaml
 uv run python scripts/aggregate_results.py --config configs/report_assets.yaml
 uv run python scripts/make_report_assets.py --config configs/report_assets.yaml
 ```
+
+Sprint 2 single-backbone aggregation can be refreshed directly:
+
+```bash
+uv run python scripts/evaluate_runs.py --feature-source frozen
+```
+
+Expected Sprint 2 report-ready outputs:
+
+```text
+artifacts/report_assets/tables/single_backbone_frozen_results.csv
+artifacts/report_assets/tables/single_backbone_frozen_per_class_f1.csv
+artifacts/report_assets/figures/frozen_single_backbone_f1.png
+```
+
+The full feature caches, checkpoints, and run folders are generated artifacts and should not be
+committed.
 
 ## Later Command Pattern
 

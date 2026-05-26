@@ -69,3 +69,15 @@ Reason: HAM10000 can contain multiple images per lesion. Grouping by lesion ID r
 Decision: dataset preparation must stop with clear errors when metadata or raw images are absent, rather than generating dummy splits or placeholder statistics.
 
 Reason: Sprint 1 is about trustworthy, reproducible dataset preparation. Fabricated class counts or split files would contaminate the report and later model comparisons.
+
+## 2026-05-26 - Cache frozen features as tensors plus manifests
+
+Decision: Sprint 2 stores frozen CNN features as one `.pt` tensor payload per backbone and split, with companion CSV manifests and a per-backbone JSON manifest.
+
+Reason: tensor caches keep MLP experiments fast, while CSV/JSON manifests make image ID, label, split, feature source, feature dimension, seed, and config provenance easy to audit without loading large tensors.
+
+## 2026-05-26 - Use train-split class weights for Sprint 2 MLP baselines
+
+Decision: enable class-weighted cross-entropy by default for frozen single-backbone MLP baselines, computing weights only from the cached train split.
+
+Reason: HAM10000 is strongly imbalanced, and the evaluation protocol treats macro-F1 as the primary interpretation metric. Computing weights only from train data avoids validation/test leakage.

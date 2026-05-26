@@ -190,6 +190,21 @@ Sprint 2 is done only if:
 - `artifacts/report_assets/tables/single_backbone_frozen_results.csv`
 - `artifacts/report_assets/figures/frozen_single_backbone_f1.png`
 
+### Implementation Status - 2026-05-26
+
+Implemented:
+
+- Real image loading from Sprint 1 split CSVs through `HAM10000ImageDataset`.
+- Deterministic RGB `224x224` ImageNet preprocessing for feature extraction.
+- Frozen classifier-free ResNet50, MobileNetV2, and EfficientNetB0 feature extractors.
+- Per-backbone/per-split `.pt` feature caches with CSV and JSON manifests.
+- MLP training from cached features for the three single-backbone frozen baselines.
+- Train-only class weighting for weighted cross-entropy.
+- Accuracy, macro precision/recall/F1, weighted F1, per-class metrics, confusion matrices, training curves, and summary macro-F1 plot export.
+- Thin Colab runner in `notebooks/02_extract_frozen_features.ipynb`.
+
+Generated feature caches and run artifacts remain intentionally gitignored.
+
 ### Interim Sprint Report
 
 Write:
