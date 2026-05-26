@@ -4,7 +4,9 @@ from __future__ import annotations
 
 
 def main() -> None:
-    raise NotImplementedError("Evaluation aggregation will be implemented after run format is fixed.")
+    raise NotImplementedError(
+        "Evaluation aggregation will be implemented after run format is fixed."
+    )
 
 
 if __name__ == "__main__":

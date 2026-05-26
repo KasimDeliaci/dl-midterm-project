@@ -9,9 +9,11 @@ dataset:
   raw_dir: data/raw
   processed_dir: data/processed
   metadata_dir: data/metadata
+  metadata_filename: HAM10000_metadata.csv
   splits_dir: data/splits
   image_size: 224
   num_classes: 7
+  seed: 42
   class_names:
     - akiec
     - bcc
