@@ -1,10 +1,220 @@
-"""Train an MLP classifier on one feature/fusion configuration."""
+"""Train single-backbone MLP classifiers on cached frozen features."""
 
 from __future__ import annotations
 
+import argparse
+from datetime import datetime
+from pathlib import Path
+
+import torch
+from torch import nn
+from torch.utils.data import DataLoader
+
+from dl_midterm.config.load_config import load_yaml
+from dl_midterm.evaluation.reports import (
+    export_single_backbone_report_assets,
+    write_run_report,
+)
+from dl_midterm.features.cache import (
+    FeatureDataset,
+    backbone_cache_dir,
+    class_weights_from_cache,
+    feature_cache_path,
+    load_feature_cache,
+    verify_cache_matches_split,
+)
+from dl_midterm.features.extract import select_single_backbone_combinations
+from dl_midterm.models.backbones import backbone_alias
+from dl_midterm.models.mlp import FeatureMLP
+from dl_midterm.training.loops import evaluate_model, train_mlp_model
+from dl_midterm.utils.device import resolve_device
+from dl_midterm.utils.seed import seed_everything
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--config", default="configs/experiments/frozen_feature_matrix.yaml")
+    parser.add_argument("--default-config", default="configs/default.yaml")
+    parser.add_argument("--dataset-config", default="configs/dataset/selected_dataset.yaml")
+    parser.add_argument("--feature-source", default="frozen", choices=["frozen"])
+    parser.add_argument("--fusion", default="none", choices=["none"])
+    parser.add_argument("--backbones", nargs="+", default=None)
+    parser.add_argument("--feature-root", default="artifacts/features")
+    parser.add_argument("--run-root", default="artifacts/runs")
+    parser.add_argument("--tables-dir", default="artifacts/report_assets/tables")
+    parser.add_argument("--figures-dir", default="artifacts/report_assets/figures")
+    parser.add_argument("--device", default=None)
+    parser.add_argument("--batch-size", type=int, default=None)
+    parser.add_argument("--epochs", type=int, default=None)
+    parser.add_argument("--learning-rate", type=float, default=None)
+    parser.add_argument("--weight-decay", type=float, default=None)
+    parser.add_argument("--no-class-weights", action="store_true")
+    return parser.parse_args()
+
 
 def main() -> None:
-    raise NotImplementedError("MLP training will be implemented with the experiment runner.")
+    args = parse_args()
+    experiment_config = load_yaml(args.config)["experiment_matrix"]
+    default_config = load_yaml(args.default_config)
+    dataset_config = load_yaml(args.dataset_config)["dataset"]
+    seed = int(experiment_config.get("seed", dataset_config.get("seed", 42)))
+    seed_everything(seed)
+
+    runtime_config = default_config.get("runtime", {})
+    training_config = default_config.get("training", {})
+    mlp_config = default_config.get("mlp", {})
+    device = resolve_device(args.device or runtime_config.get("device", "auto"))
+    batch_size = args.batch_size or int(training_config.get("batch_size", 32))
+    epochs = args.epochs or int(training_config.get("epochs", 25))
+    learning_rate = args.learning_rate or float(training_config.get("learning_rate", 1e-3))
+    weight_decay = args.weight_decay or float(training_config.get("weight_decay", 1e-4))
+    class_weighting = not args.no_class_weights
+
+    backbones = args.backbones
+    if backbones is None:
+        backbones = select_single_backbone_combinations(experiment_config["combinations"])
+    for backbone in backbones:
+        run_single_backbone(
+            backbone=backbone,
+            args=args,
+            dataset_config=dataset_config,
+            seed=seed,
+            device=device,
+            batch_size=batch_size,
+            epochs=epochs,
+            learning_rate=learning_rate,
+            weight_decay=weight_decay,
+            class_weighting=class_weighting,
+            training_config=training_config,
+            mlp_config=mlp_config,
+        )
+
+    exported = export_single_backbone_report_assets(
+        args.run_root,
+        args.tables_dir,
+        args.figures_dir,
+        feature_source=args.feature_source,
+    )
+    print("Exported report assets:")
+    for name, path in exported.items():
+        print(f"  {name}: {path}")
+
+
+def run_single_backbone(
+    *,
+    backbone: str,
+    args: argparse.Namespace,
+    dataset_config: dict,
+    seed: int,
+    device: torch.device,
+    batch_size: int,
+    epochs: int,
+    learning_rate: float,
+    weight_decay: float,
+    class_weighting: bool,
+    training_config: dict,
+    mlp_config: dict,
+) -> Path:
+    class_names = list(dataset_config["class_names"])
+    cache_dir = backbone_cache_dir(
+        args.feature_root,
+        dataset_config["name"],
+        args.feature_source,
+        backbone,
+    )
+    caches = {
+        split: load_feature_cache(feature_cache_path(cache_dir, split))
+        for split in ("train", "val", "test")
+    }
+    for split, cache in caches.items():
+        verify_cache_matches_split(cache, Path(dataset_config["splits_dir"]) / f"{split}.csv")
+
+    train_loader = DataLoader(
+        FeatureDataset(caches["train"]),
+        batch_size=batch_size,
+        shuffle=True,
+        generator=torch.Generator().manual_seed(seed),
+    )
+    val_loader = DataLoader(FeatureDataset(caches["val"]), batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(FeatureDataset(caches["test"]), batch_size=batch_size, shuffle=False)
+
+    feature_dim = caches["train"].feature_dim
+    model = FeatureMLP(
+        input_dim=feature_dim,
+        num_classes=len(class_names),
+        hidden_dims=list(mlp_config.get("hidden_dims", [512, 256])),
+        dropout=float(mlp_config.get("dropout", 0.3)),
+    )
+    weights = (
+        class_weights_from_cache(caches["train"], len(class_names)).to(device)
+        if class_weighting
+        else None
+    )
+    criterion = nn.CrossEntropyLoss(weight=weights)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+
+    model, history, val_metrics = train_mlp_model(
+        model,
+        train_loader,
+        val_loader,
+        class_names=class_names,
+        device=device,
+        epochs=epochs,
+        criterion=criterion,
+        optimizer=optimizer,
+        early_stopping_patience=int(training_config.get("early_stopping_patience", 5)),
+    )
+    test_metrics = evaluate_model(model, test_loader, class_names=class_names, device=device)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_id = f"{timestamp}_{args.feature_source}_{backbone_alias(backbone)}_none_mlp_s{seed}"
+    run_dir = Path(args.run_root) / run_id
+    resolved_config = {
+        "run_id": run_id,
+        "seed": seed,
+        "dataset": dataset_config["name"],
+        "feature_source": args.feature_source,
+        "backbone": backbone,
+        "fusion_method": args.fusion,
+        "feature_dim": feature_dim,
+        "class_weighting": class_weighting,
+        "batch_size": batch_size,
+        "epochs": epochs,
+        "learning_rate": learning_rate,
+        "weight_decay": weight_decay,
+        "hidden_dims": list(mlp_config.get("hidden_dims", [512, 256])),
+        "dropout": float(mlp_config.get("dropout", 0.3)),
+        "best_val_epoch": val_metrics.get("best_epoch"),
+        "best_val_macro_f1": val_metrics.get("macro_f1"),
+        "feature_cache_dir": str(cache_dir),
+        "split_files": {
+            split: str(Path(dataset_config["splits_dir"]) / f"{split}.csv")
+            for split in ("train", "val", "test")
+        },
+    }
+    test_metrics.update(
+        {
+            "run_id": run_id,
+            "seed": seed,
+            "feature_source": args.feature_source,
+            "backbone": backbone,
+            "fusion_method": args.fusion,
+            "feature_dim": feature_dim,
+            "class_weighting": class_weighting,
+            "best_val_macro_f1": val_metrics.get("macro_f1"),
+            "best_val_epoch": val_metrics.get("best_epoch"),
+        }
+    )
+    write_run_report(
+        run_dir,
+        resolved_config=resolved_config,
+        history=history,
+        metrics=test_metrics,
+        class_names=class_names,
+        backbone=backbone,
+    )
+    torch.save(model.state_dict(), run_dir / "model.pt")
+    print(f"Wrote MLP run: {run_dir}")
+    return run_dir
 
 
 if __name__ == "__main__":
