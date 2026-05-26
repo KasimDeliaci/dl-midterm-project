@@ -158,6 +158,61 @@ artifacts/report_assets/figures/frozen_single_backbone_f1.png
 The full feature caches, checkpoints, and run folders are generated artifacts and should not be
 committed.
 
+## Sprint 2b: MLP Hyperparameter Search
+
+After frozen features exist, run the focused MLP-only search:
+
+```bash
+uv run python scripts/run_mlp_hyperparam_search.py \
+  --config configs/experiments/mlp_hyperparam_search.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --search-id mlp_hparam_v1_full
+```
+
+The current search varies:
+
+- class weighting: enabled vs disabled,
+- dropout: `0.1`, `0.3`, `0.5`,
+- optimizer: AdamW, Adam, SGD with momentum,
+- backbone: ResNet50, MobileNetV2, EfficientNetB0.
+
+Each MLP run gets a separate folder under:
+
+```text
+artifacts/runs/mlp_hparam_search/<search_id>/<run_id>/
+```
+
+Each run folder contains:
+
+```text
+config_resolved.yaml
+metrics.json
+history.csv
+classification_report.csv
+confusion_matrix.png
+training_curve.png
+model.pt
+```
+
+Search-level report assets are exported to:
+
+```text
+artifacts/report_assets/tables/mlp_hparam_search/<search_id>/
+artifacts/report_assets/figures/mlp_hparam_search/<search_id>/
+```
+
+Quick smoke test:
+
+```bash
+uv run python scripts/run_mlp_hyperparam_search.py \
+  --config configs/experiments/mlp_hyperparam_search.yaml \
+  --backbones resnet50 \
+  --candidates cw_adamw_d03 nocw_adamw_d03 \
+  --epochs 3 \
+  --search-id smoke_mlp_search
+```
+
 ## Later Command Pattern
 
 ```bash

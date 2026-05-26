@@ -81,3 +81,9 @@ Reason: tensor caches keep MLP experiments fast, while CSV/JSON manifests make i
 Decision: enable class-weighted cross-entropy by default for frozen single-backbone MLP baselines, computing weights only from the cached train split.
 
 Reason: HAM10000 is strongly imbalanced, and the evaluation protocol treats macro-F1 as the primary interpretation metric. Computing weights only from train data avoids validation/test leakage.
+
+## 2026-05-26 - Track MLP search runs under isolated search IDs
+
+Decision: run MLP-only hyperparameter searches under `artifacts/runs/mlp_hparam_search/<search_id>/`, with every backbone/candidate pair writing a complete independent run folder.
+
+Reason: Sprint 2b is exploratory. Isolated search IDs keep baseline results, hyperparameter candidates, plots, and aggregate tables auditable without mixing them into the canonical Sprint 2 baseline folders.
