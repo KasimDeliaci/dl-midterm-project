@@ -15,6 +15,13 @@ After uploading `ham10000_colab_bundle.tar` to Google Drive, run the restore flo
 /content/drive/MyDrive/ham10000_colab_bundle.tar
 ```
 
+The runner notebooks force-remount Drive and also check these fallback locations:
+
+```text
+/content/drive/MyDrive/Colab Notebooks/ham10000_colab_bundle.tar
+/content/drive/MyDrive/dl-assignment/ham10000_colab_bundle.tar
+```
+
 It restores these repo-relative paths:
 
 ```text
