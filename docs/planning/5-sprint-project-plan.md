@@ -45,6 +45,29 @@ Sprint 1 is done only if:
 - Dataset notes include source, license/usage constraints, class labels, and non-clinical benchmark disclaimer.
 - Colab setup notebook can clone/install the repo and resolve dataset/output paths.
 
+### Implementation Status - 2026-05-26
+
+Sprint 1 infrastructure is implemented, but real dataset verification is blocked until HAM10000
+metadata and images are present locally.
+
+Completed:
+
+- Dataset config defines HAM10000 labels, source URL, default `70/15/15` split ratios, and seed.
+- `scripts/prepare_dataset.py` audits metadata/images, exports audited metadata and class distribution assets, and writes splits only when blocking audit errors are absent.
+- `scripts/create_splits.py` supports split generation from an already audited metadata CSV.
+- `src/dl_midterm/data/datasets.py` normalizes HAM10000 metadata and resolves image paths.
+- `src/dl_midterm/data/splits.py` creates lesion-aware splits and checks leakage.
+- `notebooks/01_dataset_prepare.ipynb` remains a thin runner around the script.
+- Unit tests cover metadata normalization, missing image detection, unknown-label failure, and lesion leakage prevention.
+
+Still pending after local dataset acquisition:
+
+- Record exact license/usage terms from the downloaded source.
+- Run the real metadata/image audit.
+- Generate real `data/splits/train.csv`, `data/splits/val.csv`, and `data/splits/test.csv`.
+- Export real `ham10000_audited_metadata.csv`, `class_distribution.csv`, `split_class_distribution.csv`, and `class_distribution.png`.
+- Run a dataloader smoke test once image files exist.
+
 ### Expected Artifacts
 
 - `configs/dataset/selected_dataset.yaml`

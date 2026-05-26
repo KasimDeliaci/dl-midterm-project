@@ -57,3 +57,15 @@ Outcome: scripts remain the command-line entrypoints; reusable logic lives in th
 Decision: replace `outputs/` with `artifacts/` for feature caches, checkpoints, run folders, and report-ready tables/figures.
 
 Reason: `artifacts/` better communicates generated, mostly-gitignored experiment products and separates them from source docs/reports.
+
+## 2026-05-26 - Use lesion-aware 70/15/15 HAM10000 splits
+
+Decision: generate the primary HAM10000 train/validation/test split with `70/15/15` ratios and group by `lesion_id` whenever metadata provides complete lesion IDs.
+
+Reason: HAM10000 can contain multiple images per lesion. Grouping by lesion ID reduces leakage risk between train, validation, and test while preserving the assignment's multi-class benchmark framing.
+
+## 2026-05-26 - Fail fast when local dataset files are absent
+
+Decision: dataset preparation must stop with clear errors when metadata or raw images are absent, rather than generating dummy splits or placeholder statistics.
+
+Reason: Sprint 1 is about trustworthy, reproducible dataset preparation. Fabricated class counts or split files would contaminate the report and later model comparisons.

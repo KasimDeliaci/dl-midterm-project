@@ -14,6 +14,9 @@ uv run python -c "import yaml; yaml.safe_load(open('configs/dataset/selected_dat
 
 ## Sprint 1: Dataset Preparation
 
+Place `HAM10000_metadata.csv` under `data/metadata/` and raw image files under `data/raw/`
+before running the preparation command.
+
 ```bash
 uv run python scripts/prepare_dataset.py --config configs/dataset/selected_dataset.yaml
 ```
@@ -26,6 +29,21 @@ data/splits/val.csv
 data/splits/test.csv
 artifacts/report_assets/tables/class_distribution.csv
 artifacts/report_assets/figures/class_distribution.png
+```
+
+Optional split-only command for an already audited metadata CSV:
+
+```bash
+uv run python scripts/create_splits.py \
+  --config configs/dataset/selected_dataset.yaml \
+  --metadata-csv data/processed/ham10000_audited_metadata.csv
+```
+
+Sprint 1 verification:
+
+```bash
+uv run pytest tests/test_dataset_sprint1.py
+uv run python -c "import yaml; yaml.safe_load(open('configs/dataset/selected_dataset.yaml')); print('dataset yaml ok')"
 ```
 
 ## Sprint 2: Frozen Feature Extraction
