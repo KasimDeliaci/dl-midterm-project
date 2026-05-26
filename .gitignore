@@ -26,6 +26,12 @@ build/
 
 # Local reference copies
 sample-project/
+deep-research-report-literature.md
+dönem-projesi-2026-DL.docx
+*projesi-2026-DL.docx
+
+# Local paper cache
+docs/literature/papers/*.pdf
 
 # Project data and generated artifacts
 data/raw/*

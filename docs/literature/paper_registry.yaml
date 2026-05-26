@@ -1,11 +1,91 @@
 papers:
   - id: tschandl2018ham10000
-    title: The HAM10000 dataset, a large collection of multi-source dermatoscopic images of common pigmented skin lesions
+    title: "The HAM10000 dataset, a large collection of multi-source dermatoscopic images of common pigmented skin lesions"
     year: 2018
     role: primary_dataset
     status: cited
+    source_url: "https://doi.org/10.1038/sdata.2018.161"
+
   - id: helber2019eurosat
     title: "EuroSAT: A Novel Dataset and Deep Learning Benchmark for Land Use and Land Cover Classification"
     year: 2019
     role: backup_dataset
     status: cited
+    source_url: "https://doi.org/10.1109/JSTARS.2019.2918242"
+
+  - id: akter2023_multiclass_skin_cancer
+    title: "Multi-class Skin Cancer Classification Architecture Based on Deep Convolutional Neural Network"
+    authors: "Akter, Shahriar, Sneha, and Cuzzocrea"
+    year: 2023
+    role: transfer_learning_comparator
+    status: downloaded_local
+    source_url: "https://arxiv.org/abs/2303.07520"
+    pdf_url: "https://arxiv.org/pdf/2303.07520"
+    local_pdf: "docs/literature/papers/akter2023_multiclass_skin_cancer.pdf"
+    relevance: "HAM10000 transfer-learning comparison; warns that stacking/fusion can underperform strong single backbones."
+
+  - id: hu2023_attention_lightweight_skin_lesion
+    title: "Attention-Driven Lightweight Model for Pigmented Skin Lesion Detection"
+    authors: "Hu and Yang"
+    year: 2023
+    role: imbalance_efficiency_reference
+    status: downloaded_local
+    source_url: "https://arxiv.org/abs/2308.02119"
+    pdf_url: "https://arxiv.org/pdf/2308.02119"
+    local_pdf: "docs/literature/papers/hu2023_attention_lightweight_skin_lesion.pdf"
+    relevance: "Lightweight HAM10000 model with imbalance-aware training; useful for macro-F1 and efficiency discussion."
+
+  - id: roy2024_wavelet_guided_feature_fusion
+    title: "A Wavelet Guided Attention Module for Skin Cancer Classification with Gradient-based Feature Fusion"
+    authors: "Roy et al."
+    year: 2024
+    role: fusion_reference
+    status: downloaded_local
+    source_url: "https://arxiv.org/abs/2406.15128"
+    pdf_url: "https://arxiv.org/pdf/2406.15128"
+    local_pdf: "docs/literature/papers/roy2024_wavelet_guided_feature_fusion.pdf"
+    relevance: "Recent HAM10000 fusion paper; supports complementary-feature motivation but uses a custom architecture."
+
+  - id: liu2024_skin_lesion_ensemble_learning
+    title: "Enhancing Skin Lesion Diagnosis with Ensemble Learning"
+    authors: "Liu, Yu, Tan, Yan, and Shi"
+    year: 2024
+    role: ensemble_reference
+    status: downloaded_local
+    source_url: "https://arxiv.org/abs/2409.04381"
+    pdf_url: "https://arxiv.org/pdf/2409.04381"
+    local_pdf: "docs/literature/papers/liu2024_skin_lesion_ensemble_learning.pdf"
+    relevance: "HAM10000 ensemble study; useful for discussing incremental ensemble gains."
+
+  - id: mahbod2025_foundation_vit_feature_fusion
+    title: "Fusion of Foundation and Vision Transformer Model Features for Dermatoscopic Image Classification"
+    authors: "Mahbod, Ecker, and Woitek"
+    year: 2025
+    role: frozen_features_mlp_reference
+    status: downloaded_local
+    source_url: "https://arxiv.org/abs/2505.16338"
+    pdf_url: "https://arxiv.org/pdf/2505.16338"
+    local_pdf: "docs/literature/papers/mahbod2025_foundation_vit_feature_fusion.pdf"
+    relevance: "Very aligned conceptually: frozen dermoscopic features, MLP probing, and fusion."
+
+  - id: mamun2025_efficient_skin_cancer_cnn
+    title: "Optimizing Deep Learning for Skin Cancer Classification: A Computationally Efficient CNN with Minimal Accuracy Trade-Off"
+    authors: "Al Mamun et al."
+    year: 2025
+    role: compute_performance_reference
+    status: downloaded_local
+    source_url: "https://arxiv.org/abs/2505.21597"
+    pdf_url: "https://arxiv.org/pdf/2505.21597"
+    local_pdf: "docs/literature/papers/mamun2025_efficient_skin_cancer_cnn.pdf"
+    relevance: "Supports runtime and complexity discussion when comparing lightweight and fused models."
+
+  - id: haque2026_explainable_skin_lesion_diagnosis
+    title: "A Deep Learning Approach for Automated Skin Lesion Diagnosis with Explainable AI"
+    authors: "Haque et al."
+    year: 2026
+    role: recent_context_reference
+    status: downloaded_local
+    source_url: "https://arxiv.org/abs/2601.00964"
+    pdf_url: "https://arxiv.org/pdf/2601.00964"
+    local_pdf: "docs/literature/papers/haque2026_explainable_skin_lesion_diagnosis.pdf"
+    relevance: "Recent EfficientNet-style context with macro-F1 and XAI; weaker direct comparability to the fixed CNN-feature project."
