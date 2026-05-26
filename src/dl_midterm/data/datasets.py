@@ -6,6 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+import torch
+from PIL import Image
+from torch.utils.data import Dataset
 
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png")
 
@@ -140,6 +143,64 @@ def read_split(split_path: Path) -> pd.DataFrame:
     if not split_path.exists():
         raise FileNotFoundError(f"Split CSV does not exist: {split_path}")
     return pd.read_csv(split_path)
+
+
+class HAM10000ImageDataset(Dataset[dict[str, object]]):
+    """PyTorch dataset backed by a Sprint 1 HAM10000 split CSV."""
+
+    def __init__(
+        self,
+        split_csv: str | Path,
+        class_names: list[str],
+        transform: object | None = None,
+        split_name: str | None = None,
+        max_samples: int | None = None,
+    ) -> None:
+        self.split_csv = Path(split_csv)
+        self.frame = read_split(self.split_csv)
+        if max_samples is not None:
+            self.frame = self.frame.head(max_samples).copy()
+        self.class_names = class_names
+        self.label_to_index = {label: index for index, label in enumerate(class_names)}
+        self.transform = transform
+        self.split_name = split_name or self.split_csv.stem
+        self._validate_columns()
+
+    def __len__(self) -> int:
+        return len(self.frame)
+
+    def __getitem__(self, index: int) -> dict[str, object]:
+        row = self.frame.iloc[index]
+        image_path = Path(str(row["image_path"]))
+        if not image_path.exists():
+            raise FileNotFoundError(f"Image file does not exist: {image_path}")
+
+        with Image.open(image_path) as image:
+            image = image.convert("RGB")
+            if self.transform is not None:
+                image_tensor = self.transform(image)
+            else:
+                image_tensor = image
+
+        label_name = str(row["label"])
+        return {
+            "image": image_tensor,
+            "label": torch.tensor(self.label_to_index[label_name], dtype=torch.long),
+            "label_name": label_name,
+            "image_id": str(row["image_id"]),
+            "split": self.split_name,
+            "image_path": str(image_path),
+        }
+
+    def _validate_columns(self) -> None:
+        required = {"image_id", "label", "image_path"}
+        missing = required - set(self.frame.columns)
+        if missing:
+            raise ValueError(f"Split CSV is missing required columns: {sorted(missing)}")
+
+        unknown_labels = sorted(set(self.frame["label"].astype(str)) - set(self.class_names))
+        if unknown_labels:
+            raise ValueError(f"Split CSV contains unknown labels: {unknown_labels}")
 
 
 def _index_images(raw_dir: Path) -> dict[str, str]:

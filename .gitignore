@@ -65,6 +65,9 @@ submission/archive/*
 !artifacts/features/ham10000/ft_last_blocks/mobilenet_v2/.gitkeep
 !artifacts/features/ham10000/ft_last_blocks/efficientnet_b0/
 !artifacts/features/ham10000/ft_last_blocks/efficientnet_b0/.gitkeep
+artifacts/features/**/*.pt
+artifacts/features/**/*_manifest.csv
+artifacts/features/**/manifest.json
 !artifacts/checkpoints/
 !artifacts/checkpoints/finetuned_backbones/
 !artifacts/checkpoints/finetuned_backbones/.gitkeep
