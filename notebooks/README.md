@@ -17,6 +17,9 @@ Core logic belongs in `src/dl_midterm/`.
 Use `00_colab_setup.ipynb` first. It mounts Drive, clones/enters the repo, installs `uv`, and
 extracts `ham10000_colab_bundle.tar` into the repo root.
 
+All notebooks request a Colab GPU runtime with T4 metadata. Colab may still assign hardware based
+on account limits and availability; if needed, use Runtime > Change runtime type and choose T4 GPU.
+
 Skip `01_dataset_prepare.ipynb` when preserving the Sprint 1 split CSVs from the uploaded bundle.
 Run it only if you intentionally want to regenerate dataset audit/split artifacts.
 

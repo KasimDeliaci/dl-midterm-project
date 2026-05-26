@@ -28,6 +28,10 @@ data/splits/test.csv
 The split CSVs are the preserved Sprint 1 lesion-aware split. Do not rerun split generation in
 Colab unless a new split is intentional.
 
+The notebooks request a Colab GPU runtime with T4 metadata. Colab can still change the assigned
+GPU based on availability; if the runtime is not T4, use Runtime > Change runtime type and choose
+T4 GPU manually.
+
 ## Validate Configs
 
 ```bash
