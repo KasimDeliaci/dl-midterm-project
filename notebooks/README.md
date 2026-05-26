@@ -11,3 +11,14 @@ They should:
 - copy artifacts back to Drive when needed.
 
 Core logic belongs in `src/dl_midterm/`.
+
+## Colab Order
+
+Use `00_colab_setup.ipynb` first. It mounts Drive, clones/enters the repo, installs `uv`, and
+extracts `ham10000_colab_bundle.tar` into the repo root.
+
+Skip `01_dataset_prepare.ipynb` when preserving the Sprint 1 split CSVs from the uploaded bundle.
+Run it only if you intentionally want to regenerate dataset audit/split artifacts.
+
+Run `02_extract_frozen_features.ipynb` for Sprint 2 frozen feature extraction, MLP training, and
+evaluation. Run `02b_mlp_hyperparam_search.ipynb` only after frozen feature caches exist.

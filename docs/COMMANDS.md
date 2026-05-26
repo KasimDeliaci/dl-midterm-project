@@ -6,6 +6,28 @@
 uv sync
 ```
 
+## Colab Data Restore
+
+After uploading `ham10000_colab_bundle.tar` to Google Drive, run the restore flow in
+`notebooks/00_colab_setup.ipynb`. The bundle is expected at:
+
+```text
+/content/drive/MyDrive/ham10000_colab_bundle.tar
+```
+
+It restores these repo-relative paths:
+
+```text
+data/raw/ham10000/
+data/metadata/HAM10000_metadata.csv
+data/splits/train.csv
+data/splits/val.csv
+data/splits/test.csv
+```
+
+The split CSVs are the preserved Sprint 1 lesion-aware split. Do not rerun split generation in
+Colab unless a new split is intentional.
+
 ## Validate Configs
 
 ```bash
