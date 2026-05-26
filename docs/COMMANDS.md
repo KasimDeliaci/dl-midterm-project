@@ -32,6 +32,13 @@ The notebooks request a Colab GPU runtime with T4 metadata. Colab can still chan
 GPU based on availability; if the runtime is not T4, use Runtime > Change runtime type and choose
 T4 GPU manually.
 
+Runner notebooks bootstrap repo/data in fresh Colab runtimes. Sprint 2 notebook outputs frozen
+feature caches and report-ready assets back to:
+
+```text
+/content/drive/MyDrive/dl-midterm-artifacts/
+```
+
 ## Validate Configs
 
 ```bash
