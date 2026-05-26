@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,7 @@ from dl_midterm.evaluation.metrics import per_class_frame
 from dl_midterm.evaluation.plots import (
     save_confusion_matrix_plot,
     save_macro_f1_comparison_plot,
+    save_mlp_search_macro_f1_plot,
     save_training_curve_plot,
 )
 
@@ -78,6 +80,21 @@ def collect_run_summaries(run_root: str | Path) -> pd.DataFrame:
                 "seed": config.get("seed", metrics.get("seed")),
                 "feature_dim": config.get("feature_dim", metrics.get("feature_dim")),
                 "class_weighting": config.get("class_weighting", metrics.get("class_weighting")),
+                "optimizer": config.get("optimizer", metrics.get("optimizer")),
+                "learning_rate": config.get("learning_rate", metrics.get("learning_rate")),
+                "weight_decay": config.get("weight_decay", metrics.get("weight_decay")),
+                "dropout": config.get("dropout", metrics.get("dropout")),
+                "hidden_dims": json.dumps(config.get("hidden_dims", metrics.get("hidden_dims"))),
+                "experiment_name": config.get(
+                    "experiment_name",
+                    metrics.get("experiment_name"),
+                ),
+                "run_tag": config.get("run_tag", metrics.get("run_tag")),
+                "best_val_macro_f1": config.get(
+                    "best_val_macro_f1",
+                    metrics.get("best_val_macro_f1"),
+                ),
+                "best_val_epoch": config.get("best_val_epoch", metrics.get("best_val_epoch")),
                 "accuracy": metrics["accuracy"],
                 "macro_precision": metrics["macro_precision"],
                 "macro_recall": metrics["macro_recall"],
@@ -133,3 +150,86 @@ def export_single_backbone_report_assets(
         "per_class_table": per_class_path,
         "macro_f1_plot": plot_path,
     }
+
+
+def export_mlp_search_report_assets(
+    run_root: str | Path,
+    tables_dir: str | Path,
+    figures_dir: str | Path,
+    *,
+    feature_source: str = "frozen",
+    experiment_name: str | None = None,
+) -> dict[str, Path]:
+    """Export report-ready tables and figures for an MLP hyperparameter search."""
+
+    summaries = collect_run_summaries(run_root)
+    if summaries.empty:
+        raise FileNotFoundError(f"No run metrics found under {run_root}")
+
+    filtered = summaries[
+        (summaries["feature_source"] == feature_source) & (summaries["fusion_method"] == "none")
+    ].copy()
+    if experiment_name is not None:
+        filtered = filtered[filtered["experiment_name"] == experiment_name].copy()
+    if filtered.empty:
+        raise FileNotFoundError(f"No matching MLP search runs found under {run_root}")
+
+    table_root = Path(tables_dir)
+    figure_root = Path(figures_dir)
+    table_root.mkdir(parents=True, exist_ok=True)
+    figure_root.mkdir(parents=True, exist_ok=True)
+
+    sorted_results = filtered.sort_values(["macro_f1", "weighted_f1"], ascending=False)
+    results_path = table_root / "mlp_hyperparam_search_results.csv"
+    sorted_results.to_csv(results_path, index=False)
+
+    best_by_backbone = (
+        sorted_results.sort_values(["backbone", "macro_f1"], ascending=[True, False])
+        .groupby("backbone", as_index=False)
+        .head(1)
+        .sort_values("macro_f1", ascending=False)
+    )
+    best_path = table_root / "mlp_hyperparam_best_by_backbone.csv"
+    best_by_backbone.to_csv(best_path, index=False)
+
+    per_class_frames: list[pd.DataFrame] = []
+    for run_id in sorted_results["run_id"]:
+        report_path = Path(run_root) / run_id / "classification_report.csv"
+        if report_path.exists():
+            report = pd.read_csv(report_path)
+            report.insert(0, "run_id", run_id)
+            per_class_frames.append(report)
+    per_class_path = table_root / "mlp_hyperparam_per_class_f1.csv"
+    if per_class_frames:
+        pd.concat(per_class_frames, ignore_index=True).to_csv(per_class_path, index=False)
+    else:
+        pd.DataFrame().to_csv(per_class_path, index=False)
+
+    plot_path = save_mlp_search_macro_f1_plot(
+        sorted_results,
+        figure_root / "mlp_hyperparam_search_macro_f1.png",
+    )
+
+    copied_plots: list[Path] = []
+    for row in best_by_backbone.itertuples(index=False):
+        run_dir = Path(run_root) / row.run_id
+        safe_tag = str(row.run_tag or row.run_id)
+        for source_name, suffix in (
+            ("confusion_matrix.png", "confusion_matrix"),
+            ("training_curve.png", "training_curve"),
+        ):
+            source_path = run_dir / source_name
+            if source_path.exists():
+                dest_path = figure_root / f"best_{row.backbone}_{safe_tag}_{suffix}.png"
+                shutil.copy2(source_path, dest_path)
+                copied_plots.append(dest_path)
+
+    exported = {
+        "results_table": results_path,
+        "best_by_backbone_table": best_path,
+        "per_class_table": per_class_path,
+        "macro_f1_plot": plot_path,
+    }
+    for index, path in enumerate(copied_plots, start=1):
+        exported[f"best_run_plot_{index}"] = path
+    return exported

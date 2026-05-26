@@ -27,6 +27,7 @@ from dl_midterm.features.extract import select_single_backbone_combinations
 from dl_midterm.models.backbones import backbone_alias
 from dl_midterm.models.mlp import FeatureMLP
 from dl_midterm.training.loops import evaluate_model, train_mlp_model
+from dl_midterm.training.optim import build_optimizer
 from dl_midterm.utils.device import resolve_device
 from dl_midterm.utils.seed import seed_everything
 
@@ -48,7 +49,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--learning-rate", type=float, default=None)
     parser.add_argument("--weight-decay", type=float, default=None)
+    parser.add_argument("--optimizer", default=None, choices=["adamw", "adam", "sgd"])
+    parser.add_argument("--momentum", type=float, default=0.9)
+    parser.add_argument("--dropout", type=float, default=None)
+    parser.add_argument("--hidden-dims", nargs="+", type=int, default=None)
     parser.add_argument("--no-class-weights", action="store_true")
+    parser.add_argument("--experiment-name", default="single_backbone_frozen_baseline")
+    parser.add_argument("--run-tag", default=None)
     return parser.parse_args()
 
 
@@ -68,6 +75,9 @@ def main() -> None:
     epochs = args.epochs or int(training_config.get("epochs", 25))
     learning_rate = args.learning_rate or float(training_config.get("learning_rate", 1e-3))
     weight_decay = args.weight_decay or float(training_config.get("weight_decay", 1e-4))
+    optimizer_name = args.optimizer or str(training_config.get("optimizer", "adamw"))
+    dropout = args.dropout if args.dropout is not None else float(mlp_config.get("dropout", 0.3))
+    hidden_dims = args.hidden_dims or list(mlp_config.get("hidden_dims", [512, 256]))
     class_weighting = not args.no_class_weights
 
     backbones = args.backbones
@@ -84,9 +94,14 @@ def main() -> None:
             epochs=epochs,
             learning_rate=learning_rate,
             weight_decay=weight_decay,
+            optimizer_name=optimizer_name,
+            momentum=float(args.momentum),
+            dropout=dropout,
+            hidden_dims=hidden_dims,
             class_weighting=class_weighting,
             training_config=training_config,
-            mlp_config=mlp_config,
+            experiment_name=args.experiment_name,
+            run_tag=args.run_tag,
         )
 
     exported = export_single_backbone_report_assets(
@@ -111,9 +126,14 @@ def run_single_backbone(
     epochs: int,
     learning_rate: float,
     weight_decay: float,
+    optimizer_name: str,
+    momentum: float,
+    dropout: float,
+    hidden_dims: list[int],
     class_weighting: bool,
     training_config: dict,
-    mlp_config: dict,
+    experiment_name: str,
+    run_tag: str | None = None,
 ) -> Path:
     class_names = list(dataset_config["class_names"])
     cache_dir = backbone_cache_dir(
@@ -142,8 +162,8 @@ def run_single_backbone(
     model = FeatureMLP(
         input_dim=feature_dim,
         num_classes=len(class_names),
-        hidden_dims=list(mlp_config.get("hidden_dims", [512, 256])),
-        dropout=float(mlp_config.get("dropout", 0.3)),
+        hidden_dims=hidden_dims,
+        dropout=dropout,
     )
     weights = (
         class_weights_from_cache(caches["train"], len(class_names)).to(device)
@@ -151,7 +171,13 @@ def run_single_backbone(
         else None
     )
     criterion = nn.CrossEntropyLoss(weight=weights)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = build_optimizer(
+        model.parameters(),
+        optimizer_name=optimizer_name,
+        learning_rate=learning_rate,
+        weight_decay=weight_decay,
+        momentum=momentum,
+    )
 
     model, history, val_metrics = train_mlp_model(
         model,
@@ -166,10 +192,13 @@ def run_single_backbone(
     )
     test_metrics = evaluate_model(model, test_loader, class_names=class_names, device=device)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_id = f"{timestamp}_{args.feature_source}_{backbone_alias(backbone)}_none_mlp_s{seed}"
+    tag = f"_{run_tag}" if run_tag else ""
+    run_id = f"{timestamp}_{args.feature_source}_{backbone_alias(backbone)}_none_mlp{tag}_s{seed}"
     run_dir = Path(args.run_root) / run_id
     resolved_config = {
         "run_id": run_id,
+        "experiment_name": experiment_name,
+        "run_tag": run_tag,
         "seed": seed,
         "dataset": dataset_config["name"],
         "feature_source": args.feature_source,
@@ -179,10 +208,12 @@ def run_single_backbone(
         "class_weighting": class_weighting,
         "batch_size": batch_size,
         "epochs": epochs,
+        "optimizer": optimizer_name,
         "learning_rate": learning_rate,
         "weight_decay": weight_decay,
-        "hidden_dims": list(mlp_config.get("hidden_dims", [512, 256])),
-        "dropout": float(mlp_config.get("dropout", 0.3)),
+        "momentum": momentum if optimizer_name.lower() == "sgd" else None,
+        "hidden_dims": hidden_dims,
+        "dropout": dropout,
         "best_val_epoch": val_metrics.get("best_epoch"),
         "best_val_macro_f1": val_metrics.get("macro_f1"),
         "feature_cache_dir": str(cache_dir),
@@ -200,6 +231,13 @@ def run_single_backbone(
             "fusion_method": args.fusion,
             "feature_dim": feature_dim,
             "class_weighting": class_weighting,
+            "optimizer": optimizer_name,
+            "learning_rate": learning_rate,
+            "weight_decay": weight_decay,
+            "dropout": dropout,
+            "hidden_dims": hidden_dims,
+            "experiment_name": experiment_name,
+            "run_tag": run_tag,
             "best_val_macro_f1": val_metrics.get("macro_f1"),
             "best_val_epoch": val_metrics.get("best_epoch"),
         }

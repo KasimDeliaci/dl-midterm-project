@@ -93,3 +93,27 @@ def save_macro_f1_comparison_plot(
     plt.savefig(output_path, dpi=200)
     plt.close()
     return output_path
+
+
+def save_mlp_search_macro_f1_plot(
+    results: pd.DataFrame,
+    path: str | Path,
+    title: str = "MLP Hyperparameter Search Macro-F1",
+) -> Path:
+    """Save macro-F1 by candidate and backbone for MLP search runs."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plot_frame = results.copy()
+    plot_frame["candidate"] = plot_frame["run_tag"].fillna(plot_frame["run_id"])
+    plt.figure(figsize=(max(10, 0.55 * len(plot_frame["candidate"].unique())), 5.5))
+    sns.barplot(data=plot_frame, x="candidate", y="macro_f1", hue="backbone")
+    plt.ylim(0, 1)
+    plt.xlabel("MLP candidate")
+    plt.ylabel("Test macro-F1")
+    plt.title(title)
+    plt.xticks(rotation=35, ha="right")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path

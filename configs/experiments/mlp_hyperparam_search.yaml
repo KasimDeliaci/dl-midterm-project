@@ -1,0 +1,56 @@
+mlp_hyperparam_search:
+  name: frozen_single_backbone_mlp_hparam_v1
+  feature_source: frozen
+  fusion_method: none
+  seed: 42
+  backbones:
+    - resnet50
+    - mobilenet_v2
+    - efficientnet_b0
+  run_root: artifacts/runs/mlp_hparam_search
+  tables_dir: artifacts/report_assets/tables/mlp_hparam_search
+  figures_dir: artifacts/report_assets/figures/mlp_hparam_search
+  candidates:
+    - name: cw_adamw_d03
+      class_weighting: true
+      optimizer: adamw
+      learning_rate: 0.001
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+    - name: nocw_adamw_d03
+      class_weighting: false
+      optimizer: adamw
+      learning_rate: 0.001
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+    - name: cw_adamw_d01
+      class_weighting: true
+      optimizer: adamw
+      learning_rate: 0.001
+      weight_decay: 0.0001
+      dropout: 0.1
+      hidden_dims: [512, 256]
+    - name: cw_adamw_d05
+      class_weighting: true
+      optimizer: adamw
+      learning_rate: 0.001
+      weight_decay: 0.0001
+      dropout: 0.5
+      hidden_dims: [512, 256]
+    - name: cw_adam_d03
+      class_weighting: true
+      optimizer: adam
+      learning_rate: 0.001
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+    - name: cw_sgd_d03
+      class_weighting: true
+      optimizer: sgd
+      learning_rate: 0.01
+      weight_decay: 0.0001
+      momentum: 0.9
+      dropout: 0.3
+      hidden_dims: [512, 256]
