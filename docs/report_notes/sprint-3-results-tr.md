@@ -112,12 +112,13 @@ birlikte okunmalıdır.
 
 ## Representation Complementarity Analysis
 
-Ek analiz olarak cached frozen feature'lar üzerinden representation complementarity ölçüldü. Farklı
-backbone'ların feature boyutları aynı olmadığı için doğrudan feature-feature correlation yerine
-sample-similarity yapısı karşılaştırıldı: her backbone için test split'teki 1500 örneğin
-sample-by-sample cosine similarity matrisi çıkarıldı, sonra bu similarity matrislerinin üst
-üçgenleri arasında Pearson correlation hesaplandı. Similarity düşükse complementarity daha yüksek
-yorumlandı.
+Ek analiz olarak cached frozen feature'lar üzerinden representation complementarity ölçüldü. Bu
+analiz yeni model eğitmez ve skorları değiştirmez; Sprint 3 sonuçlarını açıklamak için kullanılan
+post-hoc bir yorum katmanıdır. Farklı backbone'ların feature boyutları aynı olmadığı için doğrudan
+feature-feature correlation yerine sample-similarity yapısı karşılaştırıldı: her backbone için test
+split'ten seed 42 ile seçilen 1500 örneğin sample-by-sample cosine similarity matrisi çıkarıldı,
+sonra bu similarity matrislerinin üst üçgenleri arasında Pearson correlation hesaplandı. Similarity
+düşükse complementarity daha yüksek yorumlandı.
 
 | Backbone pair | Representation similarity | Complementarity |
 | --- | ---: | ---: |
