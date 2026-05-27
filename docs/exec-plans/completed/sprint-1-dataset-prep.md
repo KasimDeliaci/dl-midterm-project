@@ -39,7 +39,11 @@ If grouped stratification is impossible because a class has too few lesion group
 
 ## Final Outcome
 
-Implemented the Sprint 1 dataset audit and split-generation infrastructure, including `data/processed/ham10000_audited_metadata.csv` export for repeatable split-only runs. Real HAM10000 audit and split outputs remain pending because the local workspace does not yet contain `data/metadata/HAM10000_metadata.csv` or raw images under `data/raw/`.
+Implemented the Sprint 1 dataset audit and split-generation infrastructure, including
+`data/processed/ham10000_audited_metadata.csv` export for repeatable split-only runs.
+The real local HAM10000 audit later completed successfully: 10,015 images were verified,
+7,470 unique lesion IDs were found, and lesion-aware 70/15/15 train/validation/test splits
+were generated with zero cross-split lesion leakage.
 
 Verified:
 
@@ -49,4 +53,16 @@ uv run python -c "import yaml; yaml.safe_load(open('configs/dataset/selected_dat
 uv run python scripts/prepare_dataset.py --config configs/dataset/selected_dataset.yaml
 ```
 
-The first two commands pass. The final command correctly stops with a metadata-not-found error in the current local workspace.
+All commands passed once the local HAM10000 metadata and raw images were available.
+
+Generated local outputs:
+
+```text
+data/splits/train.csv
+data/splits/val.csv
+data/splits/test.csv
+artifacts/report_assets/tables/class_distribution.csv
+artifacts/report_assets/tables/split_class_distribution.csv
+artifacts/report_assets/figures/class_distribution.png
+artifacts/report_assets/figures/split_class_distribution.png
+```
