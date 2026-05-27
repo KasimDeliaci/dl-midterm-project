@@ -13,6 +13,11 @@ Bu not, Sprint 1 sonunda lokalde üretilen HAM10000 audit ve split artifact'leri
 
 Bu proje klinik teşhis iddiası üretmez. Sprint 1'in amacı, sonraki modelleme sprintleri için güvenilir, leakage-free ve raporlanabilir bir benchmark dermoscopic image classification veri temeli oluşturmaktır.
 
+Dataset erişimi Harvard Dataverse üzerinden yapılmış ve indirme sırasında gösterilen dataset agreement kabul edilmiştir. Raporda hem dataset record'u hem de Scientific Data descriptor paper'ı cite edilmelidir:
+
+- Dataset record: `DVN/DBW86T_2018`
+- Descriptor paper: `tschandl2018ham10000`
+
 ## Ne Yapıldı?
 
 Sprint 1'de HAM10000 dataset'i lokal olarak audit edildi ve train/validation/test split'leri üretildi. Metadata dosyası `data/metadata/HAM10000_metadata.csv` altında okundu; raw image dosyaları `data/raw` altında recursive şekilde image ID ile eşleştirildi. Label alanı HAM10000 `dx` değerlerinden canonical yedi sınıfa normalize edildi:
@@ -125,11 +130,16 @@ Experimental setup veya evaluation protocol kısmında vurgulanması gereken ana
 
 Discussion kısmında vurgulanması gereken ana mesaj: Özellikle `df` ve `vasc` gibi küçük sınıflarda metric belirsizliği yüksektir. Bu sınıflardaki F1 değişimleri support düşük olduğu için dikkatli yorumlanmalıdır. Split oranlarındaki küçük sapmalar, leakage prevention tradeoff'u olarak kabul edilmiştir.
 
+Dataset figürleri raporda abartmadan iki noktayı desteklemek için kullanılabilir:
+
+- `class_distribution.png`: HAM10000 class imbalance'ını göstermek.
+- `split_class_distribution.png`: lesion-aware split sonrası class dağılımının train/validation/test içinde korunduğunu, fakat küçük sınıflarda doğal sapma olduğunu göstermek.
+
 ## Sprint 2'ye Bağlantı
 
-Sprint 2 frozen feature extraction ve MLP baseline deneyleri bu Sprint 1 split'lerini doğrudan kullanmıştır. Bu bağlantı önemlidir çünkü Sprint 2 sonuçlarının güvenilirliği, Sprint 1'de temizlenen veri ve leakage-free split garantisine dayanır.
+Sprint 2 frozen feature extraction ve MLP baseline deneyleri bu Sprint 1 split'lerini doğrudan kullanmalıdır. Bu bağlantı önemlidir çünkü Sprint 2 sonuçlarının güvenilirliği, Sprint 1'de temizlenen veri ve leakage-free split garantisine dayanacaktır.
 
-Sprint 2'de görülen `df` sınıfı düşük/oynak performansı da Sprint 1 bulgularıyla uyumludur: `df` hem dataset genelinde çok küçük bir sınıftır hem de test split'te sadece 20 örnekle temsil edilir. Bu nedenle Sprint 2 ve sonraki sprintlerde `df` sonuçları raporlanmalı, fakat yüksek belirsizlikle yorumlanmalıdır.
+Sprint 2'de `df` sınıfında düşük veya oynak performans görülürse bu Sprint 1 bulgularıyla uyumlu olacaktır: `df` hem dataset genelinde çok küçük bir sınıftır hem de test split'te sadece 20 örnekle temsil edilir. Bu nedenle Sprint 2 ve sonraki sprintlerde `df` sonuçları raporlanmalı, fakat yüksek belirsizlikle yorumlanmalıdır.
 
 ## Report-Ready Artifact List
 
@@ -144,4 +154,3 @@ Sprint 1 raporuna doğrudan bağlanabilecek küçük artifact'ler:
 - `data/splits/test.csv`
 
 Raw images, processed metadata ve büyük generated artifacts git'e alınmamalıdır. Rapor için küçük CSV/PNG özetleri yeterlidir.
-
