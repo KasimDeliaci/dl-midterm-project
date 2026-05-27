@@ -161,9 +161,13 @@ uv run python scripts/train_mlp.py \
 
 ## Sprint 3: Fusion Matrix
 
+Planned Sprint 3 entrypoint after fusion orchestration is implemented:
+
 ```bash
 uv run python scripts/run_experiment_matrix.py --config configs/experiments/frozen_feature_matrix.yaml --feature-source frozen
 ```
+
+Current status before Sprint 3 implementation: `scripts/run_experiment_matrix.py` is still a placeholder. Implement fusion modules, shape tests, and matrix orchestration before treating this command as runnable.
 
 ## Sprint 4: Fine-Tuning
 

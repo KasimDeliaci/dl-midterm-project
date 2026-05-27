@@ -19,20 +19,21 @@ The assignment requires:
 - Primary metric for interpretation: macro-F1.
 - Required reported metrics: accuracy, precision, recall, and F1-score.
 - Creative angle: projected learnable weighted fusion plus learned-weight and per-class F1 analysis.
+- Current status: Sprint 1 dataset audit/splits and Sprint 2 frozen single-backbone baselines are complete locally.
 
 ## Core Rules
 
 - Use `uv` with `pyproject.toml` and `uv.lock`.
 - Use PyTorch and TorchVision.
-- Use Colab for GPU-heavy execution.
+- Use Colab for GPU-heavy execution, especially fine-tuning; frozen cached-feature MLP work can continue locally.
 - Keep notebooks as launchers; scripts and `src/dl_midterm/` contain real logic.
 - Cache features so MLP ablations are cheap and reproducible.
 - Avoid medical diagnosis claims; describe the task as benchmark dermoscopic image classification.
 
 ## Near-Term Path
 
-1. Complete Sprint 1 dataset acquisition, audit, and leakage-aware split generation.
-2. Build frozen feature extraction and single-backbone MLP baselines.
-3. Add concatenation and projected learnable weighted fusion.
-4. Fine-tune final meaningful backbone blocks and rerun the comparison matrix.
+1. Use the completed Sprint 1 lesion-aware split and Sprint 2 frozen feature caches as the fixed baseline.
+2. Add Sprint 3 concatenation and projected learnable weighted fusion on cached frozen features.
+3. Compare single-backbone, pairwise-fusion, and three-backbone frozen MLP results with macro-F1 as the main interpretation metric.
+4. Fine-tune final meaningful backbone blocks in Sprint 4 and rerun the comparison matrix.
 5. Aggregate results into report-ready tables, plots, and discussion notes.

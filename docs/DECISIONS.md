@@ -87,3 +87,15 @@ Reason: HAM10000 is strongly imbalanced, and the evaluation protocol treats macr
 Decision: run MLP-only hyperparameter searches under `artifacts/runs/mlp_hparam_search/<search_id>/`, with every backbone/candidate pair writing a complete independent run folder.
 
 Reason: Sprint 2b is exploratory. Isolated search IDs keep baseline results, hyperparameter candidates, plots, and aggregate tables auditable without mixing them into the canonical Sprint 2 baseline folders.
+
+## 2026-05-27 - Keep local Sprint results canonical
+
+Decision: treat the local Sprint 1 and Sprint 2 artifact set as the canonical result source unless explicitly requested otherwise. Colab smoke-test outputs are reproducibility checks and should not be mixed into the local Sprint result interpretation.
+
+Reason: local artifacts were generated and analyzed as the project baseline. Colab runs are useful for verifying runner notebooks and future GPU workflows, but they can create extra run IDs and smoke-test artifacts that would make the result narrative harder to audit.
+
+## 2026-05-27 - Select final report assets later
+
+Decision: keep generated candidate tables/figures under `artifacts/report_assets/` during experimentation, then copy only the figures and tables actually referenced by the final LaTeX report into `reports/final_report/figures/` and `reports/final_report/tables/`.
+
+Reason: `artifacts/` is the generated experiment-output area; `reports/final_report/` should stay focused on final selected deliverables. Choosing report assets late avoids clutter and stale figures in the final report folder.

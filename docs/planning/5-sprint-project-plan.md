@@ -45,10 +45,9 @@ Sprint 1 is done only if:
 - Dataset notes include source, license/usage constraints, class labels, and non-clinical benchmark disclaimer.
 - Colab setup notebook can clone/install the repo and resolve dataset/output paths.
 
-### Implementation Status - 2026-05-26
+### Implementation Status - 2026-05-27
 
-Sprint 1 infrastructure is implemented, but real dataset verification is blocked until HAM10000
-metadata and images are present locally.
+Sprint 1 is complete locally.
 
 Completed:
 
@@ -59,14 +58,15 @@ Completed:
 - `src/dl_midterm/data/splits.py` creates lesion-aware splits and checks leakage.
 - `notebooks/01_dataset_prepare.ipynb` remains a thin runner around the script.
 - Unit tests cover metadata normalization, missing image detection, unknown-label failure, and lesion leakage prevention.
-
-Still pending after local dataset acquisition:
-
-- Record exact license/usage terms from the downloaded source.
-- Run the real metadata/image audit.
-- Generate real `data/splits/train.csv`, `data/splits/val.csv`, and `data/splits/test.csv`.
-- Export real `ham10000_audited_metadata.csv`, `class_distribution.csv`, `split_class_distribution.csv`, and `class_distribution.png`.
-- Run a dataloader smoke test once image files exist.
+- Real HAM10000 audit passed: 10,015 images, 10,015 unique image IDs, 0 duplicate image IDs, 0 missing images, and 0 missing labels.
+- `lesion_id` is available with 7,470 unique lesion IDs.
+- Real lesion-aware split files were generated:
+  - train: 6,981 images
+  - validation: 1,532 images
+  - test: 1,502 images
+- Cross-split lesion leakage is 0 for train/validation, train/test, and validation/test.
+- Class distribution and split class distribution CSV/PNG assets were exported.
+- The `df` class ratio deviation is documented as an acceptable lesion-aware grouping tradeoff.
 
 ### Expected Artifacts
 
@@ -190,7 +190,7 @@ Sprint 2 is done only if:
 - `artifacts/report_assets/tables/single_backbone_frozen_results.csv`
 - `artifacts/report_assets/figures/frozen_single_backbone_f1.png`
 
-### Implementation Status - 2026-05-26
+### Implementation Status - 2026-05-27
 
 Implemented:
 
@@ -202,14 +202,22 @@ Implemented:
 - Train-only class weighting for weighted cross-entropy.
 - Accuracy, macro precision/recall/F1, weighted F1, per-class metrics, confusion matrices, training curves, and summary macro-F1 plot export.
 - Thin Colab runner in `notebooks/02_extract_frozen_features.ipynb`.
+- Local Sprint 2 result interpretation is recorded in `docs/report_notes/sprint-2-results-tr.md`.
+- Local MLP hyperparameter-search notes are available through the `mlp_hparam_v1_full` report assets.
 
 Generated feature caches and run artifacts remain intentionally gitignored.
 
+Baseline result summary:
+
+- Default class-weighted single-backbone baseline: ResNet50 is best by macro-F1 (`0.531`), followed by EfficientNetB0 (`0.506`) and MobileNetV2 (`0.468`).
+- Local MLP hyperparameter search found the best tested macro-F1 with EfficientNetB0 + class-weighted SGD (`0.560`).
+- Accuracy and weighted-F1 are higher than macro-F1 because the `nv` majority class dominates the test set; macro-F1 remains the main interpretation metric.
+
 ### Interim Sprint Report
 
-Write:
+Actual local note:
 
-> We extracted frozen ImageNet-pretrained features from ResNet50, MobileNetV2, and EfficientNetB0 and trained identical MLP classifiers on each feature representation. This established the single-backbone baseline required by the assignment. Initial results suggest that [best backbone] provides the strongest frozen representation under macro-F1, while [weakest class/classes] remain difficult due to class imbalance and visual similarity.
+> We extracted frozen ImageNet-pretrained features from ResNet50, MobileNetV2, and EfficientNetB0 and trained MLP classifiers on each feature representation. In the default class-weighted baseline, ResNet50 achieved the strongest single-backbone macro-F1. A focused MLP hyperparameter search showed that EfficientNetB0 with class-weighted SGD can produce a higher macro-F1 among the tested MLP settings. Minority and visually similar classes, especially `df` and `mel`, remain difficult, so Sprint 3 will test whether fusion improves per-class behavior.
 
 ### Risks and Fallbacks
 
@@ -238,6 +246,8 @@ Large feature files should stay out of Git.
 ### Goal
 
 Complete the core feature-fusion requirement using frozen features first. Run pairwise and three-CNN fusion experiments with both concatenation and projected learnable weighted fusion, then analyze whether fusion improves performance overall and per class.
+
+Starting point for Sprint 3: frozen feature caches and single-backbone MLP baselines exist locally. The current `src/dl_midterm/models/fusion.py`, `tests/test_fusion_shapes.py`, and `scripts/run_experiment_matrix.py` are placeholders and should be implemented before running the matrix.
 
 ### Main Workstreams
 
