@@ -99,3 +99,22 @@ Reason: local artifacts were generated and analyzed as the project baseline. Col
 Decision: keep generated candidate tables/figures under `artifacts/report_assets/` during experimentation, then copy only the figures and tables actually referenced by the final LaTeX report into `reports/final_report/figures/` and `reports/final_report/tables/`.
 
 Reason: `artifacts/` is the generated experiment-output area; `reports/final_report/` should stay focused on final selected deliverables. Choosing report assets late avoids clutter and stale figures in the final report folder.
+
+## 2026-05-27 - Run Sprint 3 fusion only from cached frozen features
+
+Decision: implement Sprint 3 fusion by loading and aligning the existing Sprint 2 `.pt` feature
+caches, concatenating cached tensors for the dataloader input, and placing projected weighted
+fusion inside the trainable classifier model.
+
+Reason: Sprint 3 is meant to isolate feature-fusion behavior from CNN feature extraction and
+fine-tuning. Reusing cached features avoids raw-image or CNN forward work, keeps the run matrix
+local and reproducible, and preserves the Sprint 2 evaluation protocol.
+
+## 2026-05-27 - Use global weighted-fusion weights for interpretability
+
+Decision: weighted fusion uses one learned global softmax weight per backbone, after projecting
+each backbone feature vector to the shared 512-dimensional space.
+
+Reason: global weights satisfy the assignment's weighted-fusion requirement while producing a
+small, reportable learned-weight table. Sample-specific attention would add complexity and make
+the learned contribution analysis harder to explain for this midterm scope.

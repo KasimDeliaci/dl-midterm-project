@@ -161,13 +161,58 @@ uv run python scripts/train_mlp.py \
 
 ## Sprint 3: Fusion Matrix
 
-Planned Sprint 3 entrypoint after fusion orchestration is implemented:
-
 ```bash
-uv run python scripts/run_experiment_matrix.py --config configs/experiments/frozen_feature_matrix.yaml --feature-source frozen
+uv run python scripts/run_experiment_matrix.py \
+  --config configs/experiments/frozen_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source frozen
 ```
 
-Current status before Sprint 3 implementation: `scripts/run_experiment_matrix.py` is still a placeholder. Implement fusion modules, shape tests, and matrix orchestration before treating this command as runnable.
+This trains the 8 Sprint 3 frozen fusion runs from the existing cached features:
+
+- ResNet50 + MobileNetV2: concat, weighted
+- ResNet50 + EfficientNetB0: concat, weighted
+- MobileNetV2 + EfficientNetB0: concat, weighted
+- ResNet50 + MobileNetV2 + EfficientNetB0: concat, weighted
+
+Weighted fusion projects each backbone feature to 512 dimensions and learns global softmax
+weights. The command does not run raw-image feature extraction or CNN forward passes.
+
+Quick smoke test:
+
+```bash
+uv run python scripts/run_experiment_matrix.py \
+  --config configs/experiments/frozen_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source frozen \
+  --max-runs 1 \
+  --epochs 1 \
+  --batch-size 128
+```
+
+Expected Sprint 3 report-ready outputs:
+
+```text
+artifacts/report_assets/tables/frozen_all_results.csv
+artifacts/report_assets/tables/fusion_weight_summary.csv
+artifacts/report_assets/tables/per_class_f1_frozen.csv
+artifacts/report_assets/tables/fusion_gain_summary.csv
+artifacts/report_assets/figures/frozen_fusion_comparison.png
+artifacts/report_assets/figures/single_pairwise_three_macro_f1.png
+artifacts/report_assets/figures/concat_vs_weighted.png
+artifacts/report_assets/figures/fusion_gain_macro_f1.png
+artifacts/report_assets/figures/per_class_f1_frozen_heatmap.png
+artifacts/report_assets/figures/frozen_best_confusion_matrix.png
+artifacts/report_assets/figures/learned_fusion_weights.png
+artifacts/report_assets/figures/accuracy_vs_macro_f1_frozen.png
+artifacts/report_assets/figures/fusion_runs/
+```
+
+The per-run folders under `artifacts/runs/` contain `metrics.json`, `history.csv`,
+`classification_report.csv`, `confusion_matrix.png`, `training_curve.png`, `model.pt`, and,
+for weighted runs, `fusion_weights.csv`/`.json`.
 
 ## Sprint 4: Fine-Tuning
 
@@ -183,6 +228,12 @@ uv run python scripts/finetune_backbone.py --config configs/backbones/efficientn
 uv run python scripts/evaluate_runs.py --config configs/report_assets.yaml
 uv run python scripts/aggregate_results.py --config configs/report_assets.yaml
 uv run python scripts/make_report_assets.py --config configs/report_assets.yaml
+```
+
+Sprint 3 frozen matrix assets can be refreshed without rerunning training:
+
+```bash
+uv run python scripts/make_report_assets.py --feature-source frozen
 ```
 
 Sprint 2 single-backbone aggregation can be refreshed directly:

@@ -247,7 +247,7 @@ Large feature files should stay out of Git.
 
 Complete the core feature-fusion requirement using frozen features first. Run pairwise and three-CNN fusion experiments with both concatenation and projected learnable weighted fusion, then analyze whether fusion improves performance overall and per class.
 
-Starting point for Sprint 3: frozen feature caches and single-backbone MLP baselines exist locally. The current `src/dl_midterm/models/fusion.py`, `tests/test_fusion_shapes.py`, and `scripts/run_experiment_matrix.py` are placeholders and should be implemented before running the matrix.
+Starting point for Sprint 3: frozen feature caches and single-backbone MLP baselines exist locally.
 
 ### Main Workstreams
 
@@ -292,6 +292,37 @@ Sprint 3 is done only if:
 - A report table exists comparing all frozen experiments.
 - Confusion matrix exists for the best frozen model.
 
+### Implementation Status - 2026-05-27
+
+Sprint 3 is complete locally.
+
+Implemented:
+
+- `src/dl_midterm/models/fusion.py` now contains concatenation fusion, projected learnable
+  weighted fusion, expected concat dimension helpers, and a weighted-fusion MLP wrapper.
+- `scripts/run_experiment_matrix.py` expands the configured frozen matrix and runs the 8 Sprint 3
+  fusion experiments from cached Sprint 2 `.pt` features only.
+- Cache alignment checks verify image ID, label name, label index, and split order before fusion.
+- Weighted fusion projects all backbone vectors to 512 dimensions and saves learned global
+  softmax weights.
+- `scripts/make_report_assets.py` exports frozen matrix report assets without rerunning training.
+- Unit tests cover fusion output shapes, softmax weight normalization, expected concat dimensions,
+  matrix expansion, and cache alignment.
+
+Generated local results:
+
+- Best frozen fusion run by test macro-F1: ResNet50 + EfficientNetB0 concat (`0.595`).
+- Best single-backbone Sprint 2 baseline by test macro-F1: ResNet50 (`0.531`).
+- Best fusion gain over the default single-backbone baseline: `+0.064` macro-F1.
+- Weighted fusion weights sum to 1 for every weighted run after softmax.
+- The frozen comparison table contains 11 runs: 3 single-backbone baselines and 8 fusion runs.
+
+Verified:
+
+- `uv run pytest`
+- `uv run ruff check src scripts tests`
+- `uv run python scripts/run_experiment_matrix.py --config configs/experiments/frozen_feature_matrix.yaml --default-config configs/default.yaml --dataset-config configs/dataset/selected_dataset.yaml --feature-source frozen`
+
 ### Expected Artifacts
 
 - `src/dl_midterm/models/fusion.py`
@@ -308,15 +339,26 @@ Sprint 3 is done only if:
 - `artifacts/report_assets/tables/frozen_all_results.csv`
 - `artifacts/report_assets/tables/fusion_weight_summary.csv`
 - `artifacts/report_assets/tables/per_class_f1_frozen.csv`
+- `artifacts/report_assets/tables/fusion_gain_summary.csv`
 - `artifacts/report_assets/figures/frozen_fusion_comparison.png`
+- `artifacts/report_assets/figures/concat_vs_weighted.png`
+- `artifacts/report_assets/figures/fusion_gain_macro_f1.png`
+- `artifacts/report_assets/figures/per_class_f1_frozen_heatmap.png`
 - `artifacts/report_assets/figures/frozen_best_confusion_matrix.png`
 - `artifacts/report_assets/figures/learned_fusion_weights.png`
+- `artifacts/report_assets/figures/fusion_runs/`
 
 ### Interim Sprint Report
 
-Write:
+Actual local note:
 
-> We completed the frozen-feature fusion experiments using both concatenation and projected learnable weighted fusion. Fusion [improved/did not improve] macro-F1 compared with the best single-backbone baseline. The learned fusion weights assigned the largest contribution to [backbone], suggesting that its frozen representation was most useful for this dataset. Per-class analysis showed that fusion helped [classes] but remained weak on [classes].
+> We completed the frozen-feature fusion experiments using both concatenation and projected
+> learnable weighted fusion. Fusion improved macro-F1 compared with the default Sprint 2
+> single-backbone baseline: ResNet50 + EfficientNetB0 concat reached `0.595` test macro-F1 versus
+> `0.531` for the best default single-backbone run. Weighted fusion produced interpretable
+> softmax weights, but concat was stronger in this single-seed frozen matrix. Per-class analysis
+> showed notable improvement on `df`, `bcc`, `bkl`, `akiec`, and `mel`, while `vasc` remained
+> strongest in the original ResNet50 baseline.
 
 ### Risks and Fallbacks
 

@@ -1,3 +1,7 @@
 \section{Experimental Setup}
 
-TODO: Document hardware, Colab setup, hyperparameters, fine-tuning policy, and experiment matrix.
+All frozen-feature experiments use the lesion-aware HAM10000 train/validation/test split from Sprint 1 and the cached ImageNet-pretrained feature tensors from Sprint 2. The CNN backbones are not updated during these experiments. The MLP classifier is trained with seed 42, batch size 32, AdamW learning rate 0.001, weight decay 0.0001, dropout 0.3, and early stopping on validation macro-F1 with patience 5. Class weights are computed from the train split only.
+
+The frozen matrix contains three single-backbone baselines and eight fusion runs. The fusion runs cover three pairwise combinations and one three-backbone combination, each evaluated with concatenation and projected weighted fusion. Weighted fusion uses a 512-dimensional projection for each backbone and learns global softmax-normalized backbone weights.
+
+Test-set metrics are reported only after training and validation selection are complete. Test performance is not used for hyperparameter or model selection.

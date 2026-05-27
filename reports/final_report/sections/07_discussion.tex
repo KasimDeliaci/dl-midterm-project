@@ -1,3 +1,9 @@
 \section{Discussion}
 
-TODO: Analyze which backbone learned better features, whether fusion helped rare or visually similar HAM10000 classes, which combination won, model strengths and weaknesses, learned fusion weights, per-class F1 gains, and frozen versus fine-tuned runtime/performance tradeoffs.
+The frozen results show that feature fusion can help the HAM10000 benchmark when complementary backbone representations are kept available to the classifier. ResNet50 + EfficientNetB0 concatenation was the strongest frozen model, suggesting that the ResNet50 and EfficientNetB0 feature spaces captured useful non-identical information. Adding MobileNetV2 as a third concatenated backbone improved over the single-backbone baselines, but did not beat the best pairwise fusion.
+
+Concatenation outperformed projected weighted fusion in this sprint. A likely explanation is that concatenation preserves the full feature vectors, while weighted fusion compresses each backbone into a shared 512-dimensional space before summation. The weighted models are still useful for interpretation: their learned weights did not collapse to a single backbone, and the three-backbone run assigned broadly distributed weights across all three CNNs.
+
+Per-class F1 confirms why macro-F1 is more informative than accuracy. The best fusion model improved \texttt{df} F1 from 0.250 in the ResNet50 baseline to 0.480, and also improved \texttt{bcc}, \texttt{bkl}, \texttt{akiec}, and \texttt{mel}. These gains should be interpreted carefully because the minority-class supports are small, especially \texttt{df} and \texttt{vasc}. The work remains benchmark dermoscopic image classification and does not support clinical diagnosis claims.
+
+The main limitation of the frozen fusion matrix is that it uses one seed. Before drawing strong conclusions in the final report, the best frozen configurations should either be repeated with additional seeds or explicitly reported as single-seed results. Sprint 4 should keep this frozen matrix fixed as the comparison point when evaluating fine-tuned feature caches.

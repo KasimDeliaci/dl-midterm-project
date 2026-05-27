@@ -1,3 +1,9 @@
 \section{Experimental Results}
 
-TODO: Present accuracy, precision, recall, F1-score, comparison tables, plots, and the best confusion matrix.
+The default frozen single-backbone baselines reached macro-F1 scores of 0.531 for ResNet50, 0.506 for EfficientNetB0, and 0.468 for MobileNetV2. Accuracy and weighted-F1 were higher than macro-F1 because the test split is dominated by the \texttt{nv} class.
+
+Frozen feature fusion improved the best default single-backbone macro-F1. The best frozen model was ResNet50 + EfficientNetB0 with concatenation fusion, reaching 0.746 accuracy, 0.550 macro precision, 0.669 macro recall, 0.595 macro-F1, and 0.760 weighted-F1. This is a +0.064 macro-F1 gain over the best default single-backbone baseline.
+
+The three-backbone concatenation run reached 0.751 accuracy and 0.576 macro-F1, but did not outperform the best pairwise fusion. The best weighted-fusion run was MobileNetV2 + EfficientNetB0 with 0.562 macro-F1. In this frozen single-seed matrix, concatenation was stronger than projected weighted fusion, although weighted fusion produced compact 512-dimensional representations and interpretable learned weights.
+
+The learned weighted-fusion weights summed to 1 after softmax for every weighted run. The three-backbone weighted model assigned weights 0.364 to ResNet50, 0.341 to MobileNetV2, and 0.295 to EfficientNetB0.
