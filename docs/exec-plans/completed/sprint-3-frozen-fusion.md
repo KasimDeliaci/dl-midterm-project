@@ -74,6 +74,14 @@ Best Sprint 3 fusion gain over the default single-backbone baseline:
 
 - ResNet50 + EfficientNetB0 concat: `+0.064` macro-F1.
 
+Sprint 3 analysis add-ons:
+
+- Per-class fusion gain heatmap shows the largest class-level gains on `df`; the best run improves
+  `df` F1 by `+0.230` against the default ResNet50 single-backbone reference.
+- Representation complementarity analysis compares cached test-split sample-similarity matrices.
+  ResNet50 + EfficientNetB0 is the most complementary pair, with representation similarity
+  `0.692` and complementarity `0.308`.
+
 Report-ready outputs:
 
 ```text
@@ -81,12 +89,18 @@ artifacts/report_assets/tables/frozen_all_results.csv
 artifacts/report_assets/tables/fusion_weight_summary.csv
 artifacts/report_assets/tables/per_class_f1_frozen.csv
 artifacts/report_assets/tables/fusion_gain_summary.csv
+artifacts/report_assets/tables/per_class_fusion_gain.csv
+artifacts/report_assets/tables/representation_complementarity_summary.csv
+artifacts/report_assets/tables/fusion_complementarity_summary.csv
 artifacts/report_assets/figures/frozen_fusion_comparison.png
 artifacts/report_assets/figures/concat_vs_weighted.png
 artifacts/report_assets/figures/fusion_gain_macro_f1.png
 artifacts/report_assets/figures/per_class_f1_frozen_heatmap.png
+artifacts/report_assets/figures/per_class_fusion_gain_heatmap.png
 artifacts/report_assets/figures/frozen_best_confusion_matrix.png
 artifacts/report_assets/figures/learned_fusion_weights.png
+artifacts/report_assets/figures/representation_similarity_heatmap.png
+artifacts/report_assets/figures/fusion_gain_vs_complementarity.png
 artifacts/report_assets/figures/fusion_runs/
 ```
 

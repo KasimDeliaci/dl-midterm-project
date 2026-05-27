@@ -10,6 +10,10 @@ from typing import Any
 import pandas as pd
 import yaml
 
+from dl_midterm.evaluation.complementarity import (
+    build_fusion_complementarity_summary,
+    compute_representation_complementarity,
+)
 from dl_midterm.evaluation.metrics import per_class_frame
 from dl_midterm.evaluation.plots import (
     save_accuracy_macro_f1_scatter,
@@ -17,10 +21,13 @@ from dl_midterm.evaluation.plots import (
     save_confusion_matrix_plot,
     save_frozen_fusion_comparison_plot,
     save_fusion_gain_plot,
+    save_fusion_gain_vs_complementarity_plot,
     save_learned_fusion_weights_plot,
     save_macro_f1_comparison_plot,
     save_mlp_search_macro_f1_plot,
     save_per_class_f1_heatmap,
+    save_per_class_fusion_gain_heatmap,
+    save_representation_similarity_heatmap,
     save_single_pairwise_three_plot,
     save_training_curve_plot,
 )
@@ -134,6 +141,10 @@ def export_frozen_matrix_report_assets(
     figures_dir: str | Path,
     *,
     feature_source: str = "frozen",
+    feature_root: str | Path | None = None,
+    dataset_config: dict[str, Any] | None = None,
+    complementarity_split: str = "test",
+    complementarity_max_samples: int = 1500,
 ) -> dict[str, Path]:
     """Export report-ready tables and figures for all frozen single/fusion runs."""
 
@@ -176,6 +187,10 @@ def export_frozen_matrix_report_assets(
     gain_path = table_root / "fusion_gain_summary.csv"
     gains.to_csv(gain_path, index=False)
 
+    per_class_gains = _build_per_class_fusion_gains(per_class, filtered, gains)
+    per_class_gain_path = table_root / "per_class_fusion_gain.csv"
+    per_class_gains.to_csv(per_class_gain_path, index=False)
+
     weights = _collect_fusion_weights(run_root, filtered)
     weights_path = table_root / "fusion_weight_summary.csv"
     weights.to_csv(weights_path, index=False)
@@ -184,6 +199,7 @@ def export_frozen_matrix_report_assets(
         "all_results_table": all_results_path,
         "per_class_table": per_class_path,
         "fusion_gain_table": gain_path,
+        "per_class_fusion_gain_table": per_class_gain_path,
         "fusion_weight_table": weights_path,
         "comparison_plot": save_frozen_fusion_comparison_plot(
             filtered,
@@ -205,11 +221,57 @@ def export_frozen_matrix_report_assets(
             per_class,
             figure_root / "per_class_f1_frozen_heatmap.png",
         ),
+        "per_class_fusion_gain_heatmap": save_per_class_fusion_gain_heatmap(
+            per_class_gains,
+            figure_root / "per_class_fusion_gain_heatmap.png",
+        ),
         "accuracy_macro_f1_scatter": save_accuracy_macro_f1_scatter(
             filtered,
             figure_root / "accuracy_vs_macro_f1_frozen.png",
         ),
     }
+
+    if feature_root is not None and dataset_config is not None:
+        backbones = _matrix_backbones(filtered)
+        complementarity = compute_representation_complementarity(
+            feature_root=feature_root,
+            dataset_name=str(dataset_config["name"]),
+            feature_source=feature_source,
+            backbones=backbones,
+            splits_dir=dataset_config["splits_dir"],
+            split=complementarity_split,
+            max_samples=complementarity_max_samples,
+            seed=int(dataset_config.get("seed", 42)),
+        )
+        complementarity_path = table_root / "representation_complementarity_summary.csv"
+        complementarity.to_csv(complementarity_path, index=False)
+        complementarity_results = filtered.merge(
+            gains[["run_id", "macro_f1_gain"]],
+            on="run_id",
+            how="left",
+        )
+        fusion_complementarity = build_fusion_complementarity_summary(
+            complementarity_results,
+            complementarity,
+        )
+        fusion_complementarity_path = table_root / "fusion_complementarity_summary.csv"
+        fusion_complementarity.to_csv(fusion_complementarity_path, index=False)
+        exported.update(
+            {
+                "representation_complementarity_table": complementarity_path,
+                "fusion_complementarity_table": fusion_complementarity_path,
+                "representation_similarity_heatmap": save_representation_similarity_heatmap(
+                    complementarity,
+                    figure_root / "representation_similarity_heatmap.png",
+                ),
+                "fusion_gain_vs_complementarity_plot": (
+                    save_fusion_gain_vs_complementarity_plot(
+                        fusion_complementarity,
+                        figure_root / "fusion_gain_vs_complementarity.png",
+                    )
+                ),
+            }
+        )
     if not weights.empty:
         exported["learned_weights_plot"] = save_learned_fusion_weights_plot(
             weights,
@@ -373,6 +435,51 @@ def _collect_fusion_weights(run_root: str | Path, results: pd.DataFrame) -> pd.D
                 }
             )
     return pd.DataFrame(rows)
+
+
+def _build_per_class_fusion_gains(
+    per_class: pd.DataFrame,
+    results: pd.DataFrame,
+    fusion_gains: pd.DataFrame,
+) -> pd.DataFrame:
+    single_rows = results[results["fusion_method"] == "none"].sort_values(
+        "macro_f1",
+        ascending=False,
+    )
+    if single_rows.empty:
+        return pd.DataFrame()
+    reference = single_rows.iloc[0]
+    reference_rows = per_class[per_class["run_id"] == reference["run_id"]][
+        ["label", "f1", "precision", "recall", "support"]
+    ].rename(
+        columns={
+            "f1": "reference_f1",
+            "precision": "reference_precision",
+            "recall": "reference_recall",
+        }
+    )
+    fusion_rows = per_class[per_class["fusion_method"].isin(["concat", "weighted"])].copy()
+    gain_rows = fusion_rows.merge(reference_rows, on=["label", "support"], how="left")
+    gain_rows = gain_rows.merge(
+        fusion_gains[["run_id", "macro_f1_gain"]],
+        on="run_id",
+        how="left",
+    )
+    gain_rows["reference_run_id"] = reference["run_id"]
+    gain_rows["reference_display_name"] = reference["display_name"]
+    gain_rows["f1_gain"] = gain_rows["f1"] - gain_rows["reference_f1"]
+    gain_rows["precision_gain"] = gain_rows["precision"] - gain_rows["reference_precision"]
+    gain_rows["recall_gain"] = gain_rows["recall"] - gain_rows["reference_recall"]
+    return gain_rows.sort_values(["macro_f1_gain", "display_name", "label"], ascending=False)
+
+
+def _matrix_backbones(results: pd.DataFrame) -> list[str]:
+    names: list[str] = []
+    for combination in results["backbone_combination"].dropna():
+        for backbone in str(combination).split("+"):
+            if backbone not in names:
+                names.append(backbone)
+    return names
 
 
 def export_mlp_search_report_assets(

@@ -239,6 +239,43 @@ def save_per_class_f1_heatmap(per_class: pd.DataFrame, path: str | Path) -> Path
     return output_path
 
 
+def save_per_class_fusion_gain_heatmap(gains: pd.DataFrame, path: str | Path) -> Path:
+    """Save per-class F1 gains versus the best overall single-backbone baseline."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pivot = gains.pivot_table(
+        index="display_name",
+        columns="label",
+        values="f1_gain",
+        aggfunc="first",
+    )
+    ordered_index = (
+        gains[["display_name", "macro_f1_gain"]]
+        .drop_duplicates()
+        .sort_values("macro_f1_gain", ascending=False)["display_name"]
+    )
+    pivot = pivot.loc[ordered_index]
+    limit = max(0.25, float(pivot.abs().max().max()))
+    plt.figure(figsize=(10, max(5, 0.38 * len(pivot))))
+    sns.heatmap(
+        pivot,
+        annot=True,
+        fmt="+.2f",
+        cmap="vlag",
+        center=0,
+        vmin=-limit,
+        vmax=limit,
+    )
+    plt.xlabel("Class")
+    plt.ylabel("Fusion experiment")
+    plt.title("Per-Class F1 Gain vs Best Single Backbone")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
 def save_learned_fusion_weights_plot(weights: pd.DataFrame, path: str | Path) -> Path:
     """Save learned weighted-fusion softmax weights."""
 
@@ -282,6 +319,61 @@ def save_accuracy_macro_f1_scatter(results: pd.DataFrame, path: str | Path) -> P
     ax.set_title("Accuracy vs Macro-F1")
     for row in results.itertuples(index=False):
         ax.text(row.accuracy + 0.004, row.macro_f1 + 0.004, row.short_name, fontsize=7)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_representation_similarity_heatmap(pairwise: pd.DataFrame, path: str | Path) -> Path:
+    """Save a heatmap of pairwise representation similarity."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    backbones = sorted(
+        set(pairwise["left_backbone"].astype(str)) | set(pairwise["right_backbone"].astype(str))
+    )
+    matrix = pd.DataFrame(1.0, index=backbones, columns=backbones)
+    for row in pairwise.itertuples(index=False):
+        matrix.loc[row.left_backbone, row.right_backbone] = row.representation_similarity
+        matrix.loc[row.right_backbone, row.left_backbone] = row.representation_similarity
+
+    plt.figure(figsize=(7, 6))
+    sns.heatmap(matrix, annot=True, fmt=".3f", cmap="mako", vmin=0, vmax=1, square=True)
+    plt.xlabel("Backbone")
+    plt.ylabel("Backbone")
+    plt.title("Frozen Feature Representation Similarity")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_fusion_gain_vs_complementarity_plot(summary: pd.DataFrame, path: str | Path) -> Path:
+    """Save fusion macro-F1 gain against average representation complementarity."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(8, 6))
+    ax = sns.scatterplot(
+        data=summary,
+        x="avg_pairwise_representation_complementarity",
+        y="macro_f1_gain",
+        hue="fusion_method",
+        style="backbone_count",
+        s=100,
+    )
+    ax.axhline(0, color="black", linewidth=1)
+    ax.set_xlabel("Average pairwise representation complementarity")
+    ax.set_ylabel("Macro-F1 gain over best single")
+    ax.set_title("Fusion Gain vs Representation Complementarity")
+    for row in summary.itertuples(index=False):
+        ax.text(
+            row.avg_pairwise_representation_complementarity + 0.002,
+            row.macro_f1_gain + 0.002,
+            row.display_name,
+            fontsize=7,
+        )
     plt.tight_layout()
     plt.savefig(output_path, dpi=200)
     plt.close()

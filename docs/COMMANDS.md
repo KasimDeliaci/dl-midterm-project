@@ -199,14 +199,20 @@ artifacts/report_assets/tables/frozen_all_results.csv
 artifacts/report_assets/tables/fusion_weight_summary.csv
 artifacts/report_assets/tables/per_class_f1_frozen.csv
 artifacts/report_assets/tables/fusion_gain_summary.csv
+artifacts/report_assets/tables/per_class_fusion_gain.csv
+artifacts/report_assets/tables/representation_complementarity_summary.csv
+artifacts/report_assets/tables/fusion_complementarity_summary.csv
 artifacts/report_assets/figures/frozen_fusion_comparison.png
 artifacts/report_assets/figures/single_pairwise_three_macro_f1.png
 artifacts/report_assets/figures/concat_vs_weighted.png
 artifacts/report_assets/figures/fusion_gain_macro_f1.png
 artifacts/report_assets/figures/per_class_f1_frozen_heatmap.png
+artifacts/report_assets/figures/per_class_fusion_gain_heatmap.png
 artifacts/report_assets/figures/frozen_best_confusion_matrix.png
 artifacts/report_assets/figures/learned_fusion_weights.png
 artifacts/report_assets/figures/accuracy_vs_macro_f1_frozen.png
+artifacts/report_assets/figures/representation_similarity_heatmap.png
+artifacts/report_assets/figures/fusion_gain_vs_complementarity.png
 artifacts/report_assets/figures/fusion_runs/
 ```
 
@@ -233,8 +239,16 @@ uv run python scripts/make_report_assets.py --config configs/report_assets.yaml
 Sprint 3 frozen matrix assets can be refreshed without rerunning training:
 
 ```bash
-uv run python scripts/make_report_assets.py --feature-source frozen
+uv run python scripts/make_report_assets.py \
+  --feature-source frozen \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-root artifacts/features
 ```
+
+This also refreshes the Sprint 3 analysis add-ons:
+
+- per-class F1 gain versus the best default single-backbone baseline,
+- representation complementarity using cached test-split feature similarity matrices.
 
 Sprint 2 single-backbone aggregation can be refreshed directly:
 

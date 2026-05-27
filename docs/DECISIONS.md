@@ -118,3 +118,13 @@ each backbone feature vector to the shared 512-dimensional space.
 Reason: global weights satisfy the assignment's weighted-fusion requirement while producing a
 small, reportable learned-weight table. Sample-specific attention would add complexity and make
 the learned contribution analysis harder to explain for this midterm scope.
+
+## 2026-05-27 - Analyze complementarity with sample-similarity structure
+
+Decision: measure frozen backbone representation complementarity by comparing sample-by-sample
+cosine similarity matrices rather than raw feature dimensions.
+
+Reason: ResNet50, MobileNetV2, and EfficientNetB0 feature vectors have different widths, so direct
+feature-feature correlation is not well-defined. Comparing the similarity structure over the same
+test examples gives a dimension-agnostic signal for whether two backbones organize the dataset in
+similar or complementary ways.

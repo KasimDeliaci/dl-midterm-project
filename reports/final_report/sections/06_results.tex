@@ -7,3 +7,7 @@ Frozen feature fusion improved the best default single-backbone macro-F1. The be
 The three-backbone concatenation run reached 0.751 accuracy and 0.576 macro-F1, but did not outperform the best pairwise fusion. The best weighted-fusion run was MobileNetV2 + EfficientNetB0 with 0.562 macro-F1. In this frozen single-seed matrix, concatenation was stronger than projected weighted fusion, although weighted fusion produced compact 512-dimensional representations and interpretable learned weights.
 
 The learned weighted-fusion weights summed to 1 after softmax for every weighted run. The three-backbone weighted model assigned weights 0.364 to ResNet50, 0.341 to MobileNetV2, and 0.295 to EfficientNetB0.
+
+Per-class gain analysis shows that the best fusion improvements were not limited to the majority class. Relative to the default ResNet50 single-backbone baseline, ResNet50 + EfficientNetB0 concatenation improved \texttt{df} F1 by 0.230, \texttt{bcc} F1 by 0.104, \texttt{bkl} F1 by 0.052, \texttt{akiec} F1 by 0.042, and \texttt{mel} F1 by 0.030. The \texttt{df} gain should be interpreted carefully because the test split contains only 20 \texttt{df} examples.
+
+Representation complementarity analysis compared backbone sample-similarity matrices on the cached test features. ResNet50 + EfficientNetB0 had the lowest pairwise representation similarity (0.692) and highest complementarity (0.308), followed by MobileNetV2 + EfficientNetB0 (0.302 complementarity) and ResNet50 + MobileNetV2 (0.253 complementarity).

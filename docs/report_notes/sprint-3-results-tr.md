@@ -7,12 +7,18 @@ Colab smoke-test çıktıları bu değerlendirmeye dahil edilmemiştir. Ana kayn
 - `artifacts/report_assets/tables/fusion_gain_summary.csv`
 - `artifacts/report_assets/tables/fusion_weight_summary.csv`
 - `artifacts/report_assets/tables/per_class_f1_frozen.csv`
+- `artifacts/report_assets/tables/per_class_fusion_gain.csv`
+- `artifacts/report_assets/tables/representation_complementarity_summary.csv`
+- `artifacts/report_assets/tables/fusion_complementarity_summary.csv`
 - `artifacts/report_assets/figures/frozen_fusion_comparison.png`
 - `artifacts/report_assets/figures/concat_vs_weighted.png`
 - `artifacts/report_assets/figures/fusion_gain_macro_f1.png`
 - `artifacts/report_assets/figures/per_class_f1_frozen_heatmap.png`
+- `artifacts/report_assets/figures/per_class_fusion_gain_heatmap.png`
 - `artifacts/report_assets/figures/frozen_best_confusion_matrix.png`
 - `artifacts/report_assets/figures/learned_fusion_weights.png`
+- `artifacts/report_assets/figures/representation_similarity_heatmap.png`
+- `artifacts/report_assets/figures/fusion_gain_vs_complementarity.png`
 
 Bu sprintin amacı klinik tanı iddiası üretmek değil, HAM10000 üzerinde benchmark dermoscopic image classification için frozen feature fusion davranışını ölçmektir.
 
@@ -88,6 +94,44 @@ En iyi model olan ResNet50 + EfficientNetB0 concat, ResNet50 single baseline'a g
 
 En dikkat çekici iyileşme `df` sınıfında görüldü: 0.250'den 0.480'e çıktı. Ancak `df` test support'u yalnızca 20 olduğu için bu artış yüksek belirsizlikle yorumlanmalıdır. `bcc`, `bkl`, `akiec` ve `mel` sınıflarında da daha dengeli bir kazanım var. `vasc` ise ResNet50 single baseline'da daha güçlü kaldı.
 
+Per-class fusion gain heatmap bu yorumu bütün fusion matrix için genişletir. Best single-backbone
+reference olarak default ResNet50 run'ı kullanıldığında en yüksek class-level gain'ler `df`
+sınıfında görülür:
+
+| Fusion run | Class | F1 gain |
+| --- | --- | ---: |
+| ResNet50 + EfficientNetB0 concat | `df` | +0.230 |
+| ResNet50 + MobileNetV2 + EfficientNetB0 concat | `df` | +0.226 |
+| MobileNetV2 + EfficientNetB0 weighted | `df` | +0.165 |
+| ResNet50 + MobileNetV2 concat | `df` | +0.114 |
+| ResNet50 + EfficientNetB0 concat | `bcc` | +0.104 |
+
+Bu tablo fusion'ın macro-F1 artışını sadece majority class üzerinden üretmediğini gösterir. Ancak
+özellikle `df` support'u çok küçük olduğu için gain heatmap yorumlanırken support bilgisiyle
+birlikte okunmalıdır.
+
+## Representation Complementarity Analysis
+
+Ek analiz olarak cached frozen feature'lar üzerinden representation complementarity ölçüldü. Farklı
+backbone'ların feature boyutları aynı olmadığı için doğrudan feature-feature correlation yerine
+sample-similarity yapısı karşılaştırıldı: her backbone için test split'teki 1500 örneğin
+sample-by-sample cosine similarity matrisi çıkarıldı, sonra bu similarity matrislerinin üst
+üçgenleri arasında Pearson correlation hesaplandı. Similarity düşükse complementarity daha yüksek
+yorumlandı.
+
+| Backbone pair | Representation similarity | Complementarity |
+| --- | ---: | ---: |
+| ResNet50 + EfficientNetB0 | 0.692 | 0.308 |
+| MobileNetV2 + EfficientNetB0 | 0.698 | 0.302 |
+| ResNet50 + MobileNetV2 | 0.747 | 0.253 |
+
+Bu sonuç, en iyi concat run olan ResNet50 + EfficientNetB0 çiftinin en tamamlayıcı pair olduğunu
+destekler. ResNet50 + MobileNetV2 daha benzer temsil yapısına sahiptir ve concat gain'i daha
+düşüktür. Ancak complementarity tek başına yeterli açıklama değildir: ResNet50 + EfficientNetB0
+weighted run'ı aynı backbone pair'ini kullanmasına rağmen concat kadar güçlü değildir. Bu nedenle
+discussion'da doğru yorum şudur: representation complementarity fusion için faydalı bir sinyal
+sağlar, fakat fusion operator'ünün bilgi koruma kapasitesi de belirleyicidir.
+
 ## Rapor İçin Ana Mesaj
 
 Sprint 3'ün ana bulgusu şudur: frozen feature fusion, default single-backbone baseline'a göre macro-F1'i iyileştirdi; fakat bu iyileşme en güçlü şekilde concat fusion ile geldi. ResNet50 + EfficientNetB0 concat, hem macro-F1 hem weighted-F1 açısından frozen matrix'in en iyi modelidir.
@@ -104,12 +148,18 @@ Küçük rapor artifact'leri:
 - `artifacts/report_assets/tables/fusion_gain_summary.csv`
 - `artifacts/report_assets/tables/fusion_weight_summary.csv`
 - `artifacts/report_assets/tables/per_class_f1_frozen.csv`
+- `artifacts/report_assets/tables/per_class_fusion_gain.csv`
+- `artifacts/report_assets/tables/representation_complementarity_summary.csv`
+- `artifacts/report_assets/tables/fusion_complementarity_summary.csv`
 - `artifacts/report_assets/figures/frozen_fusion_comparison.png`
 - `artifacts/report_assets/figures/concat_vs_weighted.png`
 - `artifacts/report_assets/figures/fusion_gain_macro_f1.png`
 - `artifacts/report_assets/figures/per_class_f1_frozen_heatmap.png`
+- `artifacts/report_assets/figures/per_class_fusion_gain_heatmap.png`
 - `artifacts/report_assets/figures/frozen_best_confusion_matrix.png`
 - `artifacts/report_assets/figures/learned_fusion_weights.png`
+- `artifacts/report_assets/figures/representation_similarity_heatmap.png`
+- `artifacts/report_assets/figures/fusion_gain_vs_complementarity.png`
 - `artifacts/report_assets/figures/fusion_runs/`
 
 Büyük cache dosyaları, run klasörleri ve `model.pt` checkpoint'leri git dışında kalmalıdır.

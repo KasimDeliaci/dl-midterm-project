@@ -176,6 +176,8 @@ def main() -> None:
         args.tables_dir,
         args.figures_dir,
         feature_source=args.feature_source,
+        feature_root=args.feature_root,
+        dataset_config=dataset_config,
     )
     (Path(args.run_root) / f"{args.experiment_name}_exported_assets.json").write_text(
         json.dumps({name: str(path) for name, path in exported.items()}, indent=2),

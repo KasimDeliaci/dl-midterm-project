@@ -314,6 +314,11 @@ Generated local results:
 - Best frozen fusion run by test macro-F1: ResNet50 + EfficientNetB0 concat (`0.595`).
 - Best single-backbone Sprint 2 baseline by test macro-F1: ResNet50 (`0.531`).
 - Best fusion gain over the default single-backbone baseline: `+0.064` macro-F1.
+- Per-class fusion gain heatmap shows the largest class-level improvements on `df`, followed by
+  gains on `bcc`, `bkl`, `akiec`, and `mel`.
+- Representation complementarity analysis shows ResNet50 + EfficientNetB0 has the lowest
+  sample-similarity correlation (`0.692`) and highest complementarity (`0.308`) among the tested
+  backbone pairs.
 - Weighted fusion weights sum to 1 for every weighted run after softmax.
 - The frozen comparison table contains 11 runs: 3 single-backbone baselines and 8 fusion runs.
 
@@ -340,12 +345,18 @@ Verified:
 - `artifacts/report_assets/tables/fusion_weight_summary.csv`
 - `artifacts/report_assets/tables/per_class_f1_frozen.csv`
 - `artifacts/report_assets/tables/fusion_gain_summary.csv`
+- `artifacts/report_assets/tables/per_class_fusion_gain.csv`
+- `artifacts/report_assets/tables/representation_complementarity_summary.csv`
+- `artifacts/report_assets/tables/fusion_complementarity_summary.csv`
 - `artifacts/report_assets/figures/frozen_fusion_comparison.png`
 - `artifacts/report_assets/figures/concat_vs_weighted.png`
 - `artifacts/report_assets/figures/fusion_gain_macro_f1.png`
 - `artifacts/report_assets/figures/per_class_f1_frozen_heatmap.png`
+- `artifacts/report_assets/figures/per_class_fusion_gain_heatmap.png`
 - `artifacts/report_assets/figures/frozen_best_confusion_matrix.png`
 - `artifacts/report_assets/figures/learned_fusion_weights.png`
+- `artifacts/report_assets/figures/representation_similarity_heatmap.png`
+- `artifacts/report_assets/figures/fusion_gain_vs_complementarity.png`
 - `artifacts/report_assets/figures/fusion_runs/`
 
 ### Interim Sprint Report
