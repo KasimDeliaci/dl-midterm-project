@@ -58,6 +58,13 @@ submission/archive/*
 !artifacts/features/ham10000/frozen/mobilenet_v2/.gitkeep
 !artifacts/features/ham10000/frozen/efficientnet_b0/
 !artifacts/features/ham10000/frozen/efficientnet_b0/.gitkeep
+!artifacts/features/ham10000/finetuned/
+!artifacts/features/ham10000/finetuned/resnet50/
+!artifacts/features/ham10000/finetuned/resnet50/.gitkeep
+!artifacts/features/ham10000/finetuned/mobilenet_v2/
+!artifacts/features/ham10000/finetuned/mobilenet_v2/.gitkeep
+!artifacts/features/ham10000/finetuned/efficientnet_b0/
+!artifacts/features/ham10000/finetuned/efficientnet_b0/.gitkeep
 !artifacts/features/ham10000/ft_last_blocks/
 !artifacts/features/ham10000/ft_last_blocks/resnet50/
 !artifacts/features/ham10000/ft_last_blocks/resnet50/.gitkeep

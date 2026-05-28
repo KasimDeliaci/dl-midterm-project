@@ -47,24 +47,42 @@ def save_training_curve_plot(
 
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    has_lr = "learning_rate" in history.columns
+    column_count = 4 if has_lr else 3
+    fig, axes = plt.subplots(1, column_count, figsize=(5 * column_count, 4))
+    best_epoch = None
+    if "val_macro_f1" in history.columns and not history.empty:
+        best_epoch = int(history.sort_values("val_macro_f1", ascending=False).iloc[0]["epoch"])
     axes[0].plot(history["epoch"], history["train_loss"], label="train")
     axes[0].plot(history["epoch"], history["val_loss"], label="val")
+    if best_epoch is not None:
+        axes[0].axvline(best_epoch, color="black", linestyle="--", linewidth=1)
     axes[0].set_title("Loss")
     axes[0].set_xlabel("Epoch")
     axes[0].legend()
 
     axes[1].plot(history["epoch"], history["val_macro_f1"], label="val macro-F1", color="tab:green")
+    if best_epoch is not None:
+        axes[1].axvline(best_epoch, color="black", linestyle="--", linewidth=1)
     axes[1].set_title("Validation Macro-F1")
     axes[1].set_xlabel("Epoch")
     axes[1].set_ylim(0, 1)
 
     axes[2].plot(history["epoch"], history["train_accuracy"], label="train")
     axes[2].plot(history["epoch"], history["val_accuracy"], label="val")
+    if best_epoch is not None:
+        axes[2].axvline(best_epoch, color="black", linestyle="--", linewidth=1)
     axes[2].set_title("Accuracy")
     axes[2].set_xlabel("Epoch")
     axes[2].set_ylim(0, 1)
     axes[2].legend()
+
+    if has_lr:
+        axes[3].plot(history["epoch"], history["learning_rate"], label="learning rate")
+        if best_epoch is not None:
+            axes[3].axvline(best_epoch, color="black", linestyle="--", linewidth=1)
+        axes[3].set_title("Learning Rate")
+        axes[3].set_xlabel("Epoch")
 
     fig.suptitle(title)
     fig.tight_layout()
@@ -205,6 +223,87 @@ def save_fusion_gain_plot(gains: pd.DataFrame, path: str | Path) -> Path:
     for container in ax.containers:
         ax.bar_label(container, fmt="%+.3f", padding=2, fontsize=8)
     plt.legend(title="Fusion")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_frozen_vs_finetuned_macro_f1_plot(summary: pd.DataFrame, path: str | Path) -> Path:
+    """Save paired frozen/fine-tuned macro-F1 bars by matching experiment."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = summary.sort_values("finetuned_macro_f1", ascending=False).copy()
+    melted = frame.melt(
+        id_vars=["display_name"],
+        value_vars=["frozen_macro_f1", "finetuned_macro_f1"],
+        var_name="feature_source",
+        value_name="macro_f1",
+    )
+    melted["feature_source"] = melted["feature_source"].map(
+        {"frozen_macro_f1": "frozen", "finetuned_macro_f1": "fine-tuned"}
+    )
+    plt.figure(figsize=(12, 6))
+    ax = sns.barplot(data=melted, x="display_name", y="macro_f1", hue="feature_source")
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Experiment")
+    ax.set_ylabel("Test macro-F1")
+    ax.set_title("Frozen vs Fine-Tuned Macro-F1")
+    ax.tick_params(axis="x", rotation=35)
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
+    plt.legend(title="Feature source")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_finetuning_gain_plot(summary: pd.DataFrame, path: str | Path) -> Path:
+    """Save macro-F1 gain for fine-tuned representations over frozen counterparts."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = summary.sort_values("macro_f1_gain", ascending=False).copy()
+    plt.figure(figsize=(12, 5.5))
+    ax = sns.barplot(data=frame, x="display_name", y="macro_f1_gain", hue="fusion_method")
+    ax.axhline(0, color="black", linewidth=1)
+    ax.set_xlabel("Experiment")
+    ax.set_ylabel("Fine-tuned minus frozen macro-F1")
+    ax.set_title("Fine-Tuning Gain Over Frozen Counterpart")
+    ax.tick_params(axis="x", rotation=35)
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%+.3f", padding=2, fontsize=8)
+    plt.legend(title="Fusion")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_per_class_source_comparison_heatmap(per_class: pd.DataFrame, path: str | Path) -> Path:
+    """Save per-class F1 heatmap across frozen and fine-tuned experiments."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pivot = per_class.pivot_table(
+        index="source_display_name",
+        columns="label",
+        values="f1",
+        aggfunc="first",
+    )
+    order = (
+        per_class[["source_display_name", "macro_f1"]]
+        .drop_duplicates()
+        .sort_values("macro_f1", ascending=False)["source_display_name"]
+    )
+    pivot = pivot.loc[order]
+    plt.figure(figsize=(10, max(5, 0.34 * len(pivot))))
+    sns.heatmap(pivot, annot=True, fmt=".2f", cmap="viridis", vmin=0, vmax=1)
+    plt.xlabel("Class")
+    plt.ylabel("Experiment")
+    plt.title("Per-Class F1: Frozen vs Fine-Tuned")
     plt.tight_layout()
     plt.savefig(output_path, dpi=200)
     plt.close()

@@ -1,5 +1,5 @@
 experiment_matrix:
-  feature_source: ft_last_blocks
+  feature_source: finetuned
   classifier: mlp
   seed: 42
   fusion_methods:

@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from dl_midterm.config.load_config import load_yaml
 from dl_midterm.evaluation.reports import (
     export_frozen_matrix_report_assets,
+    export_frozen_vs_finetuned_report_assets,
     write_run_report,
 )
 from dl_midterm.features.cache import (
@@ -41,7 +42,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default="configs/experiments/frozen_feature_matrix.yaml")
     parser.add_argument("--default-config", default="configs/default.yaml")
     parser.add_argument("--dataset-config", default="configs/dataset/selected_dataset.yaml")
-    parser.add_argument("--feature-source", default="frozen", choices=["frozen"])
+    parser.add_argument("--feature-source", default="frozen", choices=["frozen", "finetuned"])
     parser.add_argument("--feature-root", default="artifacts/features")
     parser.add_argument("--run-root", default="artifacts/runs")
     parser.add_argument("--tables-dir", default="artifacts/report_assets/tables")
@@ -60,7 +61,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--fusion-methods", nargs="+", choices=["concat", "weighted"], default=None)
     parser.add_argument("--backbones", nargs="+", default=None)
     parser.add_argument("--max-runs", type=int, default=None)
-    parser.add_argument("--experiment-name", default="sprint3_frozen_fusion")
+    parser.add_argument("--experiment-name", default=None)
     return parser.parse_args()
 
 
@@ -120,6 +121,7 @@ def main() -> None:
     hidden_dims = args.hidden_dims or list(mlp_config.get("hidden_dims", [512, 256]))
     projection_dim = args.projection_dim or int(mlp_config.get("projection_dim", 512))
     class_weighting = not args.no_class_weights
+    experiment_name = args.experiment_name or f"{args.feature_source}_fusion_matrix"
 
     run_specs = expand_fusion_run_matrix(
         experiment_config,
@@ -130,7 +132,7 @@ def main() -> None:
     if args.max_runs is not None:
         run_specs = run_specs[: args.max_runs]
     if not run_specs:
-        raise ValueError("No Sprint 3 fusion runs selected.")
+        raise ValueError("No fusion runs selected.")
 
     completed_runs: list[dict[str, Any]] = []
     for run_spec in run_specs:
@@ -155,13 +157,13 @@ def main() -> None:
             projection_dim=projection_dim,
             class_weighting=class_weighting,
             training_config=training_config,
-            experiment_name=args.experiment_name,
+            experiment_name=experiment_name,
         )
         completed_runs.append({**run_spec, "run_dir": str(run_dir)})
 
-    manifest_path = Path(args.run_root) / f"{args.experiment_name}_manifest.yaml"
+    manifest_path = Path(args.run_root) / f"{experiment_name}_manifest.yaml"
     manifest = {
-        "experiment_name": args.experiment_name,
+        "experiment_name": experiment_name,
         "feature_source": args.feature_source,
         "seed": seed,
         "config": str(Path(args.config)),
@@ -179,7 +181,15 @@ def main() -> None:
         feature_root=args.feature_root,
         dataset_config=dataset_config,
     )
-    (Path(args.run_root) / f"{args.experiment_name}_exported_assets.json").write_text(
+    if args.feature_source == "finetuned":
+        exported.update(
+            export_frozen_vs_finetuned_report_assets(
+                args.run_root,
+                args.tables_dir,
+                args.figures_dir,
+            )
+        )
+    (Path(args.run_root) / f"{experiment_name}_exported_assets.json").write_text(
         json.dumps({name: str(path) for name, path in exported.items()}, indent=2),
         encoding="utf-8",
     )

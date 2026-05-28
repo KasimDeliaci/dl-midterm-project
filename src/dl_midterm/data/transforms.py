@@ -16,13 +16,19 @@ def build_image_transform(image_size: int = 224, train: bool = False) -> transfo
     """
 
     if train:
-        resize = transforms.Resize((image_size, image_size), antialias=True)
+        steps = [
+            transforms.Resize((image_size, image_size), antialias=True),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5),
+            transforms.RandomRotation(degrees=20),
+            transforms.ColorJitter(brightness=0.08, contrast=0.08, saturation=0.05, hue=0.02),
+        ]
     else:
-        resize = transforms.Resize((image_size, image_size), antialias=True)
+        steps = [transforms.Resize((image_size, image_size), antialias=True)]
 
     return transforms.Compose(
-        [
-            resize,
+        steps
+        + [
             transforms.ToTensor(),
             transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
         ]

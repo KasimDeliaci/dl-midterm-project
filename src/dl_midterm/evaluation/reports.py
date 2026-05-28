@@ -19,7 +19,9 @@ from dl_midterm.evaluation.plots import (
     save_accuracy_macro_f1_scatter,
     save_concat_vs_weighted_plot,
     save_confusion_matrix_plot,
+    save_finetuning_gain_plot,
     save_frozen_fusion_comparison_plot,
+    save_frozen_vs_finetuned_macro_f1_plot,
     save_fusion_gain_plot,
     save_fusion_gain_vs_complementarity_plot,
     save_learned_fusion_weights_plot,
@@ -27,6 +29,7 @@ from dl_midterm.evaluation.plots import (
     save_mlp_search_macro_f1_plot,
     save_per_class_f1_heatmap,
     save_per_class_fusion_gain_heatmap,
+    save_per_class_source_comparison_heatmap,
     save_representation_similarity_heatmap,
     save_single_pairwise_three_plot,
     save_training_curve_plot,
@@ -46,6 +49,9 @@ def write_run_report(
     """Write all standard artifacts for one MLP run."""
 
     output_dir = Path(run_dir)
+    feature_source = str(resolved_config.get("feature_source", "feature"))
+    fusion_method = str(resolved_config.get("fusion_method", "mlp"))
+    curve_label = "fine-tuning" if fusion_method == "finetune_head" else "MLP"
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "config_resolved.yaml").write_text(
         yaml.safe_dump(resolved_config, sort_keys=False),
@@ -65,12 +71,12 @@ def write_run_report(
         metrics["confusion_matrix"],
         class_names,
         output_dir / "confusion_matrix.png",
-        title=f"{backbone} frozen MLP confusion matrix",
+        title=f"{backbone} {feature_source} {curve_label} confusion matrix",
     )
     save_training_curve_plot(
         history,
         output_dir / "training_curve.png",
-        title=f"{backbone} frozen MLP training curves",
+        title=f"{backbone} {feature_source} {curve_label} training curves",
     )
 
 
@@ -167,14 +173,15 @@ def export_frozen_matrix_report_assets(
     figure_root.mkdir(parents=True, exist_ok=True)
     run_figure_root.mkdir(parents=True, exist_ok=True)
 
-    all_results_path = table_root / "frozen_all_results.csv"
+    source_prefix = _source_prefix(feature_source)
+    all_results_path = table_root / f"{source_prefix}_all_results.csv"
     filtered.sort_values(["backbone_count", "backbone_combination", "fusion_method"]).to_csv(
         all_results_path,
         index=False,
     )
 
     per_class = _collect_per_class_reports(run_root, filtered)
-    per_class_path = table_root / "per_class_f1_frozen.csv"
+    per_class_path = table_root / _per_class_table_name(feature_source)
     per_class.to_csv(per_class_path, index=False)
 
     fusion_rows = filtered[filtered["fusion_method"].isin(["concat", "weighted"])].copy()
@@ -184,7 +191,7 @@ def export_frozen_matrix_report_assets(
     gains = fusion_rows.copy()
     gains["best_single_macro_f1"] = best_single_macro_f1
     gains["macro_f1_gain"] = gains["macro_f1"] - best_single_macro_f1
-    gain_path = table_root / "fusion_gain_summary.csv"
+    gain_path = table_root / _fusion_gain_table_name(feature_source)
     gains.to_csv(gain_path, index=False)
 
     per_class_gains = _build_per_class_fusion_gains(per_class, filtered, gains)
@@ -192,7 +199,7 @@ def export_frozen_matrix_report_assets(
     per_class_gains.to_csv(per_class_gain_path, index=False)
 
     weights = _collect_fusion_weights(run_root, filtered)
-    weights_path = table_root / "fusion_weight_summary.csv"
+    weights_path = table_root / _fusion_weight_table_name(feature_source)
     weights.to_csv(weights_path, index=False)
 
     exported: dict[str, Path] = {
@@ -203,31 +210,31 @@ def export_frozen_matrix_report_assets(
         "fusion_weight_table": weights_path,
         "comparison_plot": save_frozen_fusion_comparison_plot(
             filtered,
-            figure_root / "frozen_fusion_comparison.png",
+            figure_root / f"{source_prefix}_fusion_comparison.png",
         ),
         "single_pairwise_three_plot": save_single_pairwise_three_plot(
             filtered,
-            figure_root / "single_pairwise_three_macro_f1.png",
+            figure_root / _single_pairwise_three_plot_name(feature_source),
         ),
         "concat_vs_weighted_plot": save_concat_vs_weighted_plot(
             filtered,
-            figure_root / "concat_vs_weighted.png",
+            figure_root / _concat_vs_weighted_plot_name(feature_source),
         ),
         "fusion_gain_plot": save_fusion_gain_plot(
             gains,
-            figure_root / "fusion_gain_macro_f1.png",
+            figure_root / _fusion_gain_plot_name(feature_source),
         ),
         "per_class_heatmap": save_per_class_f1_heatmap(
             per_class,
-            figure_root / "per_class_f1_frozen_heatmap.png",
+            figure_root / _per_class_heatmap_name(feature_source),
         ),
         "per_class_fusion_gain_heatmap": save_per_class_fusion_gain_heatmap(
             per_class_gains,
-            figure_root / "per_class_fusion_gain_heatmap.png",
+            figure_root / f"{source_prefix}_per_class_fusion_gain_heatmap.png",
         ),
         "accuracy_macro_f1_scatter": save_accuracy_macro_f1_scatter(
             filtered,
-            figure_root / "accuracy_vs_macro_f1_frozen.png",
+            figure_root / f"accuracy_vs_macro_f1_{source_prefix}.png",
         ),
     }
 
@@ -243,7 +250,7 @@ def export_frozen_matrix_report_assets(
             max_samples=complementarity_max_samples,
             seed=int(dataset_config.get("seed", 42)),
         )
-        complementarity_path = table_root / "representation_complementarity_summary.csv"
+        complementarity_path = table_root / _representation_complementarity_name(feature_source)
         complementarity.to_csv(complementarity_path, index=False)
         complementarity_results = filtered.merge(
             gains[["run_id", "macro_f1_gain"]],
@@ -254,7 +261,7 @@ def export_frozen_matrix_report_assets(
             complementarity_results,
             complementarity,
         )
-        fusion_complementarity_path = table_root / "fusion_complementarity_summary.csv"
+        fusion_complementarity_path = table_root / _fusion_complementarity_name(feature_source)
         fusion_complementarity.to_csv(fusion_complementarity_path, index=False)
         exported.update(
             {
@@ -262,12 +269,12 @@ def export_frozen_matrix_report_assets(
                 "fusion_complementarity_table": fusion_complementarity_path,
                 "representation_similarity_heatmap": save_representation_similarity_heatmap(
                     complementarity,
-                    figure_root / "representation_similarity_heatmap.png",
+                    figure_root / f"{source_prefix}_representation_similarity_heatmap.png",
                 ),
                 "fusion_gain_vs_complementarity_plot": (
                     save_fusion_gain_vs_complementarity_plot(
                         fusion_complementarity,
-                        figure_root / "fusion_gain_vs_complementarity.png",
+                        figure_root / f"{source_prefix}_fusion_gain_vs_complementarity.png",
                     )
                 ),
             }
@@ -275,12 +282,12 @@ def export_frozen_matrix_report_assets(
     if not weights.empty:
         exported["learned_weights_plot"] = save_learned_fusion_weights_plot(
             weights,
-            figure_root / "learned_fusion_weights.png",
+            figure_root / _learned_weights_plot_name(feature_source),
         )
 
     best_row = filtered.sort_values("macro_f1", ascending=False).iloc[0]
     best_source = Path(run_root) / str(best_row["run_id"]) / "confusion_matrix.png"
-    best_dest = figure_root / "frozen_best_confusion_matrix.png"
+    best_dest = figure_root / f"{source_prefix}_best_confusion_matrix.png"
     if best_source.exists():
         shutil.copy2(best_source, best_dest)
         exported["best_confusion_matrix"] = best_dest
@@ -322,7 +329,8 @@ def export_single_backbone_report_assets(
     figure_root = Path(figures_dir)
     table_root.mkdir(parents=True, exist_ok=True)
     figure_root.mkdir(parents=True, exist_ok=True)
-    results_path = table_root / "single_backbone_frozen_results.csv"
+    source_prefix = _source_prefix(feature_source)
+    results_path = table_root / f"single_backbone_{source_prefix}_results.csv"
     filtered.sort_values("backbone").to_csv(results_path, index=False)
 
     per_class_frames: list[pd.DataFrame] = []
@@ -330,7 +338,7 @@ def export_single_backbone_report_assets(
         report_path = Path(run_root) / run_id / "classification_report.csv"
         if report_path.exists():
             per_class_frames.append(pd.read_csv(report_path))
-    per_class_path = table_root / "single_backbone_frozen_per_class_f1.csv"
+    per_class_path = table_root / f"single_backbone_{source_prefix}_per_class_f1.csv"
     if per_class_frames:
         pd.concat(per_class_frames, ignore_index=True).to_csv(per_class_path, index=False)
     else:
@@ -338,13 +346,123 @@ def export_single_backbone_report_assets(
 
     plot_path = save_macro_f1_comparison_plot(
         filtered,
-        figure_root / "frozen_single_backbone_f1.png",
+        figure_root / f"{source_prefix}_single_backbone_f1.png",
+        title=f"{source_prefix.title()} Single-Backbone Macro-F1",
     )
     return {
         "results_table": results_path,
         "per_class_table": per_class_path,
         "macro_f1_plot": plot_path,
     }
+
+
+def export_frozen_vs_finetuned_report_assets(
+    run_root: str | Path,
+    tables_dir: str | Path,
+    figures_dir: str | Path,
+) -> dict[str, Path]:
+    """Export report assets comparing latest frozen and fine-tuned matrix rows."""
+
+    summaries = collect_run_summaries(run_root)
+    if summaries.empty:
+        raise FileNotFoundError(f"No run metrics found under {run_root}")
+
+    frozen = _select_latest_matrix_rows(
+        summaries[
+            (summaries["feature_source"] == "frozen")
+            & (summaries["fusion_method"].isin(["none", "concat", "weighted"]))
+        ].copy()
+    )
+    finetuned = _select_latest_matrix_rows(
+        summaries[
+            (summaries["feature_source"] == "finetuned")
+            & (summaries["fusion_method"].isin(["none", "concat", "weighted"]))
+        ].copy()
+    )
+    if frozen.empty or finetuned.empty:
+        raise FileNotFoundError("Both frozen and finetuned matrix runs are required.")
+
+    frozen = _add_display_columns(frozen)
+    finetuned = _add_display_columns(finetuned)
+    comparison = frozen.merge(
+        finetuned,
+        on=["backbone_combination", "fusion_method"],
+        suffixes=("_frozen", "_finetuned"),
+    )
+    if comparison.empty:
+        raise FileNotFoundError("No matching frozen/fine-tuned experiment rows found.")
+
+    summary = pd.DataFrame(
+        {
+            "backbone_combination": comparison["backbone_combination"],
+            "fusion_method": comparison["fusion_method"],
+            "display_name": comparison["display_name_finetuned"],
+            "backbone_count": comparison["backbone_count_finetuned"],
+            "frozen_run_id": comparison["run_id_frozen"],
+            "finetuned_run_id": comparison["run_id_finetuned"],
+            "frozen_accuracy": comparison["accuracy_frozen"],
+            "finetuned_accuracy": comparison["accuracy_finetuned"],
+            "accuracy_gain": comparison["accuracy_finetuned"] - comparison["accuracy_frozen"],
+            "frozen_macro_f1": comparison["macro_f1_frozen"],
+            "finetuned_macro_f1": comparison["macro_f1_finetuned"],
+            "macro_f1_gain": comparison["macro_f1_finetuned"] - comparison["macro_f1_frozen"],
+            "frozen_weighted_f1": comparison["weighted_f1_frozen"],
+            "finetuned_weighted_f1": comparison["weighted_f1_finetuned"],
+            "weighted_f1_gain": (
+                comparison["weighted_f1_finetuned"] - comparison["weighted_f1_frozen"]
+            ),
+        }
+    ).sort_values("finetuned_macro_f1", ascending=False)
+
+    table_root = Path(tables_dir)
+    figure_root = Path(figures_dir)
+    table_root.mkdir(parents=True, exist_ok=True)
+    figure_root.mkdir(parents=True, exist_ok=True)
+
+    summary_path = table_root / "frozen_vs_finetuned_summary.csv"
+    gain_path = table_root / "finetuning_gain_summary.csv"
+    summary.to_csv(summary_path, index=False)
+    summary.sort_values("macro_f1_gain", ascending=False).to_csv(gain_path, index=False)
+
+    per_class = _build_frozen_vs_finetuned_per_class(run_root, frozen, finetuned, summary)
+    per_class_path = table_root / "frozen_vs_finetuned_per_class_f1.csv"
+    per_class.to_csv(per_class_path, index=False)
+    per_class_gain_path = table_root / "finetuned_per_class_gain.csv"
+    if not per_class.empty:
+        per_class[
+            per_class["feature_source"] == "finetuned"
+        ].sort_values(["display_name", "label"]).to_csv(per_class_gain_path, index=False)
+    else:
+        pd.DataFrame().to_csv(per_class_gain_path, index=False)
+
+    exported = {
+        "frozen_vs_finetuned_summary": summary_path,
+        "finetuning_gain_summary": gain_path,
+        "frozen_vs_finetuned_per_class": per_class_path,
+        "finetuned_per_class_gain": per_class_gain_path,
+        "frozen_vs_finetuned_macro_f1_plot": save_frozen_vs_finetuned_macro_f1_plot(
+            summary,
+            figure_root / "frozen_vs_finetuned_macro_f1.png",
+        ),
+        "finetuning_gain_plot": save_finetuning_gain_plot(
+            summary,
+            figure_root / "finetuning_gain_macro_f1.png",
+        ),
+    }
+    if not per_class.empty:
+        exported["per_class_frozen_vs_finetuned_heatmap"] = (
+            save_per_class_source_comparison_heatmap(
+                per_class,
+                figure_root / "per_class_f1_frozen_vs_finetuned_heatmap.png",
+            )
+        )
+        gain_rows = per_class[per_class["feature_source"] == "finetuned"].copy()
+        if not gain_rows.empty:
+            exported["per_class_gain_heatmap"] = save_per_class_fusion_gain_heatmap(
+                gain_rows.rename(columns={"class_f1_gain": "f1_gain"}),
+                figure_root / "finetuning_per_class_gain_heatmap.png",
+            )
+    return exported
 
 
 def _select_latest_matrix_rows(summaries: pd.DataFrame) -> pd.DataFrame:
@@ -473,6 +591,53 @@ def _build_per_class_fusion_gains(
     return gain_rows.sort_values(["macro_f1_gain", "display_name", "label"], ascending=False)
 
 
+def _build_frozen_vs_finetuned_per_class(
+    run_root: str | Path,
+    frozen: pd.DataFrame,
+    finetuned: pd.DataFrame,
+    summary: pd.DataFrame,
+) -> pd.DataFrame:
+    frozen_per_class = _collect_per_class_reports(run_root, frozen)
+    finetuned_per_class = _collect_per_class_reports(run_root, finetuned)
+    if frozen_per_class.empty or finetuned_per_class.empty:
+        return pd.DataFrame()
+
+    frozen_per_class["feature_source"] = "frozen"
+    finetuned_per_class["feature_source"] = "finetuned"
+    key_cols = ["backbone_combination", "fusion_method", "label"]
+    reference = frozen_per_class[key_cols + ["f1", "precision", "recall"]].rename(
+        columns={
+            "f1": "frozen_f1",
+            "precision": "frozen_precision",
+            "recall": "frozen_recall",
+        }
+    )
+    finetuned_per_class = finetuned_per_class.merge(reference, on=key_cols, how="left")
+    finetuned_per_class["class_f1_gain"] = finetuned_per_class["f1"] - finetuned_per_class[
+        "frozen_f1"
+    ]
+    finetuned_per_class["class_precision_gain"] = (
+        finetuned_per_class["precision"] - finetuned_per_class["frozen_precision"]
+    )
+    finetuned_per_class["class_recall_gain"] = (
+        finetuned_per_class["recall"] - finetuned_per_class["frozen_recall"]
+    )
+    finetuned_per_class = finetuned_per_class.merge(
+        summary[["backbone_combination", "fusion_method", "macro_f1_gain"]],
+        on=["backbone_combination", "fusion_method"],
+        how="left",
+    )
+    frozen_per_class["class_f1_gain"] = 0.0
+    frozen_per_class["class_precision_gain"] = 0.0
+    frozen_per_class["class_recall_gain"] = 0.0
+    frozen_per_class["macro_f1_gain"] = 0.0
+    combined = pd.concat([frozen_per_class, finetuned_per_class], ignore_index=True)
+    combined["source_display_name"] = combined["feature_source"].map(
+        {"frozen": "frozen", "finetuned": "fine-tuned"}
+    ) + " " + combined["display_name"].astype(str)
+    return combined.sort_values(["display_name", "feature_source", "label"])
+
+
 def _matrix_backbones(results: pd.DataFrame) -> list[str]:
     names: list[str] = []
     for combination in results["backbone_combination"].dropna():
@@ -480,6 +645,70 @@ def _matrix_backbones(results: pd.DataFrame) -> list[str]:
             if backbone not in names:
                 names.append(backbone)
     return names
+
+
+def _source_prefix(feature_source: str) -> str:
+    return "frozen" if feature_source == "frozen" else feature_source
+
+
+def _per_class_table_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "per_class_f1_frozen.csv"
+    return f"{_source_prefix(feature_source)}_per_class_f1.csv"
+
+
+def _fusion_gain_table_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "fusion_gain_summary.csv"
+    return f"{_source_prefix(feature_source)}_fusion_gain_summary.csv"
+
+
+def _fusion_weight_table_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "fusion_weight_summary.csv"
+    return f"{_source_prefix(feature_source)}_fusion_weight_summary.csv"
+
+
+def _concat_vs_weighted_plot_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "concat_vs_weighted.png"
+    return f"{_source_prefix(feature_source)}_concat_vs_weighted.png"
+
+
+def _single_pairwise_three_plot_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "single_pairwise_three_macro_f1.png"
+    return f"{_source_prefix(feature_source)}_single_pairwise_three_macro_f1.png"
+
+
+def _fusion_gain_plot_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "fusion_gain_macro_f1.png"
+    return f"{_source_prefix(feature_source)}_fusion_gain_macro_f1.png"
+
+
+def _per_class_heatmap_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "per_class_f1_frozen_heatmap.png"
+    return f"{_source_prefix(feature_source)}_per_class_f1_heatmap.png"
+
+
+def _learned_weights_plot_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "learned_fusion_weights.png"
+    return f"{_source_prefix(feature_source)}_learned_fusion_weights.png"
+
+
+def _representation_complementarity_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "representation_complementarity_summary.csv"
+    return f"{_source_prefix(feature_source)}_representation_complementarity_summary.csv"
+
+
+def _fusion_complementarity_name(feature_source: str) -> str:
+    if feature_source == "frozen":
+        return "fusion_complementarity_summary.csv"
+    return f"{_source_prefix(feature_source)}_fusion_complementarity_summary.csv"
 
 
 def export_mlp_search_report_assets(

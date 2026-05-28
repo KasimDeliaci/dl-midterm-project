@@ -5,7 +5,10 @@ from __future__ import annotations
 import argparse
 
 from dl_midterm.config.load_config import load_yaml
-from dl_midterm.evaluation.reports import export_frozen_matrix_report_assets
+from dl_midterm.evaluation.reports import (
+    export_frozen_matrix_report_assets,
+    export_frozen_vs_finetuned_report_assets,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -35,6 +38,14 @@ def main() -> None:
         complementarity_split=args.complementarity_split,
         complementarity_max_samples=args.complementarity_max_samples,
     )
+    if args.feature_source == "finetuned":
+        exported.update(
+            export_frozen_vs_finetuned_report_assets(
+                args.run_root,
+                args.tables_dir,
+                args.figures_dir,
+            )
+        )
     print("Exported report assets:")
     for name, path in exported.items():
         print(f"  {name}: {path}")

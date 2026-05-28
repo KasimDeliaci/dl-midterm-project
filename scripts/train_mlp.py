@@ -37,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default="configs/experiments/frozen_feature_matrix.yaml")
     parser.add_argument("--default-config", default="configs/default.yaml")
     parser.add_argument("--dataset-config", default="configs/dataset/selected_dataset.yaml")
-    parser.add_argument("--feature-source", default="frozen", choices=["frozen"])
+    parser.add_argument("--feature-source", default="frozen", choices=["frozen", "finetuned"])
     parser.add_argument("--fusion", default="none", choices=["none"])
     parser.add_argument("--backbones", nargs="+", default=None)
     parser.add_argument("--feature-root", default="artifacts/features")
@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dropout", type=float, default=None)
     parser.add_argument("--hidden-dims", nargs="+", type=int, default=None)
     parser.add_argument("--no-class-weights", action="store_true")
-    parser.add_argument("--experiment-name", default="single_backbone_frozen_baseline")
+    parser.add_argument("--experiment-name", default=None)
     parser.add_argument("--run-tag", default=None)
     return parser.parse_args()
 
@@ -79,6 +79,7 @@ def main() -> None:
     dropout = args.dropout if args.dropout is not None else float(mlp_config.get("dropout", 0.3))
     hidden_dims = args.hidden_dims or list(mlp_config.get("hidden_dims", [512, 256]))
     class_weighting = not args.no_class_weights
+    experiment_name = args.experiment_name or f"single_backbone_{args.feature_source}_baseline"
 
     backbones = args.backbones
     if backbones is None:
@@ -100,7 +101,7 @@ def main() -> None:
             hidden_dims=hidden_dims,
             class_weighting=class_weighting,
             training_config=training_config,
-            experiment_name=args.experiment_name,
+            experiment_name=experiment_name,
             run_tag=args.run_tag,
         )
 
@@ -203,6 +204,9 @@ def run_single_backbone(
         "dataset": dataset_config["name"],
         "feature_source": args.feature_source,
         "backbone": backbone,
+        "backbones": [backbone],
+        "backbone_combination": backbone,
+        "backbone_count": 1,
         "fusion_method": args.fusion,
         "feature_dim": feature_dim,
         "class_weighting": class_weighting,
@@ -228,6 +232,9 @@ def run_single_backbone(
             "seed": seed,
             "feature_source": args.feature_source,
             "backbone": backbone,
+            "backbones": [backbone],
+            "backbone_combination": backbone,
+            "backbone_count": 1,
             "fusion_method": args.fusion,
             "feature_dim": feature_dim,
             "class_weighting": class_weighting,
