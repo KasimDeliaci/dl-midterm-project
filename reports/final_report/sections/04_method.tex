@@ -5,3 +5,11 @@ The method uses three ImageNet-pretrained CNN backbones: ResNet50, MobileNetV2, 
 Two fusion strategies are evaluated. Concatenation fusion joins feature vectors directly. Weighted fusion first projects each backbone feature vector into a shared 512-dimensional latent space, then combines the projected vectors with learnable softmax-normalized weights before passing the fused representation to the MLP classifier. This keeps the project within the required feature-fusion setting while enabling analysis of which backbone contributes most to the final representation.
 
 All single-backbone and fused representations are evaluated using the same MLP classifier. This keeps the classifier fixed so the experiments isolate the effects of backbone choice, fusion strategy, and transfer-learning setting.
+
+For the fine-tuned transfer-learning setting, the project updates only the final meaningful CNN
+blocks rather than the full backbone. ResNet50 fine-tunes \texttt{layer4}; MobileNetV2 fine-tunes
+\texttt{features[16]}, \texttt{features[17]}, and \texttt{features[18]}; EfficientNetB0 fine-tunes
+\texttt{features[7]} and \texttt{features[8]}. In all three cases, the temporary classification head
+is trainable. The best checkpoint is selected by validation macro-F1, then the classifier head is
+removed and fine-tuned feature caches are extracted for the same MLP and fusion matrix used in the
+frozen-feature setting.

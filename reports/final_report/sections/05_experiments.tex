@@ -5,3 +5,10 @@ All frozen-feature experiments use the lesion-aware HAM10000 train/validation/te
 The frozen matrix contains three single-backbone baselines and eight fusion runs. The fusion runs cover three pairwise combinations and one three-backbone combination, each evaluated with concatenation and projected weighted fusion. Weighted fusion uses a 512-dimensional projection for each backbone and learns global softmax-normalized backbone weights.
 
 Test-set metrics are reported only after training and validation selection are complete. Test performance is not used for hyperparameter or model selection.
+
+The Sprint 4 fine-tuning experiments use the same train/validation/test split and the same primary
+metric. Fine-tuning uses ImageNet-pretrained backbones, train-split class weights, seed 42, AdamW
+with learning rate 0.0001, weight decay 0.0001, and early stopping on validation macro-F1. The full
+fine-tuned matrix repeats the frozen matrix structure with three single-backbone MLP runs and eight
+fusion runs over the fine-tuned feature caches. Full Sprint 4 metrics are generated on Colab GPU and
+are not selected using test-set performance.

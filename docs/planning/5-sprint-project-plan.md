@@ -427,6 +427,44 @@ The goal is not to chase the highest possible score. It is to compare whether fi
 - Save both validation macro-F1 and validation loss.
 - Ideally run the full fine-tuned matrix. If time is tight, the emergency reduction is fine-tuned singles plus three-CNN concat/weighted, but this should be marked as a fallback.
 
+### Implementation Status - 2026-05-28
+
+Sprint 4 implementation is ready locally; full canonical results still need to be produced on
+Colab GPU.
+
+Implemented:
+
+- Architecture-specific partial fine-tuning policies:
+  - ResNet50: unfreeze `layer4` and `fc`.
+  - MobileNetV2: unfreeze `features[16]`, `features[17]`, `features[18]`, and `classifier`.
+  - EfficientNetB0: unfreeze `features[7]`, `features[8]`, and `classifier`.
+- `scripts/finetune_backbone.py` now fine-tunes backbones, saves best checkpoints by validation
+  macro-F1, writes fine-tuning histories/confusion matrices, and extracts classifier-free
+  fine-tuned feature caches.
+- Fine-tuned feature source is canonicalized as `finetuned`, with caches under
+  `artifacts/features/ham10000/finetuned/<backbone>/`.
+- `scripts/train_mlp.py` and `scripts/run_experiment_matrix.py` support cached `finetuned`
+  features in addition to `frozen`.
+- Report asset export now supports fine-tuned matrix tables/plots and frozen-vs-fine-tuned
+  comparison summaries.
+- `notebooks/03_finetune_backbones.ipynb` is a thin Colab runner around script commands.
+- Unit tests cover freeze/unfreeze policy, fine-tuned cache shape/alignment, matrix expansion,
+  weighted-fusion weight normalization, and cached-feature MLP tensor-only input.
+
+Verified locally:
+
+- `uv run ruff check src scripts tests`
+- `uv run pytest`
+- non-canonical `/tmp` smoke fine-tune/cache extraction for MobileNetV2 with
+  `--limit-per-split 2`, `--epochs 1`, and `--no-pretrained`
+- non-canonical `/tmp` smoke MLP run from the tiny fine-tuned cache using matching mini split CSVs
+
+Pending:
+
+- Run full ImageNet-pretrained fine-tuning on Colab GPU for all three backbones.
+- Run the full 11-run fine-tuned feature matrix.
+- Generate canonical Sprint 4 report assets and move the active execution plan to completed.
+
 ### Verification Gates
 
 Sprint 4 is done only if:
@@ -450,14 +488,14 @@ Sprint 4 is done only if:
 - `artifacts/checkpoints/finetuned_backbones/resnet50_best.pt`
 - `artifacts/checkpoints/finetuned_backbones/mobilenet_v2_best.pt`
 - `artifacts/checkpoints/finetuned_backbones/efficientnet_b0_best.pt`
-- `artifacts/features/ham10000/ft_last_blocks/resnet50/`
-- `artifacts/features/ham10000/ft_last_blocks/mobilenet_v2/`
-- `artifacts/features/ham10000/ft_last_blocks/efficientnet_b0/`
+- `artifacts/features/ham10000/finetuned/resnet50/`
+- `artifacts/features/ham10000/finetuned/mobilenet_v2/`
+- `artifacts/features/ham10000/finetuned/efficientnet_b0/`
 - `artifacts/runs/*_finetuned_*_mlp_s42/`
 - `artifacts/report_assets/tables/finetuned_all_results.csv`
-- `artifacts/report_assets/tables/frozen_vs_finetuned_results.csv`
-- `artifacts/report_assets/tables/runtime_summary.csv`
-- `artifacts/report_assets/tables/per_class_f1_finetuned.csv`
+- `artifacts/report_assets/tables/frozen_vs_finetuned_summary.csv`
+- `artifacts/report_assets/tables/finetuning_gain_summary.csv`
+- `artifacts/report_assets/tables/finetuned_per_class_f1.csv`
 - `artifacts/report_assets/figures/frozen_vs_finetuned_macro_f1.png`
 - `artifacts/report_assets/figures/runtime_vs_macro_f1.png`
 - `artifacts/report_assets/figures/finetuned_best_confusion_matrix.png`
@@ -562,7 +600,7 @@ Sprint 5 is done only if:
 - `artifacts/report_assets/tables/all_results.csv`
 - `artifacts/report_assets/tables/best_models.csv`
 - `artifacts/report_assets/tables/fusion_gain_summary.csv`
-- `artifacts/report_assets/tables/frozen_vs_finetuned_results.csv`
+- `artifacts/report_assets/tables/frozen_vs_finetuned_summary.csv`
 - `artifacts/report_assets/tables/runtime_summary.csv`
 - `artifacts/report_assets/tables/per_class_f1_comparison.csv`
 - `artifacts/report_assets/figures/macro_f1_all_experiments.png`

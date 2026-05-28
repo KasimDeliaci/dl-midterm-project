@@ -222,10 +222,101 @@ for weighted runs, `fusion_weights.csv`/`.json`.
 
 ## Sprint 4: Fine-Tuning
 
+Sprint 4 full runs should execute on Colab GPU, not locally. The notebook
+`notebooks/03_finetune_backbones.ipynb` is a thin runner around the commands below. It clones/pulls
+the repo under `/content/dl-assignment`, restores the Drive HAM10000 bundle, runs scripts, and
+mirrors selected generated artifacts to:
+
 ```bash
-uv run python scripts/finetune_backbone.py --config configs/backbones/resnet50.yaml --backbone resnet50
-uv run python scripts/finetune_backbone.py --config configs/backbones/mobilenet_v2.yaml --backbone mobilenet_v2
-uv run python scripts/finetune_backbone.py --config configs/backbones/efficientnet_b0.yaml --backbone efficientnet_b0
+/content/drive/MyDrive/dl-midterm-artifacts/
+```
+
+Fine-tune all three backbones and extract fine-tuned feature caches:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --config configs/experiments/finetune_backbones.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned \
+  --batch-size 32
+```
+
+Expected checkpoint layout:
+
+```text
+artifacts/checkpoints/finetuned_backbones/resnet50_best.pt
+artifacts/checkpoints/finetuned_backbones/mobilenet_v2_best.pt
+artifacts/checkpoints/finetuned_backbones/efficientnet_b0_best.pt
+```
+
+Expected fine-tuned feature cache layout:
+
+```text
+artifacts/features/ham10000/finetuned/resnet50/{train,val,test}.pt
+artifacts/features/ham10000/finetuned/mobilenet_v2/{train,val,test}.pt
+artifacts/features/ham10000/finetuned/efficientnet_b0/{train,val,test}.pt
+```
+
+Run the three single-backbone fine-tuned MLP baselines:
+
+```bash
+uv run python scripts/train_mlp.py \
+  --config configs/experiments/finetuned_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned
+```
+
+Run the eight fine-tuned fusion MLP experiments:
+
+```bash
+uv run python scripts/run_experiment_matrix.py \
+  --config configs/experiments/finetuned_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned
+```
+
+Refresh fine-tuned and frozen-vs-fine-tuned report assets:
+
+```bash
+uv run python scripts/make_report_assets.py \
+  --feature-source finetuned \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-root artifacts/features
+```
+
+Expected Sprint 4 report-ready outputs:
+
+```text
+artifacts/report_assets/tables/finetuned_all_results.csv
+artifacts/report_assets/tables/frozen_vs_finetuned_summary.csv
+artifacts/report_assets/tables/finetuned_per_class_f1.csv
+artifacts/report_assets/tables/finetuning_gain_summary.csv
+artifacts/report_assets/tables/finetuned_fusion_weight_summary.csv
+artifacts/report_assets/figures/frozen_vs_finetuned_macro_f1.png
+artifacts/report_assets/figures/finetuned_fusion_comparison.png
+artifacts/report_assets/figures/finetuned_concat_vs_weighted.png
+artifacts/report_assets/figures/finetuning_gain_macro_f1.png
+artifacts/report_assets/figures/finetuned_per_class_f1_heatmap.png
+artifacts/report_assets/figures/finetuned_best_confusion_matrix.png
+artifacts/report_assets/figures/finetuned_learned_fusion_weights.png
+```
+
+Non-canonical local smoke test, writing only to `/tmp`:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --backbone mobilenet_v2 \
+  --epochs 1 \
+  --batch-size 2 \
+  --limit-per-split 2 \
+  --no-pretrained \
+  --no-mixed-precision \
+  --checkpoint-dir /tmp/dlmidterm_sprint4_ckpt \
+  --feature-root /tmp/dlmidterm_sprint4_features \
+  --run-root /tmp/dlmidterm_sprint4_runs
 ```
 
 ## Evaluation And Report Assets

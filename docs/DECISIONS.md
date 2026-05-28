@@ -128,3 +128,33 @@ Reason: ResNet50, MobileNetV2, and EfficientNetB0 feature vectors have different
 feature-feature correlation is not well-defined. Comparing the similarity structure over the same
 test examples gives a dimension-agnostic signal for whether two backbones organize the dataset in
 similar or complementary ways.
+
+## 2026-05-28 - Fine-tune only final meaningful CNN blocks
+
+Decision: Sprint 4 fine-tuning keeps most ImageNet-pretrained CNN parameters frozen and unfreezes
+only the final meaningful stage plus the temporary classification head:
+
+- ResNet50: `layer4` and `fc`.
+- MobileNetV2: `features[16]`, `features[17]`, `features[18]`, and `classifier`.
+- EfficientNetB0: `features[7]`, `features[8]`, and `classifier`.
+
+Reason: HAM10000 is modest in size and imbalanced. Conservative partial fine-tuning reduces
+overfitting risk, keeps Colab runtime manageable, and still satisfies the transfer-learning
+comparison against frozen feature extraction.
+
+## 2026-05-28 - Use `finetuned` as the canonical Sprint 4 feature source
+
+Decision: store fine-tuned feature caches under
+`artifacts/features/ham10000/finetuned/<backbone>/` and use `feature_source=finetuned` in MLP and
+fusion matrix configs.
+
+Reason: this path clearly distinguishes Sprint 4 checkpoints-derived feature caches from Sprint 2
+`frozen` caches and avoids the older `ft_last_blocks` placeholder name leaking into report assets.
+
+## 2026-05-28 - Select fine-tuned checkpoints by validation macro-F1
+
+Decision: fine-tuned backbone checkpoints are selected by validation macro-F1, with class weights
+computed only from the train split.
+
+Reason: macro-F1 is the project primary metric because HAM10000 is imbalanced. Using validation
+macro-F1 preserves the evaluation protocol; test metrics remain held out for final reporting only.
