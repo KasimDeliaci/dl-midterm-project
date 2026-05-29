@@ -427,10 +427,11 @@ The goal is not to chase the highest possible score. It is to compare whether fi
 - Save both validation macro-F1 and validation loss.
 - Ideally run the full fine-tuned matrix. If time is tight, the emergency reduction is fine-tuned singles plus three-CNN concat/weighted, but this should be marked as a fallback.
 
-### Implementation Status - 2026-05-28
+### Implementation Status - 2026-05-29
 
-Sprint 4 implementation is ready locally; full canonical results still need to be produced on
-Colab GPU.
+Sprint 4 implementation and full Colab execution are complete. The Drive artifact bundle was
+downloaded locally, and frozen-vs-fine-tuned report assets were regenerated against the canonical
+Sprint 3 frozen run set.
 
 Implemented:
 
@@ -459,11 +460,17 @@ Verified locally:
   `--limit-per-split 2`, `--epochs 1`, and `--no-pretrained`
 - non-canonical `/tmp` smoke MLP run from the tiny fine-tuned cache using matching mini split CSVs
 
-Pending:
+Canonical Sprint 4 results:
 
-- Run full ImageNet-pretrained fine-tuning on Colab GPU for all three backbones.
-- Run the full 11-run fine-tuned feature matrix.
-- Generate canonical Sprint 4 report assets and move the active execution plan to completed.
+- Full ImageNet-pretrained fine-tuning completed for ResNet50, MobileNetV2, and EfficientNetB0.
+- Fine-tuned feature caches exist for all three backbones with train/val/test alignment verified.
+- Full 11-run fine-tuned matrix completed: 3 single-backbone runs and 8 fusion runs.
+- Best fine-tuned run: `r50+mnv2+effb0 concat`, macro-F1 `0.706`, accuracy `0.811`,
+  weighted-F1 `0.813`.
+- Best frozen Sprint 3 run: `r50+effb0 concat`, macro-F1 `0.595`.
+- Best matched frozen-vs-fine-tuned gain: `r50+mnv2+effb0 weighted`, macro-F1 gain `+0.168`.
+- Report-ready fine-tuned and frozen-vs-fine-tuned CSV/PNG assets were generated under
+  `artifacts/report_assets/`.
 
 ### Verification Gates
 
@@ -504,7 +511,7 @@ Sprint 4 is done only if:
 
 Write:
 
-> We fine-tuned the final meaningful blocks of ResNet50, MobileNetV2, and EfficientNetB0 and extracted fine-tuned feature representations. Compared with frozen feature extraction, fine-tuning [improved/did not improve] macro-F1 by [amount] and had the strongest effect on [classes]. The additional runtime was [reasonable/high], so the performance-compute tradeoff will be discussed in the final report.
+> We fine-tuned the final meaningful blocks of ResNet50, MobileNetV2, and EfficientNetB0 and extracted fine-tuned feature representations. Compared with frozen feature extraction, fine-tuning improved the best overall macro-F1 from 0.595 to 0.706. In the matched frozen-vs-fine-tuned table, the largest macro-F1 gain was +0.168 for the three-backbone weighted fusion run. The best fine-tuned concat model improved minority-class F1 most for vasc, bcc, df, akiec, and mel, while the additional runtime and single-seed limitation remain important final-report caveats.
 
 ### Risks and Fallbacks
 

@@ -11,3 +11,14 @@ The learned weighted-fusion weights summed to 1 after softmax for every weighted
 Per-class gain analysis shows that the best fusion improvements were not limited to the majority class. Relative to the default ResNet50 single-backbone baseline, ResNet50 + EfficientNetB0 concatenation improved \texttt{df} F1 by 0.230, \texttt{bcc} F1 by 0.104, \texttt{bkl} F1 by 0.052, \texttt{akiec} F1 by 0.042, and \texttt{mel} F1 by 0.030. The \texttt{df} gain should be interpreted carefully because the test split contains only 20 \texttt{df} examples.
 
 Representation complementarity analysis compared backbone sample-similarity matrices on the cached test features. ResNet50 + EfficientNetB0 had the lowest pairwise representation similarity (0.692) and highest complementarity (0.308), followed by MobileNetV2 + EfficientNetB0 (0.302 complementarity) and ResNet50 + MobileNetV2 (0.253 complementarity).
+
+Fine-tuning the final meaningful blocks improved the best overall result. The best fine-tuned
+single-backbone model was ResNet50 with 0.776 accuracy, 0.658 macro-F1, and 0.785 weighted-F1. The
+best fine-tuned fusion model was the three-backbone concatenation model, reaching 0.811 accuracy,
+0.706 macro-F1, and 0.813 weighted-F1.
+
+Compared with the frozen Sprint 3 matrix, the best overall macro-F1 increased from 0.595 to 0.706.
+For matched configurations, the largest macro-F1 gain was observed for the three-backbone weighted
+fusion run, which improved from 0.519 to 0.687. The best fine-tuned concatenation model improved
+per-class F1 most for \texttt{vasc}, \texttt{bcc}, \texttt{df}, \texttt{akiec}, and \texttt{mel},
+although the low support of \texttt{vasc} and \texttt{df} requires cautious interpretation.

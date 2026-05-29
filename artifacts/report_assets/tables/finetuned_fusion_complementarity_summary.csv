@@ -1,0 +1,9 @@
+run_id,display_name,backbone_combination,fusion_method,backbone_count,avg_pairwise_representation_similarity,avg_pairwise_representation_complementarity,macro_f1,macro_f1_gain
+20260529_173707_finetuned_r50-mnv2_concat_mlp_s42,r50+mnv2 concat,resnet50+mobilenet_v2,concat,2,0.675167188047173,0.324832811952827,0.6852993171057028,0.027544716651255907
+20260529_173720_finetuned_r50-mnv2_weighted_mlp_s42,r50+mnv2 weighted,resnet50+mobilenet_v2,weighted,2,0.675167188047173,0.324832811952827,0.6511762007118466,-0.006578399742600327
+20260529_173730_finetuned_r50-effb0_concat_mlp_s42,r50+effb0 concat,resnet50+efficientnet_b0,concat,2,0.5627568189662514,0.4372431810337486,0.6787325242339214,0.020977923779474494
+20260529_173742_finetuned_r50-effb0_weighted_mlp_s42,r50+effb0 weighted,resnet50+efficientnet_b0,weighted,2,0.5627568189662514,0.4372431810337486,0.6976650579184576,0.039910457464010674
+20260529_173748_finetuned_mnv2-effb0_concat_mlp_s42,mnv2+effb0 concat,mobilenet_v2+efficientnet_b0,concat,2,0.6858097238214319,0.3141902761785681,0.601564531147144,-0.05619006930730286
+20260529_173756_finetuned_mnv2-effb0_weighted_mlp_s42,mnv2+effb0 weighted,mobilenet_v2+efficientnet_b0,weighted,2,0.6858097238214319,0.3141902761785681,0.5940426542458282,-0.06371194620861864
+20260529_173806_finetuned_r50-mnv2-effb0_concat_mlp_s42,r50+mnv2+effb0 concat,resnet50+mobilenet_v2+efficientnet_b0,concat,3,0.6412445769449522,0.3587554230550479,0.7059113258715694,0.04815672541712246
+20260529_173817_finetuned_r50-mnv2-effb0_weighted_mlp_s42,r50+mnv2+effb0 weighted,resnet50+mobilenet_v2+efficientnet_b0,weighted,3,0.6412445769449522,0.3587554230550479,0.6867827900397871,0.02902818958534026
