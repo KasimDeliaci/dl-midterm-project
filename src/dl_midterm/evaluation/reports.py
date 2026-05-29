@@ -367,20 +367,26 @@ def export_frozen_vs_finetuned_report_assets(
     if summaries.empty:
         raise FileNotFoundError(f"No run metrics found under {run_root}")
 
-    frozen = _select_latest_matrix_rows(
-        summaries[
-            (summaries["feature_source"] == "frozen")
-            & (summaries["fusion_method"].isin(["none", "concat", "weighted"]))
-        ].copy()
-    )
-    finetuned = _select_latest_matrix_rows(
-        summaries[
-            (summaries["feature_source"] == "finetuned")
-            & (summaries["fusion_method"].isin(["none", "concat", "weighted"]))
-        ].copy()
-    )
-    if frozen.empty or finetuned.empty:
-        raise FileNotFoundError("Both frozen and finetuned matrix runs are required.")
+    frozen_candidates = summaries[
+        (summaries["feature_source"] == "frozen")
+        & (summaries["fusion_method"].isin(["none", "concat", "weighted"]))
+    ].copy()
+    finetuned_candidates = summaries[
+        (summaries["feature_source"] == "finetuned")
+        & (summaries["fusion_method"].isin(["none", "concat", "weighted"]))
+    ].copy()
+    if frozen_candidates.empty:
+        raise FileNotFoundError(
+            "Frozen-vs-finetuned comparison requires frozen run metrics under "
+            f"{run_root}. Restore Sprint 3 frozen run folders or run this export locally."
+        )
+    if finetuned_candidates.empty:
+        raise FileNotFoundError(
+            f"Frozen-vs-finetuned comparison requires finetuned run metrics under {run_root}."
+        )
+
+    frozen = _select_latest_matrix_rows(frozen_candidates)
+    finetuned = _select_latest_matrix_rows(finetuned_candidates)
 
     frozen = _add_display_columns(frozen)
     finetuned = _add_display_columns(finetuned)
@@ -466,8 +472,11 @@ def export_frozen_vs_finetuned_report_assets(
 
 
 def _select_latest_matrix_rows(summaries: pd.DataFrame) -> pd.DataFrame:
+    if summaries.empty:
+        return summaries.copy()
     frame = summaries.copy()
     frame["backbone_combination"] = frame.apply(_resolve_backbone_combination, axis=1)
+    frame["backbone_combination"] = frame["backbone_combination"].astype(str)
     frame["backbone_count"] = frame["backbone_combination"].str.count(r"\+") + 1
     frame = frame.sort_values("run_id")
     return (

@@ -39,13 +39,20 @@ def main() -> None:
         complementarity_max_samples=args.complementarity_max_samples,
     )
     if args.feature_source == "finetuned":
-        exported.update(
-            export_frozen_vs_finetuned_report_assets(
-                args.run_root,
-                args.tables_dir,
-                args.figures_dir,
+        try:
+            exported.update(
+                export_frozen_vs_finetuned_report_assets(
+                    args.run_root,
+                    args.tables_dir,
+                    args.figures_dir,
+                )
             )
-        )
+        except FileNotFoundError as exc:
+            print(f"Skipping frozen-vs-finetuned export: {exc}")
+            print(
+                "Fine-tuned matrix assets were still exported. Run the comparison where "
+                "Sprint 3 frozen run folders are available."
+            )
     print("Exported report assets:")
     for name, path in exported.items():
         print(f"  {name}: {path}")

@@ -154,3 +154,49 @@ def test_cached_feature_mlp_stage_does_not_expose_raw_image_paths(tmp_path: Path
     assert isinstance(dataset, TensorDataset)
     assert len(sample) == 2
     assert all(isinstance(item, torch.Tensor) for item in sample)
+
+
+def test_frozen_vs_finetuned_export_reports_missing_frozen_runs(tmp_path: Path) -> None:
+    from dl_midterm.evaluation.reports import export_frozen_vs_finetuned_report_assets
+
+    run_dir = tmp_path / "20260529_finetuned_r50_none_mlp_s42"
+    run_dir.mkdir(parents=True)
+    (run_dir / "config_resolved.yaml").write_text(
+        "\n".join(
+            [
+                "run_id: 20260529_finetuned_r50_none_mlp_s42",
+                "feature_source: finetuned",
+                "backbone: resnet50",
+                "backbones:",
+                "  - resnet50",
+                "backbone_combination: resnet50",
+                "backbone_count: 1",
+                "fusion_method: none",
+                "feature_dim: 2048",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (run_dir / "metrics.json").write_text(
+        """
+{
+  "accuracy": 0.1,
+  "macro_precision": 0.1,
+  "macro_recall": 0.1,
+  "macro_f1": 0.1,
+  "weighted_f1": 0.1
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    try:
+        export_frozen_vs_finetuned_report_assets(
+            tmp_path,
+            tmp_path / "tables",
+            tmp_path / "figures",
+        )
+    except FileNotFoundError as exc:
+        assert "requires frozen run metrics" in str(exc)
+    else:
+        raise AssertionError("Expected missing frozen run folders to be reported clearly.")

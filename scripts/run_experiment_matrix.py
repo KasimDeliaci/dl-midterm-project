@@ -182,13 +182,20 @@ def main() -> None:
         dataset_config=dataset_config,
     )
     if args.feature_source == "finetuned":
-        exported.update(
-            export_frozen_vs_finetuned_report_assets(
-                args.run_root,
-                args.tables_dir,
-                args.figures_dir,
+        try:
+            exported.update(
+                export_frozen_vs_finetuned_report_assets(
+                    args.run_root,
+                    args.tables_dir,
+                    args.figures_dir,
+                )
             )
-        )
+        except FileNotFoundError as exc:
+            print(f"Skipping frozen-vs-finetuned export: {exc}")
+            print(
+                "Fine-tuned matrix assets were still exported. Run the comparison where "
+                "Sprint 3 frozen run folders are available."
+            )
     (Path(args.run_root) / f"{experiment_name}_exported_assets.json").write_text(
         json.dumps({name: str(path) for name, path in exported.items()}, indent=2),
         encoding="utf-8",
