@@ -18,11 +18,13 @@ from dl_midterm.config.load_config import load_yaml
 from dl_midterm.evaluation.reports import (
     export_frozen_matrix_report_assets,
     export_frozen_vs_finetuned_report_assets,
+    export_sprint4b_full_classaware_report_assets,
     write_run_report,
 )
 from dl_midterm.features.cache import (
     FeatureCache,
     backbone_cache_dir,
+    cache_allows_prefix_split_verification,
     class_weights_from_cache,
     feature_cache_path,
     load_feature_cache,
@@ -42,7 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default="configs/experiments/frozen_feature_matrix.yaml")
     parser.add_argument("--default-config", default="configs/default.yaml")
     parser.add_argument("--dataset-config", default="configs/dataset/selected_dataset.yaml")
-    parser.add_argument("--feature-source", default="frozen", choices=["frozen", "finetuned"])
+    parser.add_argument("--feature-source", default=None)
     parser.add_argument("--feature-root", default="artifacts/features")
     parser.add_argument("--run-root", default="artifacts/runs")
     parser.add_argument("--tables-dir", default="artifacts/report_assets/tables")
@@ -111,6 +113,7 @@ def main() -> None:
     runtime_config = default_config.get("runtime", {})
     training_config = default_config.get("training", {})
     mlp_config = default_config.get("mlp", {})
+    feature_source = str(args.feature_source or experiment_config.get("feature_source", "frozen"))
     device = resolve_device(args.device or runtime_config.get("device", "auto"))
     batch_size = args.batch_size or int(training_config.get("batch_size", 32))
     epochs = args.epochs or int(training_config.get("epochs", 25))
@@ -121,11 +124,11 @@ def main() -> None:
     hidden_dims = args.hidden_dims or list(mlp_config.get("hidden_dims", [512, 256]))
     projection_dim = args.projection_dim or int(mlp_config.get("projection_dim", 512))
     class_weighting = not args.no_class_weights
-    experiment_name = args.experiment_name or f"{args.feature_source}_fusion_matrix"
+    experiment_name = args.experiment_name or f"{feature_source}_fusion_matrix"
 
     run_specs = expand_fusion_run_matrix(
         experiment_config,
-        feature_source=args.feature_source,
+        feature_source=feature_source,
         fusion_methods=args.fusion_methods,
         backbones=args.backbones,
     )
@@ -158,13 +161,14 @@ def main() -> None:
             class_weighting=class_weighting,
             training_config=training_config,
             experiment_name=experiment_name,
+            feature_source=feature_source,
         )
         completed_runs.append({**run_spec, "run_dir": str(run_dir)})
 
     manifest_path = Path(args.run_root) / f"{experiment_name}_manifest.yaml"
     manifest = {
         "experiment_name": experiment_name,
-        "feature_source": args.feature_source,
+        "feature_source": feature_source,
         "seed": seed,
         "config": str(Path(args.config)),
         "default_config": str(Path(args.default_config)),
@@ -177,11 +181,11 @@ def main() -> None:
         args.run_root,
         args.tables_dir,
         args.figures_dir,
-        feature_source=args.feature_source,
+        feature_source=feature_source,
         feature_root=args.feature_root,
         dataset_config=dataset_config,
     )
-    if args.feature_source == "finetuned":
+    if feature_source == "finetuned":
         try:
             exported.update(
                 export_frozen_vs_finetuned_report_assets(
@@ -196,6 +200,17 @@ def main() -> None:
                 "Fine-tuned matrix assets were still exported. Run the comparison where "
                 "Sprint 3 frozen run folders are available."
             )
+    if feature_source == "finetuned_classaware":
+        try:
+            exported.update(
+                export_sprint4b_full_classaware_report_assets(
+                    args.run_root,
+                    args.tables_dir,
+                    args.figures_dir,
+                )
+            )
+        except FileNotFoundError as exc:
+            print(f"Skipping Sprint 4B full-matrix comparison export: {exc}")
     (Path(args.run_root) / f"{experiment_name}_exported_assets.json").write_text(
         json.dumps({name: str(path) for name, path in exported.items()}, indent=2),
         encoding="utf-8",
@@ -225,6 +240,7 @@ def run_fusion_experiment(
     class_weighting: bool,
     training_config: dict[str, Any],
     experiment_name: str,
+    feature_source: str,
 ) -> Path:
     class_names = list(dataset_config["class_names"])
     backbones = list(run_spec["backbones"])
@@ -232,7 +248,7 @@ def run_fusion_experiment(
     caches_by_split = _load_aligned_caches(
         feature_root=args.feature_root,
         dataset_name=dataset_config["name"],
-        feature_source=args.feature_source,
+        feature_source=feature_source,
         backbones=backbones,
         splits_dir=Path(dataset_config["splits_dir"]),
     )
@@ -300,7 +316,7 @@ def run_fusion_experiment(
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     alias = "-".join(backbone_alias(backbone) for backbone in backbones)
-    run_id = f"{timestamp}_{args.feature_source}_{alias}_{fusion_method}_mlp_s{seed}"
+    run_id = f"{timestamp}_{feature_source}_{alias}_{fusion_method}_mlp_s{seed}"
     run_dir = Path(args.run_root) / run_id
     backbone_combination = "+".join(backbones)
     resolved_config = {
@@ -308,7 +324,7 @@ def run_fusion_experiment(
         "experiment_name": experiment_name,
         "seed": seed,
         "dataset": dataset_config["name"],
-        "feature_source": args.feature_source,
+        "feature_source": feature_source,
         "backbones": backbones,
         "backbone_combination": backbone_combination,
         "backbone_count": len(backbones),
@@ -334,7 +350,7 @@ def run_fusion_experiment(
                 backbone_cache_dir(
                     args.feature_root,
                     dataset_config["name"],
-                    args.feature_source,
+                    feature_source,
                     backbone,
                 )
             )
@@ -350,7 +366,7 @@ def run_fusion_experiment(
         {
             "run_id": run_id,
             "seed": seed,
-            "feature_source": args.feature_source,
+            "feature_source": feature_source,
             "backbones": backbones,
             "backbone_combination": backbone_combination,
             "backbone_count": len(backbones),
@@ -400,7 +416,11 @@ def _load_aligned_caches(
         for backbone in backbones:
             cache_dir = backbone_cache_dir(feature_root, dataset_name, feature_source, backbone)
             cache = load_feature_cache(feature_cache_path(cache_dir, split))
-            verify_cache_matches_split(cache, splits_dir / f"{split}.csv")
+            verify_cache_matches_split(
+                cache,
+                splits_dir / f"{split}.csv",
+                allow_prefix=cache_allows_prefix_split_verification(cache),
+            )
             split_caches.append(cache)
         verify_cache_alignment(split_caches)
         caches_by_split[split] = split_caches

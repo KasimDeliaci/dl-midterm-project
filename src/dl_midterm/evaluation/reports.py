@@ -32,6 +32,9 @@ from dl_midterm.evaluation.plots import (
     save_per_class_source_comparison_heatmap,
     save_representation_similarity_heatmap,
     save_single_pairwise_three_plot,
+    save_sprint4b_per_class_gain_heatmap,
+    save_sprint4b_test_macro_f1_vs_canonical_plot,
+    save_sprint4b_val_macro_f1_screening_plot,
     save_training_curve_plot,
 )
 from dl_midterm.models.backbones import backbone_alias
@@ -356,6 +359,193 @@ def export_single_backbone_report_assets(
     }
 
 
+def export_sprint4b_screening_report_assets(
+    run_root: str | Path,
+    tables_dir: str | Path,
+    figures_dir: str | Path,
+    *,
+    canonical_source: str = "finetuned",
+    candidate_sources: tuple[str, ...] = ("finetuned_classaware", "finetuned_deeper"),
+) -> dict[str, Path]:
+    """Export Sprint 4B single-backbone screening comparisons versus canonical Sprint 4."""
+
+    summaries = collect_run_summaries(run_root)
+    if summaries.empty:
+        raise FileNotFoundError(f"No run metrics found under {run_root}")
+
+    singles = summaries[summaries["fusion_method"] == "none"].copy()
+    canonical = singles[singles["feature_source"] == canonical_source].copy()
+    candidates = singles[singles["feature_source"].isin(candidate_sources)].copy()
+    if canonical.empty:
+        raise FileNotFoundError(
+            f"Sprint 4B screening export requires canonical {canonical_source} single runs."
+        )
+    if candidates.empty:
+        raise FileNotFoundError("No Sprint 4B screening single-backbone runs found.")
+
+    canonical = _add_source_labels(_add_display_columns(_select_latest_matrix_rows(canonical)))
+    candidates = _add_source_labels(_add_display_columns(_select_latest_matrix_rows(candidates)))
+    screening = pd.concat([canonical, candidates], ignore_index=True).sort_values(
+        ["feature_source", "backbone_combination"]
+    )
+
+    comparison = candidates.merge(
+        canonical,
+        on=["backbone_combination", "fusion_method"],
+        suffixes=("", "_canonical"),
+    )
+    comparison = comparison.assign(
+        backbone=comparison["backbone_combination"],
+        canonical_run_id=comparison["run_id_canonical"],
+        canonical_best_val_macro_f1=comparison["best_val_macro_f1_canonical"],
+        canonical_accuracy=comparison["accuracy_canonical"],
+        canonical_macro_f1=comparison["macro_f1_canonical"],
+        canonical_weighted_f1=comparison["weighted_f1_canonical"],
+        val_macro_f1_gain=(
+            comparison["best_val_macro_f1"] - comparison["best_val_macro_f1_canonical"]
+        ),
+        accuracy_gain=comparison["accuracy"] - comparison["accuracy_canonical"],
+        macro_f1_gain=comparison["macro_f1"] - comparison["macro_f1_canonical"],
+        weighted_f1_gain=comparison["weighted_f1"] - comparison["weighted_f1_canonical"],
+    )
+
+    table_root = Path(tables_dir)
+    figure_root = Path(figures_dir)
+    table_root.mkdir(parents=True, exist_ok=True)
+    figure_root.mkdir(parents=True, exist_ok=True)
+
+    screening_path = table_root / "sprint4b_screening_results.csv"
+    comparison_path = table_root / "sprint4b_vs_canonical_single_backbone.csv"
+    per_class_gain_path = table_root / "sprint4b_per_class_f1_gain.csv"
+
+    screening.to_csv(screening_path, index=False)
+    comparison[
+        [
+            "feature_source",
+            "source_label",
+            "backbone",
+            "run_id",
+            "canonical_run_id",
+            "best_val_macro_f1",
+            "canonical_best_val_macro_f1",
+            "val_macro_f1_gain",
+            "accuracy",
+            "canonical_accuracy",
+            "accuracy_gain",
+            "macro_f1",
+            "canonical_macro_f1",
+            "macro_f1_gain",
+            "weighted_f1",
+            "canonical_weighted_f1",
+            "weighted_f1_gain",
+        ]
+    ].sort_values(["feature_source", "backbone"]).to_csv(comparison_path, index=False)
+
+    per_class_gains = _build_sprint4b_per_class_gains(run_root, canonical, candidates, comparison)
+    per_class_gains.to_csv(per_class_gain_path, index=False)
+
+    exported = {
+        "screening_results": screening_path,
+        "vs_canonical_single_backbone": comparison_path,
+        "per_class_gain": per_class_gain_path,
+        "val_macro_f1_screening_plot": save_sprint4b_val_macro_f1_screening_plot(
+            screening,
+            figure_root / "sprint4b_val_macro_f1_screening.png",
+        ),
+        "test_macro_f1_vs_canonical_plot": save_sprint4b_test_macro_f1_vs_canonical_plot(
+            comparison,
+            figure_root / "sprint4b_test_macro_f1_vs_canonical.png",
+        ),
+    }
+    if not per_class_gains.empty:
+        exported["per_class_gain_heatmap"] = save_sprint4b_per_class_gain_heatmap(
+            per_class_gains,
+            figure_root / "sprint4b_per_class_f1_gain_heatmap.png",
+        )
+    return exported
+
+
+def export_sprint4b_full_classaware_report_assets(
+    run_root: str | Path,
+    tables_dir: str | Path,
+    figures_dir: str | Path,
+    *,
+    canonical_source: str = "finetuned",
+    classaware_source: str = "finetuned_classaware",
+) -> dict[str, Path]:
+    """Export optional full class-aware matrix comparisons versus canonical Sprint 4."""
+
+    summaries = collect_run_summaries(run_root)
+    if summaries.empty:
+        raise FileNotFoundError(f"No run metrics found under {run_root}")
+
+    methods = ["none", "concat", "weighted"]
+    canonical = summaries[
+        (summaries["feature_source"] == canonical_source)
+        & (summaries["fusion_method"].isin(methods))
+    ].copy()
+    classaware = summaries[
+        (summaries["feature_source"] == classaware_source)
+        & (summaries["fusion_method"].isin(methods))
+    ].copy()
+    if canonical.empty or classaware.empty:
+        raise FileNotFoundError("Full Sprint 4B export requires canonical and class-aware runs.")
+
+    canonical = _add_display_columns(_select_latest_matrix_rows(canonical))
+    classaware = _add_display_columns(_select_latest_matrix_rows(classaware))
+    comparison = classaware.merge(
+        canonical,
+        on=["backbone_combination", "fusion_method"],
+        suffixes=("_classaware", "_canonical"),
+    )
+    if comparison.empty:
+        raise FileNotFoundError("No matched canonical/class-aware matrix rows found.")
+
+    summary = pd.DataFrame(
+        {
+            "backbone_combination": comparison["backbone_combination"],
+            "fusion_method": comparison["fusion_method"],
+            "display_name": comparison["display_name_classaware"],
+            "classaware_run_id": comparison["run_id_classaware"],
+            "canonical_run_id": comparison["run_id_canonical"],
+            "classaware_best_val_macro_f1": comparison["best_val_macro_f1_classaware"],
+            "canonical_best_val_macro_f1": comparison["best_val_macro_f1_canonical"],
+            "val_macro_f1_gain": (
+                comparison["best_val_macro_f1_classaware"]
+                - comparison["best_val_macro_f1_canonical"]
+            ),
+            "classaware_accuracy": comparison["accuracy_classaware"],
+            "canonical_accuracy": comparison["accuracy_canonical"],
+            "accuracy_gain": comparison["accuracy_classaware"] - comparison["accuracy_canonical"],
+            "classaware_macro_f1": comparison["macro_f1_classaware"],
+            "canonical_macro_f1": comparison["macro_f1_canonical"],
+            "macro_f1_gain": (
+                comparison["macro_f1_classaware"] - comparison["macro_f1_canonical"]
+            ),
+            "classaware_weighted_f1": comparison["weighted_f1_classaware"],
+            "canonical_weighted_f1": comparison["weighted_f1_canonical"],
+            "weighted_f1_gain": (
+                comparison["weighted_f1_classaware"] - comparison["weighted_f1_canonical"]
+            ),
+        }
+    ).sort_values("classaware_macro_f1", ascending=False)
+
+    table_root = Path(tables_dir)
+    figure_root = Path(figures_dir)
+    table_root.mkdir(parents=True, exist_ok=True)
+    figure_root.mkdir(parents=True, exist_ok=True)
+    summary_path = table_root / "sprint4b_classaware_vs_canonical_fusion_summary.csv"
+    summary.to_csv(summary_path, index=False)
+
+    exported = {"classaware_vs_canonical_fusion_summary": summary_path}
+    best_source = figure_root / "sprint4b_classaware_best_confusion_matrix.png"
+    best_dest = figure_root / "sprint4b_best_confusion_matrix.png"
+    if best_source.exists():
+        shutil.copy2(best_source, best_dest)
+        exported["best_confusion_matrix"] = best_dest
+    return exported
+
+
 def export_frozen_vs_finetuned_report_assets(
     run_root: str | Path,
     tables_dir: str | Path,
@@ -484,6 +674,12 @@ def _select_latest_matrix_rows(summaries: pd.DataFrame) -> pd.DataFrame:
         .tail(1)
         .reset_index(drop=True)
     )
+
+
+def _add_source_labels(results: pd.DataFrame) -> pd.DataFrame:
+    frame = results.copy()
+    frame["source_label"] = frame["feature_source"].map(_source_label)
+    return frame
 
 
 def _add_display_columns(results: pd.DataFrame) -> pd.DataFrame:
@@ -657,7 +853,66 @@ def _matrix_backbones(results: pd.DataFrame) -> list[str]:
 
 
 def _source_prefix(feature_source: str) -> str:
+    if feature_source == "finetuned_classaware":
+        return "sprint4b_classaware"
+    if feature_source == "finetuned_deeper":
+        return "sprint4b_deeper"
     return "frozen" if feature_source == "frozen" else feature_source
+
+
+def _source_label(feature_source: str) -> str:
+    labels = {
+        "frozen": "Frozen",
+        "finetuned": "Canonical Sprint 4",
+        "finetuned_classaware": "Sprint 4B class-aware",
+        "finetuned_deeper": "Sprint 4B deeper",
+    }
+    return labels.get(feature_source, feature_source)
+
+
+def _build_sprint4b_per_class_gains(
+    run_root: str | Path,
+    canonical: pd.DataFrame,
+    candidates: pd.DataFrame,
+    comparison: pd.DataFrame,
+) -> pd.DataFrame:
+    canonical_per_class = _collect_per_class_reports(run_root, canonical)
+    candidate_per_class = _collect_per_class_reports(run_root, candidates)
+    if canonical_per_class.empty or candidate_per_class.empty:
+        return pd.DataFrame()
+
+    canonical_ref = canonical_per_class[
+        ["run_id", "backbone_combination", "label", "f1", "precision", "recall", "support"]
+    ].rename(
+        columns={
+            "run_id": "canonical_run_id",
+            "f1": "canonical_f1",
+            "precision": "canonical_precision",
+            "recall": "canonical_recall",
+        }
+    )
+    candidate_rows = candidate_per_class.merge(
+        candidates[["run_id", "feature_source", "source_label"]],
+        on="run_id",
+        how="left",
+    )
+    gain_rows = candidate_rows.merge(
+        canonical_ref,
+        on=["backbone_combination", "label", "support"],
+        how="left",
+    )
+    gain_rows = gain_rows.merge(
+        comparison[["run_id", "macro_f1_gain"]],
+        on="run_id",
+        how="left",
+    )
+    gain_rows["candidate_display_name"] = (
+        gain_rows["source_label"].astype(str) + " " + gain_rows["display_name"].astype(str)
+    )
+    gain_rows["f1_gain"] = gain_rows["f1"] - gain_rows["canonical_f1"]
+    gain_rows["precision_gain"] = gain_rows["precision"] - gain_rows["canonical_precision"]
+    gain_rows["recall_gain"] = gain_rows["recall"] - gain_rows["canonical_recall"]
+    return gain_rows.sort_values(["macro_f1_gain", "candidate_display_name", "label"])
 
 
 def _per_class_table_name(feature_source: str) -> str:

@@ -150,16 +150,31 @@ def save_backbone_manifest(cache_dir: str | Path, caches: list[FeatureCache]) ->
     return path
 
 
-def verify_cache_matches_split(cache: FeatureCache, split_csv: str | Path) -> None:
+def verify_cache_matches_split(
+    cache: FeatureCache,
+    split_csv: str | Path,
+    *,
+    allow_prefix: bool = False,
+) -> None:
     """Ensure cache image IDs and labels align exactly with a split CSV."""
 
     split = pd.read_csv(split_csv)
     expected_ids = split["image_id"].astype(str).tolist()
     expected_labels = split["label"].astype(str).tolist()
+    if allow_prefix:
+        expected_ids = expected_ids[: len(cache.image_ids)]
+        expected_labels = expected_labels[: len(cache.label_names)]
     if cache.image_ids != expected_ids:
         raise ValueError(f"Cache image_id order does not match split CSV: {split_csv}")
     if cache.label_names != expected_labels:
         raise ValueError(f"Cache label order does not match split CSV: {split_csv}")
+
+
+def cache_allows_prefix_split_verification(cache: FeatureCache) -> bool:
+    """Return true for explicitly limited smoke-test feature caches."""
+
+    config = cache.metadata.get("config", {})
+    return bool(isinstance(config, dict) and config.get("limit_per_split") is not None)
 
 
 def class_weights_from_cache(cache: FeatureCache, num_classes: int) -> torch.Tensor:

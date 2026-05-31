@@ -158,3 +158,33 @@ computed only from the train split.
 
 Reason: macro-F1 is the project primary metric because HAM10000 is imbalanced. Using validation
 macro-F1 preserves the evaluation protocol; test metrics remain held out for final reporting only.
+
+## 2026-05-31 - Keep Sprint 4B as an exploratory extension
+
+Decision: implement Sprint 4B under separate feature sources, `finetuned_classaware` and
+`finetuned_deeper`, without renaming or overwriting canonical Sprint 4 `finetuned` caches,
+checkpoints, run folders, tables, or report claims.
+
+Reason: Sprint 4 already completes the assignment's fine-tuned transfer-learning matrix. Sprint 4B
+is a controlled follow-up to test imbalance-aware fine-tuning and one deeper ResNet50 probe, so its
+results must remain separable from the canonical Sprint 4 baseline.
+
+## 2026-05-31 - Use mild class-aware focal loss for Sprint 4B screening
+
+Decision: Sprint 4B class-aware fine-tuning uses class-balanced focal loss with gamma `1.0`,
+train-split class weights, square-root class-weight smoothing, class-weight clipping, and no
+weighted sampler.
+
+Reason: HAM10000 is strongly imbalanced, but aggressive minority reweighting can destabilize
+precision and accuracy. A mild focal objective keeps the experiment narrow while directly testing
+whether validation macro-F1 and minority-class behavior improve over canonical Sprint 4.
+
+## 2026-05-31 - Limit deeper unfreezing to a ResNet50 probe first
+
+Decision: Sprint 4B deeper fine-tuning initially unfreezes ResNet50 `layer3`, `layer4`, and `fc`
+only, using a lower backbone learning rate than the head. MobileNetV2 and EfficientNetB0 deeper
+variants are not run unless the ResNet50 probe shows a clear validation macro-F1 gain.
+
+Reason: deeper partial unfreezing increases overfitting and compute risk. A single ResNet50 probe
+is enough to test whether the conservative Sprint 4 policy is leaving obvious validation signal on
+the table before expanding the run count.

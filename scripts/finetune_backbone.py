@@ -29,12 +29,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--checkpoint-dir", default=None)
     parser.add_argument("--feature-root", default="artifacts/features")
     parser.add_argument("--run-root", default="artifacts/runs")
-    parser.add_argument("--feature-source", default="finetuned")
+    parser.add_argument("--feature-source", default=None)
     parser.add_argument("--device", default=None)
     parser.add_argument("--batch-size", type=int, default=None)
     parser.add_argument("--num-workers", type=int, default=None)
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--learning-rate", type=float, default=None)
+    parser.add_argument("--backbone-learning-rate", type=float, default=None)
+    parser.add_argument("--head-learning-rate", type=float, default=None)
     parser.add_argument("--weight-decay", type=float, default=None)
     parser.add_argument("--early-stopping-patience", type=int, default=None)
     parser.add_argument("--limit-per-split", type=int, default=None)
@@ -71,12 +73,21 @@ def main() -> None:
         num_workers = int(runtime_config.get("num_workers", 2))
     epochs = args.epochs or int(finetune_config.get("epochs", 10))
     learning_rate = args.learning_rate or float(finetune_config.get("learning_rate", 1e-4))
+    backbone_learning_rate = _optional_float(
+        args.backbone_learning_rate,
+        finetune_config.get("backbone_learning_rate"),
+    )
+    head_learning_rate = _optional_float(
+        args.head_learning_rate,
+        finetune_config.get("head_learning_rate"),
+    )
     weight_decay = args.weight_decay or float(finetune_config.get("weight_decay", 1e-4))
     patience = args.early_stopping_patience or int(
         finetune_config.get("early_stopping_patience", 3)
     )
     checkpoint_dir = Path(args.checkpoint_dir or finetune_config["checkpoint_dir"])
     backbones = _selected_backbones(args, finetune_config)
+    feature_source = str(args.feature_source or finetune_config.get("feature_source", "finetuned"))
 
     class_names = list(dataset_config["class_names"])
     image_size = int(dataset_config.get("image_size", 224))
@@ -117,19 +128,26 @@ def main() -> None:
                 early_stopping_patience=patience,
                 policy=policy,
                 mixed_precision=mixed_precision,
+                feature_source=feature_source,
                 pretrained=not args.no_pretrained,
                 class_weighting=not args.no_class_weights,
+                loss_config=finetune_config.get("loss"),
+                backbone_learning_rate=backbone_learning_rate,
+                head_learning_rate=head_learning_rate,
                 output_run_root=args.run_root,
+                experiment_name=str(
+                    finetune_config.get("experiment_name", "sprint4_finetune_backbones")
+                ),
                 limit_per_split=args.limit_per_split,
             )
             print(f"Wrote best checkpoint: {checkpoint_path}")
         if not args.skip_feature_extraction:
             cache_dir = backbone_cache_dir(
-                args.feature_root,
-                dataset_config["name"],
-                args.feature_source,
-                backbone,
-            )
+                    args.feature_root,
+                    dataset_config["name"],
+                    feature_source,
+                    backbone,
+                )
             caches = extract_finetuned_feature_cache(
                 backbone=backbone,
                 checkpoint_path=checkpoint_path,
@@ -139,6 +157,7 @@ def main() -> None:
                 seed=seed,
                 device=device,
                 mixed_precision=mixed_precision,
+                feature_source=feature_source,
                 config={
                     "checkpoint_path": str(checkpoint_path),
                     "dataset_config": str(Path(args.dataset_config)),
@@ -146,7 +165,12 @@ def main() -> None:
                     "finetune_config": str(Path(args.config)),
                     "batch_size": batch_size,
                     "image_size": image_size,
-                    "feature_source": args.feature_source,
+                    "feature_source": feature_source,
+                    "loss": finetune_config.get("loss"),
+                    "unfreeze_policy": policy,
+                    "learning_rate": learning_rate,
+                    "backbone_learning_rate": backbone_learning_rate,
+                    "head_learning_rate": head_learning_rate,
                     "limit_per_split": args.limit_per_split,
                 },
             )
@@ -161,7 +185,7 @@ def main() -> None:
                     backbone_cache_dir(
                         args.feature_root,
                         dataset_config["name"],
-                        args.feature_source,
+                        feature_source,
                         backbone,
                     )
                 ),
@@ -189,6 +213,14 @@ def _policy_for_backbone(config: dict[str, Any], backbone: str) -> str | None:
     if backbone == "resnet50":
         return "layer4"
     return "last_feature_blocks"
+
+
+def _optional_float(cli_value: float | None, config_value: Any) -> float | None:
+    if cli_value is not None:
+        return float(cli_value)
+    if config_value is None:
+        return None
+    return float(config_value)
 
 
 if __name__ == "__main__":

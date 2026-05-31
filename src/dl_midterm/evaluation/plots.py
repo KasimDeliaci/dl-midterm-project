@@ -424,6 +424,107 @@ def save_accuracy_macro_f1_scatter(results: pd.DataFrame, path: str | Path) -> P
     return output_path
 
 
+def save_sprint4b_val_macro_f1_screening_plot(results: pd.DataFrame, path: str | Path) -> Path:
+    """Save validation macro-F1 bars for Sprint 4B single-backbone screening."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = results.dropna(subset=["best_val_macro_f1"]).copy()
+    frame = frame.sort_values("best_val_macro_f1", ascending=False)
+    plt.figure(figsize=(9, 5))
+    ax = sns.barplot(
+        data=frame,
+        x="backbone",
+        y="best_val_macro_f1",
+        hue="source_label",
+    )
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Backbone")
+    ax.set_ylabel("Validation macro-F1")
+    ax.set_title("Sprint 4B Single-Backbone Screening")
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
+    plt.legend(title="Feature source")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4b_test_macro_f1_vs_canonical_plot(
+    comparison: pd.DataFrame,
+    path: str | Path,
+) -> Path:
+    """Save canonical Sprint 4 versus Sprint 4B test macro-F1 bars."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    melted = comparison.melt(
+        id_vars=["backbone", "feature_source", "source_label"],
+        value_vars=["canonical_macro_f1", "macro_f1"],
+        var_name="series",
+        value_name="test_macro_f1",
+    )
+    melted["series"] = melted["series"].map(
+        {"canonical_macro_f1": "canonical Sprint 4", "macro_f1": "Sprint 4B"}
+    )
+    plt.figure(figsize=(10, 5))
+    ax = sns.barplot(
+        data=melted,
+        x="backbone",
+        y="test_macro_f1",
+        hue="series",
+    )
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Backbone")
+    ax.set_ylabel("Test macro-F1")
+    ax.set_title("Sprint 4B vs Canonical Sprint 4 Single-Backbone Macro-F1")
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
+    plt.legend(title="")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4b_per_class_gain_heatmap(gains: pd.DataFrame, path: str | Path) -> Path:
+    """Save per-class F1 gains for Sprint 4B screening runs versus canonical Sprint 4."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pivot = gains.pivot_table(
+        index="candidate_display_name",
+        columns="label",
+        values="f1_gain",
+        aggfunc="first",
+    )
+    order = (
+        gains[["candidate_display_name", "macro_f1_gain"]]
+        .drop_duplicates()
+        .sort_values("macro_f1_gain", ascending=False)["candidate_display_name"]
+    )
+    pivot = pivot.loc[order]
+    limit = max(0.25, float(pivot.abs().max().max()))
+    plt.figure(figsize=(10, max(4, 0.45 * len(pivot))))
+    sns.heatmap(
+        pivot,
+        annot=True,
+        fmt="+.2f",
+        cmap="vlag",
+        center=0,
+        vmin=-limit,
+        vmax=limit,
+    )
+    plt.xlabel("Class")
+    plt.ylabel("Sprint 4B run")
+    plt.title("Sprint 4B Per-Class F1 Gain vs Canonical Sprint 4")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
 def save_representation_similarity_heatmap(pairwise: pd.DataFrame, path: str | Path) -> Path:
     """Save a heatmap of pairwise representation similarity."""
 
