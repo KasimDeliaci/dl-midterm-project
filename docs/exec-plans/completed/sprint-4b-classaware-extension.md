@@ -319,12 +319,13 @@ In both cases:
 - Treat `df` and `vasc` gains cautiously because their test support is low.
 - Avoid clinical diagnosis claims.
 
-## Current Status
+## Completion Status
 
-Implementation scaffold is complete locally; full Colab GPU runs and result interpretation are
-still pending.
+Sprint 4B is complete as an exploratory extension. Canonical Sprint 4 remains the main
+fine-tuned result set; Sprint 4B is reported separately as a class-aware/deeper fine-tuning
+analysis.
 
-Completed locally:
+Completed:
 
 - Added class-aware loss support with class-balanced focal loss, train-only class weights,
   smoothing, and clipping.
@@ -332,15 +333,13 @@ Completed locally:
 - Added ResNet50 `layer3_layer4` unfreeze policy with optional backbone/head learning-rate groups.
 - Added Sprint 4B screening and optional full-matrix report exporters.
 - Added thin Colab runner `notebooks/04_sprint4b_classaware.ipynb`.
+- Ran class-aware fine-tuning on Colab GPU and restored the resulting small report assets locally.
+- Ran class-aware single-backbone screening, the full class-aware fusion matrix, and the deeper
+  ResNet50 probe.
+- Generated report-ready Sprint 4B tables and figures under `artifacts/report_assets/`.
+- Wrote the interpretation note in `docs/report_notes/sprint-4b-results-tr.md`.
 - Added tests for focal-loss gradients, class-weight smoothing/clipping, canonical Sprint 4
   defaults, feature-source path expansion, deeper ResNet50 unfreezing, screening expansion, full
   11-run matrix expansion, and cached-feature MLP boundaries.
 
-Pending:
-
-- Run class-aware fine-tuning on Colab GPU.
-- Run class-aware single-backbone MLP screening and deeper ResNet50 MLP screening.
-- Apply validation-based stop/go before any full class-aware fusion matrix.
-- Generate and interpret real Sprint 4B tables/figures.
-- Move this execution plan to `docs/exec-plans/completed/` only after the Sprint 4B runs and
-  result notes are complete.
+Large feature caches, checkpoints, MLP `model.pt` files, and full run folders remain outside Git.

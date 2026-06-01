@@ -1122,7 +1122,7 @@ def export_sprint4c_hparam_search_report_assets(
     screening_summary.to_csv(screening_summary_path, index=False)
 
     best_by_combination = (
-        results.sort_values(["best_val_macro_f1", "macro_f1"], ascending=False)
+        _sort_sprint4c_selection_rows(results)
         .groupby(["backbone_combination", "fusion_method"], as_index=False)
         .head(1)
         .sort_values("best_val_macro_f1", ascending=False)
@@ -1219,7 +1219,7 @@ def _build_sprint4c_screening_summary(results: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for key, group in grouped:
         combination, method = key
-        best = group.sort_values(["best_val_macro_f1", "macro_f1"], ascending=False).iloc[0]
+        best = _sort_sprint4c_selection_rows(group).iloc[0]
         rows.append(
             {
                 "backbone_combination": combination,
@@ -1237,6 +1237,16 @@ def _build_sprint4c_screening_summary(results: pd.DataFrame) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows).sort_values("best_val_macro_f1", ascending=False)
+
+
+def _sort_sprint4c_selection_rows(results: pd.DataFrame) -> pd.DataFrame:
+    """Rank Sprint 4C candidates by validation metrics without test-set tie-breaks."""
+
+    return results.sort_values(
+        ["best_val_macro_f1", "candidate_name", "run_id"],
+        ascending=[False, True, True],
+        kind="mergesort",
+    )
 
 
 def _build_sprint4c_vs_canonical(

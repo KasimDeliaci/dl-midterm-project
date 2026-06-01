@@ -6,7 +6,10 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 from dl_midterm.config.load_config import load_yaml
+from dl_midterm.evaluation.reports import _build_sprint4c_screening_summary
 
 
 def _load_sprint4c_module():
@@ -71,3 +74,34 @@ def test_sprint4c_full_config_expands_to_22_runs_with_candidate_projection_dims(
         "w_cw_adamw_base_p1024",
         "w_cw_adamw_low_lr_p512",
     }
+
+
+def test_sprint4c_candidate_selection_does_not_use_test_macro_f1_tie_break() -> None:
+    results = pd.DataFrame(
+        [
+            {
+                "backbone_combination": "resnet50",
+                "fusion_method": "none",
+                "run_id": "z_run",
+                "candidate_name": "z_candidate",
+                "best_val_macro_f1": 0.7,
+                "macro_f1": 0.9,
+                "accuracy": 0.8,
+                "weighted_f1": 0.8,
+            },
+            {
+                "backbone_combination": "resnet50",
+                "fusion_method": "none",
+                "run_id": "a_run",
+                "candidate_name": "a_candidate",
+                "best_val_macro_f1": 0.7,
+                "macro_f1": 0.5,
+                "accuracy": 0.7,
+                "weighted_f1": 0.7,
+            },
+        ]
+    )
+
+    summary = _build_sprint4c_screening_summary(results)
+
+    assert summary.iloc[0]["best_run_id"] == "a_run"
