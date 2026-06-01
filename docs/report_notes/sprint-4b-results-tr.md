@@ -1,122 +1,140 @@
 # Sprint 4B Sonuç Notu: Class-Aware Fine-Tuning Extension
 
-Bu not Sprint 4B için sonuç yorumu iskeletidir. Şu anda implementasyon hazırdır, fakat Colab GPU
-üzerinde full class-aware fine-tuning ve screening run'ları henüz bu lokalde sonuçlanmış artifact
-olarak bulunmamaktadır. Bu nedenle aşağıdaki metin sonuç iddiası değil, çalıştırma ve yorumlama
-çerçevesidir.
+Bu not, Sprint 4 canonical `finetuned` sonuçlarına karşı Sprint 4B class-aware extension
+çalışmasının özetidir. Sprint 4B canonical sonucu değiştirmez; `finetuned_classaware` ve
+`finetuned_deeper` ayrı exploratory feature source olarak tutulur.
 
-## Amaç
+## Çalıştırılan Deneyler
 
-Sprint 4B, canonical Sprint 4'ün yerine geçmez. Canonical Sprint 4 feature source'u
-`finetuned` olarak kalır. Sprint 4B iki ayrı exploratory source kullanır:
+Sprint 4B Colab koşusunda şu çıktılar üretildi ve lokal `artifacts/` altına senkronize edildi:
 
-- `finetuned_classaware`: canonical Sprint 4 unfreeze policy aynı kalır, loss class-balanced focal
-  loss olur.
-- `finetuned_deeper`: sadece ResNet50 için `layer3 + layer4 + fc` deeper partial unfreezing probe.
+- `finetuned_classaware`: ResNet50, MobileNetV2 ve EfficientNet-B0 için class-balanced focal loss
+  ile fine-tuning, feature cache ve single-backbone MLP screening.
+- `finetuned_classaware`: 3 single, 3 pairwise concat, 3 pairwise weighted, 1 three-backbone concat
+  ve 1 three-backbone weighted olmak üzere 11 MLP matrix run.
+- `finetuned_deeper`: ResNet50 için `layer3 + layer4 + fc` unfreeze probe ve single-backbone MLP.
 
-Ana soru, class-aware fine-tuning'in validation macro-F1 ve minority-class davranışını canonical
-Sprint 4'e göre iyileştirip iyileştirmediğidir. Test metric model veya hyperparameter seçiminde
-kullanılmamalıdır.
+Lokal asset refresh canonical Sprint 4 run klasörleriyle tekrar çalıştırıldı. Böylece Colab'da
+canonical run'lar bulunmadığı için atlanan Sprint 4B karşılaştırma tabloları lokal olarak üretildi.
 
-## Çalıştırılacak Komutlar
+## Ana Sonuç
 
-Class-aware backbone fine-tuning ve feature cache üretimi:
+Class-aware fine-tuning bazı tekil modellerde ve bazı fusion kombinasyonlarında küçük kazançlar
+verdi, fakat canonical Sprint 4'ün en iyi fusion sonucunu geçemedi. Bu nedenle Sprint 4B'nin ana
+bulgusu şudur:
 
-```bash
-uv run python scripts/finetune_backbone.py \
-  --config configs/experiments/sprint4b_classaware_backbones.yaml \
-  --default-config configs/default.yaml \
-  --dataset-config configs/dataset/selected_dataset.yaml \
-  --feature-source finetuned_classaware \
-  --batch-size 32
-```
+> Class-aware objective, standalone macro-F1'i yer yer iyileştirse de daha güçlü fusion sonucuna
+> dönüşmedi. Fusion başarımı yalnızca backbone kalitesine değil, backboneların tamamlayıcı ve farklı
+> hata örüntüleri üretmesine de bağlı görünüyor.
 
-Class-aware single-backbone MLP screening:
+## Single-Backbone Screening
 
-```bash
-uv run python scripts/train_mlp.py \
-  --config configs/experiments/sprint4b_classaware_feature_matrix.yaml \
-  --default-config configs/default.yaml \
-  --dataset-config configs/dataset/selected_dataset.yaml \
-  --feature-source finetuned_classaware
-```
+Canonical Sprint 4 single-backbone sonuçlarıyla karşılaştırma:
 
-Deeper ResNet50 probe:
+| Candidate | Canonical macro-F1 | Sprint 4B macro-F1 | Gain | Accuracy gain | Weighted-F1 gain |
+|---|---:|---:|---:|---:|---:|
+| EfficientNet-B0 class-aware | 0.5957 | 0.6190 | +0.0232 | -0.0140 | -0.0063 |
+| MobileNetV2 class-aware | 0.5750 | 0.5917 | +0.0168 | +0.0173 | +0.0119 |
+| ResNet50 deeper probe | 0.6578 | 0.6885 | +0.0307 | +0.0153 | +0.0115 |
 
-```bash
-uv run python scripts/finetune_backbone.py \
-  --config configs/experiments/sprint4b_deeper_screen.yaml \
-  --default-config configs/default.yaml \
-  --dataset-config configs/dataset/selected_dataset.yaml \
-  --feature-source finetuned_deeper \
-  --backbone resnet50 \
-  --batch-size 32
+Class-aware ResNet50 ayrıca full class-aware comparison içinde yer aldı:
 
-uv run python scripts/train_mlp.py \
-  --config configs/experiments/sprint4b_deeper_screen.yaml \
-  --default-config configs/default.yaml \
-  --dataset-config configs/dataset/selected_dataset.yaml \
-  --feature-source finetuned_deeper
-```
+- Canonical ResNet50 macro-F1: `0.6578`
+- Class-aware ResNet50 macro-F1: `0.6482`
+- Test macro-F1 farkı: `-0.0095`
 
-Screening asset refresh:
+Bu yüzden class-aware kaybın ResNet50 tarafında yararlı olmadığı, deeper unfreeze probe'un ise
+ResNet50 için daha umut verici olduğu görülüyor.
 
-```bash
-uv run python scripts/make_report_assets.py \
-  --feature-source finetuned_classaware \
-  --dataset-config configs/dataset/selected_dataset.yaml \
-  --feature-root artifacts/features
-```
+## Full Class-Aware Fusion Matrix
 
-Full class-aware matrix yalnızca validation stop/go geçerse çalıştırılmalıdır:
+En iyi class-aware full matrix sonucu:
 
-```bash
-uv run python scripts/run_experiment_matrix.py \
-  --config configs/experiments/sprint4b_classaware_feature_matrix.yaml \
-  --default-config configs/default.yaml \
-  --dataset-config configs/dataset/selected_dataset.yaml \
-  --feature-source finetuned_classaware
-```
+| Model | Accuracy | Macro-F1 | Weighted-F1 |
+|---|---:|---:|---:|
+| `r50+mnv2 concat` | 0.8209 | 0.6946 | 0.8164 |
 
-## Beklenen Artifact'ler
+Canonical Sprint 4 ile matched fusion karşılaştırmasında önemli satırlar:
 
-Screening sonrası beklenen küçük report-ready çıktılar:
+| Fusion | Canonical macro-F1 | Class-aware macro-F1 | Gain |
+|---|---:|---:|---:|
+| `r50+mnv2 weighted` | 0.6512 | 0.6738 | +0.0226 |
+| `mnv2+effb0 concat` | 0.6016 | 0.6209 | +0.0194 |
+| `mnv2+effb0 weighted` | 0.5940 | 0.6124 | +0.0184 |
+| `r50+mnv2 concat` | 0.6853 | 0.6946 | +0.0093 |
+| `r50+mnv2+effb0 weighted` | 0.6868 | 0.6781 | -0.0087 |
+| `r50+effb0 concat` | 0.6787 | 0.6519 | -0.0268 |
+| `r50+mnv2+effb0 concat` | 0.7059 | 0.6762 | -0.0297 |
+| `r50+effb0 weighted` | 0.6977 | 0.6628 | -0.0348 |
 
-- `artifacts/report_assets/tables/sprint4b_screening_results.csv`
-- `artifacts/report_assets/tables/sprint4b_vs_canonical_single_backbone.csv`
-- `artifacts/report_assets/tables/sprint4b_per_class_f1_gain.csv`
-- `artifacts/report_assets/figures/sprint4b_val_macro_f1_screening.png`
-- `artifacts/report_assets/figures/sprint4b_test_macro_f1_vs_canonical.png`
-- `artifacts/report_assets/figures/sprint4b_per_class_f1_gain_heatmap.png`
+Canonical Sprint 4'ün en iyi overall sonucu `r50+mnv2+effb0 concat` macro-F1 `0.7059` iken,
+class-aware matrix'in en iyi sonucu `r50+mnv2 concat` macro-F1 `0.6946` seviyesinde kaldı.
 
-Full class-aware matrix çalışırsa ek beklenen çıktılar:
+## Yorum
+
+Bu sonuç class-aware yaklaşımın tamamen anlamsız olduğunu göstermez; EfficientNet-B0,
+MobileNetV2 ve bazı MobileNet/EfficientNet fusion kombinasyonlarında sinyal var. Ancak sonuçlar
+canonical Sprint 4'e göre daha iyi bir nihai model üretmedi.
+
+Muhtemel açıklama:
+
+- Class-aware loss minority-class davranışını bazı backbonelarda iyileştirirken feature uzayını
+  fusion için daha az tamamlayıcı hale getirmiş olabilir.
+- Backbonelar benzer class-aware karar sınırlarına itilmişse, single macro-F1 artışı fusion gain'e
+  dönüşmeyebilir.
+- ResNet50 class-aware single sonucu canonical ResNet50'den düşük kaldığı için ResNet50 içeren bazı
+  fusionlar aşağı çekilmiş olabilir.
+- Weighted fusion, class-aware feature dağılımı ve validation gürültüsüne concat'ten daha hassas
+  davranmış olabilir.
+
+Bu nedenle raporda Sprint 4B için en savunulabilir sonuç:
+
+> Class-aware fine-tuning, bazı zayıf/orta backbone sonuçlarını iyileştirdi ancak canonical
+> three-backbone concat fusion'ı geçemedi. Better standalone macro-F1 is not sufficient for better
+> fusion; representation complementarity and calibration remain important.
+
+## Artifact'ler
+
+Senkronize edilen büyük artifact grupları:
+
+- `artifacts/features/ham10000/finetuned_classaware/`
+- `artifacts/features/ham10000/finetuned_deeper/`
+- `artifacts/checkpoints/finetuned_classaware_backbones/`
+- `artifacts/checkpoints/finetuned_deeper_backbones/`
+- `artifacts/runs/20260531_*_finetuned_classaware_*`
+- `artifacts/runs/20260531_*_finetuned_deeper_*`
+
+Report-ready tablolar:
 
 - `artifacts/report_assets/tables/sprint4b_classaware_all_results.csv`
 - `artifacts/report_assets/tables/sprint4b_classaware_vs_canonical_fusion_summary.csv`
-- `artifacts/report_assets/tables/sprint4b_classaware_fusion_weight_summary.csv`
+- `artifacts/report_assets/tables/sprint4b_screening_results.csv`
+- `artifacts/report_assets/tables/sprint4b_vs_canonical_single_backbone.csv`
+- `artifacts/report_assets/tables/sprint4b_per_class_f1_gain.csv`
+- `artifacts/report_assets/tables/sprint4b_deeper_all_results.csv`
+
+Report-ready figürler:
+
 - `artifacts/report_assets/figures/sprint4b_classaware_fusion_comparison.png`
 - `artifacts/report_assets/figures/sprint4b_classaware_concat_vs_weighted.png`
 - `artifacts/report_assets/figures/sprint4b_classaware_learned_fusion_weights.png`
 - `artifacts/report_assets/figures/sprint4b_best_confusion_matrix.png`
+- `artifacts/report_assets/figures/sprint4b_test_macro_f1_vs_canonical.png`
+- `artifacts/report_assets/figures/sprint4b_per_class_f1_gain_heatmap.png`
 
-## Yorumlama Kuralları
+## Verification
 
-- Expansion kararı validation macro-F1 ile verilir, test metric ile değil.
-- En iyi class-aware single-backbone validation macro-F1, matched canonical Sprint 4 single'dan
-  en az yaklaşık `0.015` iyi olursa full matrix düşünülebilir.
-- Alternatif olarak üç backbone'dan en az ikisi matched canonical'a göre yaklaşık `0.010`
-  validation macro-F1 gain gösterirse full matrix düşünülebilir.
-- Accuracy veya weighted-F1 yaklaşık `0.03` veya daha fazla çökerse genişletme yapılmamalıdır.
-- Minority recall artarken precision collapse varsa sonuç olumlu sayılmamalıdır.
-- `df` ve `vasc` support düşük olduğu için per-class değişimler dikkatli yorumlanmalıdır.
+Lokal doğrulama:
 
-## Sonuç Durumu
+- İndirilen Sprint 4B feature, checkpoint ve run klasörleri lokal kopyalarla `diff -qr` üzerinden
+  eşleşti.
+- Beklenen Sprint 4B CSV/PNG report asset'leri mevcut ve boş değil.
+- Row count kontrolleri geçti:
+  - `sprint4b_classaware_all_results.csv`: 11
+  - `sprint4b_classaware_vs_canonical_fusion_summary.csv`: 11
+  - `sprint4b_screening_results.csv`: 6
+  - `sprint4b_vs_canonical_single_backbone.csv`: 3
+  - `sprint4b_deeper_all_results.csv`: 1
+- `uv run ruff check src scripts tests` geçti.
+- `uv run pytest` geçti: 32 test.
 
-Henüz gerçek Sprint 4B sonucu yoktur. Colab run'ları tamamlandığında bu bölüm şu sorularla
-doldurulmalıdır:
-
-- Hangi feature cache'ler oluştu?
-- Screening validation macro-F1 sonuçları canonical Sprint 4'e göre nasıl değişti?
-- Full class-aware matrix çalıştı mı, çalışmadıysa validation-based gerekçe neydi?
-- Macro-F1, accuracy, weighted-F1 ve per-class F1 tarafında tradeoff var mı?
-- Büyük checkpoint/cache/run artifact'leri git dışında kaldı mı?
