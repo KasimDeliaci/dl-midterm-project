@@ -8,6 +8,8 @@ from dl_midterm.config.load_config import load_yaml
 from dl_midterm.evaluation.reports import (
     export_frozen_matrix_report_assets,
     export_frozen_vs_finetuned_report_assets,
+    export_sprint4b_full_classaware_report_assets,
+    export_sprint4b_screening_report_assets,
 )
 
 
@@ -53,6 +55,28 @@ def main() -> None:
                 "Fine-tuned matrix assets were still exported. Run the comparison where "
                 "Sprint 3 frozen run folders are available."
             )
+    if args.feature_source in {"finetuned_classaware", "finetuned_deeper"}:
+        try:
+            exported.update(
+                export_sprint4b_screening_report_assets(
+                    args.run_root,
+                    args.tables_dir,
+                    args.figures_dir,
+                )
+            )
+        except FileNotFoundError as exc:
+            print(f"Skipping Sprint 4B screening export: {exc}")
+        if args.feature_source == "finetuned_classaware":
+            try:
+                exported.update(
+                    export_sprint4b_full_classaware_report_assets(
+                        args.run_root,
+                        args.tables_dir,
+                        args.figures_dir,
+                    )
+                )
+            except FileNotFoundError as exc:
+                print(f"Skipping Sprint 4B full-matrix comparison export: {exc}")
     print("Exported report assets:")
     for name, path in exported.items():
         print(f"  {name}: {path}")

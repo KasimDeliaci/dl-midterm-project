@@ -338,7 +338,12 @@ def save_per_class_f1_heatmap(per_class: pd.DataFrame, path: str | Path) -> Path
     return output_path
 
 
-def save_per_class_fusion_gain_heatmap(gains: pd.DataFrame, path: str | Path) -> Path:
+def save_per_class_fusion_gain_heatmap(
+    gains: pd.DataFrame,
+    path: str | Path,
+    *,
+    title: str = "Per-Class F1 Gain vs Best Single Backbone",
+) -> Path:
     """Save per-class F1 gains versus the best overall single-backbone baseline."""
 
     output_path = Path(path)
@@ -368,7 +373,7 @@ def save_per_class_fusion_gain_heatmap(gains: pd.DataFrame, path: str | Path) ->
     )
     plt.xlabel("Class")
     plt.ylabel("Fusion experiment")
-    plt.title("Per-Class F1 Gain vs Best Single Backbone")
+    plt.title(title)
     plt.tight_layout()
     plt.savefig(output_path, dpi=200)
     plt.close()
@@ -418,6 +423,275 @@ def save_accuracy_macro_f1_scatter(results: pd.DataFrame, path: str | Path) -> P
     ax.set_title("Accuracy vs Macro-F1")
     for row in results.itertuples(index=False):
         ax.text(row.accuracy + 0.004, row.macro_f1 + 0.004, row.short_name, fontsize=7)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4b_val_macro_f1_screening_plot(results: pd.DataFrame, path: str | Path) -> Path:
+    """Save validation macro-F1 bars for Sprint 4B single-backbone screening."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = results.dropna(subset=["best_val_macro_f1"]).copy()
+    frame = frame.sort_values("best_val_macro_f1", ascending=False)
+    plt.figure(figsize=(9, 5))
+    ax = sns.barplot(
+        data=frame,
+        x="backbone",
+        y="best_val_macro_f1",
+        hue="source_label",
+    )
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Backbone")
+    ax.set_ylabel("Validation macro-F1")
+    ax.set_title("Sprint 4B Single-Backbone Screening")
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
+    plt.legend(title="Feature source")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4b_test_macro_f1_vs_canonical_plot(
+    comparison: pd.DataFrame,
+    path: str | Path,
+) -> Path:
+    """Save canonical Sprint 4 versus Sprint 4B test macro-F1 bars."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    melted = comparison.melt(
+        id_vars=["backbone", "feature_source", "source_label"],
+        value_vars=["canonical_macro_f1", "macro_f1"],
+        var_name="series",
+        value_name="test_macro_f1",
+    )
+    melted["series"] = melted["series"].map(
+        {"canonical_macro_f1": "canonical Sprint 4", "macro_f1": "Sprint 4B"}
+    )
+    plt.figure(figsize=(10, 5))
+    ax = sns.barplot(
+        data=melted,
+        x="backbone",
+        y="test_macro_f1",
+        hue="series",
+    )
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Backbone")
+    ax.set_ylabel("Test macro-F1")
+    ax.set_title("Sprint 4B vs Canonical Sprint 4 Single-Backbone Macro-F1")
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
+    plt.legend(title="")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4b_per_class_gain_heatmap(gains: pd.DataFrame, path: str | Path) -> Path:
+    """Save per-class F1 gains for Sprint 4B screening runs versus canonical Sprint 4."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pivot = gains.pivot_table(
+        index="candidate_display_name",
+        columns="label",
+        values="f1_gain",
+        aggfunc="first",
+    )
+    order = (
+        gains[["candidate_display_name", "macro_f1_gain"]]
+        .drop_duplicates()
+        .sort_values("macro_f1_gain", ascending=False)["candidate_display_name"]
+    )
+    pivot = pivot.loc[order]
+    limit = max(0.25, float(pivot.abs().max().max()))
+    plt.figure(figsize=(10, max(4, 0.45 * len(pivot))))
+    sns.heatmap(
+        pivot,
+        annot=True,
+        fmt="+.2f",
+        cmap="vlag",
+        center=0,
+        vmin=-limit,
+        vmax=limit,
+    )
+    plt.xlabel("Class")
+    plt.ylabel("Sprint 4B run")
+    plt.title("Sprint 4B Per-Class F1 Gain vs Canonical Sprint 4")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4c_val_macro_f1_by_candidate_plot(
+    results: pd.DataFrame,
+    path: str | Path,
+) -> Path:
+    """Save Sprint 4C validation macro-F1 by candidate and searched combination."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = results.dropna(subset=["best_val_macro_f1"]).copy()
+    frame["candidate_label"] = frame["candidate_name"].fillna(frame["run_tag"]).fillna(
+        frame["run_id"]
+    )
+    frame["display_name"] = frame["display_name"].fillna(frame["backbone_combination"])
+    frame = frame.sort_values(["display_name", "best_val_macro_f1"], ascending=[True, False])
+    plt.figure(figsize=(14, max(6, 0.32 * len(frame))))
+    ax = sns.barplot(
+        data=frame,
+        y="display_name",
+        x="best_val_macro_f1",
+        hue="candidate_label",
+        dodge=False,
+    )
+    ax.set_xlim(0, 1)
+    ax.set_xlabel("Validation macro-F1")
+    ax.set_ylabel("Searched combination")
+    ax.set_title("Sprint 4C Validation Macro-F1 by Candidate")
+    plt.legend(title="Candidate", bbox_to_anchor=(1.02, 1), loc="upper left")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4c_best_by_combination_plot(
+    best_by_combination: pd.DataFrame,
+    path: str | Path,
+) -> Path:
+    """Save best validation macro-F1 for each Sprint 4C searched combination."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = best_by_combination.sort_values("best_val_macro_f1", ascending=False).copy()
+    plt.figure(figsize=(11, 5.5))
+    ax = sns.barplot(data=frame, x="display_name", y="best_val_macro_f1", hue="fusion_method")
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Combination")
+    ax.set_ylabel("Best validation macro-F1")
+    ax.set_title("Sprint 4C Best Candidate by Combination")
+    ax.tick_params(axis="x", rotation=35)
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
+    plt.legend(title="Fusion")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4c_canonical_vs_tuned_macro_f1_plot(
+    comparison: pd.DataFrame,
+    path: str | Path,
+) -> Path:
+    """Save canonical Sprint 4 versus tuned Sprint 4C test macro-F1."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = comparison.dropna(subset=["canonical_macro_f1", "macro_f1"]).copy()
+    melted = frame.melt(
+        id_vars=["display_name", "fusion_method"],
+        value_vars=["canonical_macro_f1", "macro_f1"],
+        var_name="series",
+        value_name="test_macro_f1",
+    )
+    melted["series"] = melted["series"].map(
+        {"canonical_macro_f1": "Canonical Sprint 4", "macro_f1": "Sprint 4C tuned"}
+    )
+    plt.figure(figsize=(12, 5.5))
+    ax = sns.barplot(data=melted, x="display_name", y="test_macro_f1", hue="series")
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Combination")
+    ax.set_ylabel("Test macro-F1")
+    ax.set_title("Sprint 4C Tuned Candidates vs Canonical Sprint 4")
+    ax.tick_params(axis="x", rotation=35)
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
+    plt.legend(title="")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4c_concat_vs_weighted_plot(results: pd.DataFrame, path: str | Path) -> Path:
+    """Save tuned concat versus weighted macro-F1 after Sprint 4C search."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = results[results["fusion_method"].isin(["concat", "weighted"])].copy()
+    frame = frame.sort_values(["backbone_combination", "fusion_method"])
+    plt.figure(figsize=(10, 5.5))
+    ax = sns.barplot(data=frame, x="backbone_combination", y="macro_f1", hue="fusion_method")
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Backbone combination")
+    ax.set_ylabel("Test macro-F1")
+    ax.set_title("Sprint 4C Tuned Concat vs Weighted Fusion")
+    ax.tick_params(axis="x", rotation=25)
+    for container in ax.containers:
+        ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
+    plt.legend(title="Fusion")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4c_runtime_vs_val_macro_f1_plot(results: pd.DataFrame, path: str | Path) -> Path:
+    """Save Sprint 4C runtime versus validation macro-F1."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = results.dropna(subset=["runtime_seconds", "best_val_macro_f1"]).copy()
+    plt.figure(figsize=(8, 6))
+    ax = sns.scatterplot(
+        data=frame,
+        x="runtime_seconds",
+        y="best_val_macro_f1",
+        hue="fusion_method",
+        style="backbone_count",
+        s=90,
+    )
+    ax.set_xlabel("Runtime seconds")
+    ax.set_ylabel("Validation macro-F1")
+    ax.set_title("Sprint 4C Runtime vs Validation Macro-F1")
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=200)
+    plt.close()
+    return output_path
+
+
+def save_sprint4c_val_vs_test_macro_f1_plot(results: pd.DataFrame, path: str | Path) -> Path:
+    """Save validation versus test macro-F1 for selected Sprint 4C candidates."""
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame = results.dropna(subset=["best_val_macro_f1", "macro_f1"]).copy()
+    plt.figure(figsize=(7, 6))
+    ax = sns.scatterplot(
+        data=frame,
+        x="best_val_macro_f1",
+        y="macro_f1",
+        hue="fusion_method",
+        style="backbone_count",
+        s=100,
+    )
+    ax.plot([0, 1], [0, 1], color="black", linestyle="--", linewidth=1)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Validation macro-F1")
+    ax.set_ylabel("Test macro-F1")
+    ax.set_title("Sprint 4C Validation vs Test Macro-F1")
+    for row in frame.itertuples(index=False):
+        ax.text(row.best_val_macro_f1 + 0.003, row.macro_f1 + 0.003, row.short_name, fontsize=7)
     plt.tight_layout()
     plt.savefig(output_path, dpi=200)
     plt.close()

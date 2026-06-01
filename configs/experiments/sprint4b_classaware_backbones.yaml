@@ -1,0 +1,33 @@
+finetuning:
+  experiment_name: sprint4b_classaware_finetune_backbones
+  seed: 42
+  selection_metric: macro_f1
+  checkpoint_dir: artifacts/checkpoints/finetuned_classaware_backbones
+  feature_source: finetuned_classaware
+  backbones:
+    - resnet50
+    - mobilenet_v2
+    - efficientnet_b0
+  unfreeze_policies:
+    resnet50: layer4
+    mobilenet_v2: last_feature_blocks
+    efficientnet_b0: last_feature_blocks
+  epochs: 10
+  batch_size: 32
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  early_stopping_patience: 3
+  class_weighting: true
+  loss:
+    name: class_balanced_focal
+    gamma: 1.0
+    weight_smoothing: sqrt
+    max_class_weight: 4.0
+    normalize_class_weights: true
+  sampler:
+    name: none
+  augmentation:
+    horizontal_flip: true
+    vertical_flip: true
+    rotation_degrees: 20
+    color_jitter: mild

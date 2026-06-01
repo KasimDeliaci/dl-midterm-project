@@ -13,11 +13,13 @@ from torch.utils.data import DataLoader
 from dl_midterm.config.load_config import load_yaml
 from dl_midterm.evaluation.reports import (
     export_single_backbone_report_assets,
+    export_sprint4b_screening_report_assets,
     write_run_report,
 )
 from dl_midterm.features.cache import (
     FeatureDataset,
     backbone_cache_dir,
+    cache_allows_prefix_split_verification,
     class_weights_from_cache,
     feature_cache_path,
     load_feature_cache,
@@ -37,7 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default="configs/experiments/frozen_feature_matrix.yaml")
     parser.add_argument("--default-config", default="configs/default.yaml")
     parser.add_argument("--dataset-config", default="configs/dataset/selected_dataset.yaml")
-    parser.add_argument("--feature-source", default="frozen", choices=["frozen", "finetuned"])
+    parser.add_argument("--feature-source", default=None)
     parser.add_argument("--fusion", default="none", choices=["none"])
     parser.add_argument("--backbones", nargs="+", default=None)
     parser.add_argument("--feature-root", default="artifacts/features")
@@ -70,6 +72,7 @@ def main() -> None:
     runtime_config = default_config.get("runtime", {})
     training_config = default_config.get("training", {})
     mlp_config = default_config.get("mlp", {})
+    feature_source = str(args.feature_source or experiment_config.get("feature_source", "frozen"))
     device = resolve_device(args.device or runtime_config.get("device", "auto"))
     batch_size = args.batch_size or int(training_config.get("batch_size", 32))
     epochs = args.epochs or int(training_config.get("epochs", 25))
@@ -79,7 +82,7 @@ def main() -> None:
     dropout = args.dropout if args.dropout is not None else float(mlp_config.get("dropout", 0.3))
     hidden_dims = args.hidden_dims or list(mlp_config.get("hidden_dims", [512, 256]))
     class_weighting = not args.no_class_weights
-    experiment_name = args.experiment_name or f"single_backbone_{args.feature_source}_baseline"
+    experiment_name = args.experiment_name or f"single_backbone_{feature_source}_baseline"
 
     backbones = args.backbones
     if backbones is None:
@@ -102,6 +105,7 @@ def main() -> None:
             class_weighting=class_weighting,
             training_config=training_config,
             experiment_name=experiment_name,
+            feature_source=feature_source,
             run_tag=args.run_tag,
         )
 
@@ -109,8 +113,19 @@ def main() -> None:
         args.run_root,
         args.tables_dir,
         args.figures_dir,
-        feature_source=args.feature_source,
+        feature_source=feature_source,
     )
+    if feature_source in {"finetuned_classaware", "finetuned_deeper"}:
+        try:
+            exported.update(
+                export_sprint4b_screening_report_assets(
+                    args.run_root,
+                    args.tables_dir,
+                    args.figures_dir,
+                )
+            )
+        except FileNotFoundError as exc:
+            print(f"Skipping Sprint 4B screening export: {exc}")
     print("Exported report assets:")
     for name, path in exported.items():
         print(f"  {name}: {path}")
@@ -134,13 +149,14 @@ def run_single_backbone(
     class_weighting: bool,
     training_config: dict,
     experiment_name: str,
+    feature_source: str,
     run_tag: str | None = None,
 ) -> Path:
     class_names = list(dataset_config["class_names"])
     cache_dir = backbone_cache_dir(
         args.feature_root,
         dataset_config["name"],
-        args.feature_source,
+        feature_source,
         backbone,
     )
     caches = {
@@ -148,7 +164,11 @@ def run_single_backbone(
         for split in ("train", "val", "test")
     }
     for split, cache in caches.items():
-        verify_cache_matches_split(cache, Path(dataset_config["splits_dir"]) / f"{split}.csv")
+        verify_cache_matches_split(
+            cache,
+            Path(dataset_config["splits_dir"]) / f"{split}.csv",
+            allow_prefix=cache_allows_prefix_split_verification(cache),
+        )
 
     train_loader = DataLoader(
         FeatureDataset(caches["train"]),
@@ -194,7 +214,7 @@ def run_single_backbone(
     test_metrics = evaluate_model(model, test_loader, class_names=class_names, device=device)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     tag = f"_{run_tag}" if run_tag else ""
-    run_id = f"{timestamp}_{args.feature_source}_{backbone_alias(backbone)}_none_mlp{tag}_s{seed}"
+    run_id = f"{timestamp}_{feature_source}_{backbone_alias(backbone)}_none_mlp{tag}_s{seed}"
     run_dir = Path(args.run_root) / run_id
     resolved_config = {
         "run_id": run_id,
@@ -202,7 +222,7 @@ def run_single_backbone(
         "run_tag": run_tag,
         "seed": seed,
         "dataset": dataset_config["name"],
-        "feature_source": args.feature_source,
+        "feature_source": feature_source,
         "backbone": backbone,
         "backbones": [backbone],
         "backbone_combination": backbone,
@@ -230,7 +250,7 @@ def run_single_backbone(
         {
             "run_id": run_id,
             "seed": seed,
-            "feature_source": args.feature_source,
+            "feature_source": feature_source,
             "backbone": backbone,
             "backbones": [backbone],
             "backbone_combination": backbone,

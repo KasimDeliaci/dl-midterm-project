@@ -6,6 +6,16 @@ Concatenation outperformed projected weighted fusion in this sprint. A likely ex
 
 Per-class F1 confirms why macro-F1 is more informative than accuracy. The best fusion model improved \texttt{df} F1 from 0.250 in the ResNet50 baseline to 0.480, and also improved \texttt{bcc}, \texttt{bkl}, \texttt{akiec}, and \texttt{mel}. These gains should be interpreted carefully because the minority-class supports are small, especially \texttt{df} and \texttt{vasc}. The work remains benchmark dermoscopic image classification and does not support clinical diagnosis claims.
 
-The main limitation of the frozen fusion matrix is that it uses one seed. Before drawing strong conclusions in the final report, the best frozen configurations should either be repeated with additional seeds or explicitly reported as single-seed results. Sprint 4 should keep this frozen matrix fixed as the comparison point when evaluating fine-tuned feature caches.
+The fine-tuned matrix shows that adapting the final CNN stages can improve the benchmark result
+without changing the cached-feature MLP protocol. The best model shifted from frozen ResNet50 +
+EfficientNetB0 concatenation to fine-tuned three-backbone concatenation, which suggests that
+fine-tuning made the combined representation more useful to the downstream classifier. Weighted
+fusion also benefited from fine-tuning, but concatenation remained the strongest final operator.
+
+The main limitation of both the frozen and fine-tuned matrices is that they use one seed. The
+fine-tuned gains are large enough to report, but they should not be treated as definitive
+architecture rankings without additional seeds. This is especially important for minority classes
+such as \texttt{df} and \texttt{vasc}, where small absolute changes in correct predictions can move
+F1 substantially.
 
 The representation complementarity analysis supports, but does not fully explain, the fusion results. The best concat model used the most complementary pair, ResNet50 + EfficientNetB0. However, the weighted model using the same pair did not achieve the same gain, which suggests that complementarity is useful only when the fusion operator preserves enough discriminative information. This strengthens the interpretation that concatenation was effective because it retained full backbone features, while projected weighted fusion traded some predictive capacity for compactness and interpretability.

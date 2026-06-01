@@ -1,0 +1,68 @@
+mlp_fusion_hparam_search:
+  name: sprint4c_finetuned_mlpfusion_full
+  feature_source: finetuned
+  seed: 42
+  stage: full
+  selection_metric: best_val_macro_f1
+  run_root: artifacts/runs/sprint4c_hparam_search
+  tables_dir: artifacts/report_assets/tables/sprint4c
+  figures_dir: artifacts/report_assets/figures/sprint4c
+  epochs: 25
+  default_projection_dim: 512
+  projection_dims: [512]
+  combinations:
+    - backbones: [resnet50]
+      fusion_method: none
+    - backbones: [mobilenet_v2]
+      fusion_method: none
+    - backbones: [efficientnet_b0]
+      fusion_method: none
+    - backbones: [resnet50, mobilenet_v2]
+      fusion_method: concat
+    - backbones: [resnet50, efficientnet_b0]
+      fusion_method: concat
+    - backbones: [mobilenet_v2, efficientnet_b0]
+      fusion_method: concat
+    - backbones: [resnet50, mobilenet_v2, efficientnet_b0]
+      fusion_method: concat
+    - backbones: [resnet50, mobilenet_v2]
+      fusion_method: weighted
+    - backbones: [resnet50, efficientnet_b0]
+      fusion_method: weighted
+    - backbones: [mobilenet_v2, efficientnet_b0]
+      fusion_method: weighted
+    - backbones: [resnet50, mobilenet_v2, efficientnet_b0]
+      fusion_method: weighted
+  candidate_groups:
+    non_weighted:
+      - name: nocw_adamw_base
+        class_weighting: false
+        optimizer: adamw
+        learning_rate: 0.001
+        weight_decay: 0.0001
+        dropout: 0.3
+        hidden_dims: [512, 256]
+      - name: cw_adamw_small
+        class_weighting: true
+        optimizer: adamw
+        learning_rate: 0.001
+        weight_decay: 0.0001
+        dropout: 0.3
+        hidden_dims: [256]
+    weighted:
+      - name: w_cw_adamw_low_lr
+        projection_dims: [512]
+        class_weighting: true
+        optimizer: adamw
+        learning_rate: 0.0003
+        weight_decay: 0.0001
+        dropout: 0.3
+        hidden_dims: [512, 256]
+      - name: w_cw_adamw_base
+        projection_dims: [1024]
+        class_weighting: true
+        optimizer: adamw
+        learning_rate: 0.001
+        weight_decay: 0.0001
+        dropout: 0.3
+        hidden_dims: [512, 256]

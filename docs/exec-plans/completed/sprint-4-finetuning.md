@@ -83,5 +83,30 @@ uv run python scripts/make_report_assets.py \
 
 ## Current Status
 
-Implementation is complete locally and verified with unit tests plus small `/tmp` smoke runs.
-The canonical full Sprint 4 result matrix still needs to be executed on Colab GPU.
+Complete. Implementation was verified locally with unit tests plus small `/tmp` smoke runs, then the
+canonical full Sprint 4 run was executed on Colab GPU.
+
+Completed outputs:
+
+- Fine-tuned checkpoints for ResNet50, MobileNetV2, and EfficientNetB0.
+- Fine-tuned feature caches under `artifacts/features/ham10000/finetuned/<backbone>/`.
+- Full 11-run fine-tuned cached-feature MLP matrix.
+- Fine-tuned report assets and frozen-vs-fine-tuned comparison assets.
+
+Local cross-check after Drive download:
+
+- Feature cache row counts match split sizes: train `6981`, val `1532`, test `1502`.
+- Fine-tuned report table has `11` rows.
+- Drive-synced fine-tuned run folders contain `22` `metrics.json` files including earlier Colab
+  retry runs; report exporters select the latest run per configuration.
+- Fine-tuned run folders do not contain `model.pt`.
+- Checkpoints, feature cache `.pt` files, and run folders remain git-excluded.
+
+Best result:
+
+- `r50+mnv2+effb0 concat`: accuracy `0.811`, macro-F1 `0.706`, weighted-F1 `0.813`.
+
+Frozen-vs-fine-tuned:
+
+- Best frozen Sprint 3 result: `r50+effb0 concat`, macro-F1 `0.595`.
+- Largest matched macro-F1 gain: `r50+mnv2+effb0 weighted`, `+0.168`.

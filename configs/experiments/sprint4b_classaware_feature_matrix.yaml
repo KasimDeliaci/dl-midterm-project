@@ -1,0 +1,27 @@
+experiment_matrix:
+  feature_source: finetuned_classaware
+  classifier: mlp
+  seed: 42
+  screening:
+    stop_go_basis: validation_macro_f1
+    expand_if_best_single_val_macro_f1_gain_at_least: 0.015
+    expand_if_two_backbones_val_macro_f1_gain_at_least: 0.010
+  fusion_methods:
+    - none
+    - concat
+    - weighted
+  combinations:
+    - backbones: [resnet50]
+      fusion_methods: [none]
+    - backbones: [mobilenet_v2]
+      fusion_methods: [none]
+    - backbones: [efficientnet_b0]
+      fusion_methods: [none]
+    - backbones: [resnet50, mobilenet_v2]
+      fusion_methods: [concat, weighted]
+    - backbones: [resnet50, efficientnet_b0]
+      fusion_methods: [concat, weighted]
+    - backbones: [mobilenet_v2, efficientnet_b0]
+      fusion_methods: [concat, weighted]
+    - backbones: [resnet50, mobilenet_v2, efficientnet_b0]
+      fusion_methods: [concat, weighted]

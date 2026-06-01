@@ -319,6 +319,127 @@ uv run python scripts/finetune_backbone.py \
   --run-root /tmp/dlmidterm_sprint4_runs
 ```
 
+## Sprint 4B: Class-Aware Extension
+
+Sprint 4B is an exploratory extension and does not replace canonical Sprint 4. Full image-level
+fine-tuning should run on Colab GPU. The thin runner is:
+
+```text
+notebooks/04_sprint4b_classaware.ipynb
+```
+
+Run the class-aware fine-tuning screen and extract feature caches:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --config configs/experiments/sprint4b_classaware_backbones.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_classaware \
+  --batch-size 32
+```
+
+Expected cache layout:
+
+```text
+artifacts/features/ham10000/finetuned_classaware/resnet50/{train,val,test}.pt
+artifacts/features/ham10000/finetuned_classaware/mobilenet_v2/{train,val,test}.pt
+artifacts/features/ham10000/finetuned_classaware/efficientnet_b0/{train,val,test}.pt
+```
+
+Run the class-aware single-backbone MLP screening:
+
+```bash
+uv run python scripts/train_mlp.py \
+  --config configs/experiments/sprint4b_classaware_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_classaware
+```
+
+Run the deeper ResNet50 probe and its single-backbone MLP screen:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --config configs/experiments/sprint4b_deeper_screen.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_deeper \
+  --backbone resnet50 \
+  --batch-size 32
+
+uv run python scripts/train_mlp.py \
+  --config configs/experiments/sprint4b_deeper_screen.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_deeper
+```
+
+Expected deeper cache layout:
+
+```text
+artifacts/features/ham10000/finetuned_deeper/resnet50/{train,val,test}.pt
+```
+
+Refresh Sprint 4B screening report assets after canonical Sprint 4 and Sprint 4B single-backbone
+MLP runs are available locally:
+
+```bash
+uv run python scripts/make_report_assets.py \
+  --feature-source finetuned_classaware \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-root artifacts/features
+```
+
+Expected screening outputs:
+
+```text
+artifacts/report_assets/tables/sprint4b_screening_results.csv
+artifacts/report_assets/tables/sprint4b_vs_canonical_single_backbone.csv
+artifacts/report_assets/tables/sprint4b_per_class_f1_gain.csv
+artifacts/report_assets/figures/sprint4b_val_macro_f1_screening.png
+artifacts/report_assets/figures/sprint4b_test_macro_f1_vs_canonical.png
+artifacts/report_assets/figures/sprint4b_per_class_f1_gain_heatmap.png
+```
+
+Run the optional full class-aware matrix only if the validation-based stop/go criteria pass:
+
+```bash
+uv run python scripts/run_experiment_matrix.py \
+  --config configs/experiments/sprint4b_classaware_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_classaware
+```
+
+Expected full-matrix outputs:
+
+```text
+artifacts/report_assets/tables/sprint4b_classaware_all_results.csv
+artifacts/report_assets/tables/sprint4b_classaware_vs_canonical_fusion_summary.csv
+artifacts/report_assets/tables/sprint4b_classaware_fusion_weight_summary.csv
+artifacts/report_assets/figures/sprint4b_classaware_fusion_comparison.png
+artifacts/report_assets/figures/sprint4b_classaware_concat_vs_weighted.png
+artifacts/report_assets/figures/sprint4b_classaware_learned_fusion_weights.png
+artifacts/report_assets/figures/sprint4b_best_confusion_matrix.png
+```
+
+Non-canonical local smoke test, writing only to `/tmp`:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --config configs/experiments/sprint4b_classaware_backbones.yaml \
+  --backbone mobilenet_v2 \
+  --epochs 1 \
+  --batch-size 2 \
+  --limit-per-split 2 \
+  --no-pretrained \
+  --no-mixed-precision \
+  --checkpoint-dir /tmp/dlmidterm_sprint4b_ckpt \
+  --feature-root /tmp/dlmidterm_sprint4b_features \
+  --run-root /tmp/dlmidterm_sprint4b_runs
+```
+
 ## Evaluation And Report Assets
 
 ```bash

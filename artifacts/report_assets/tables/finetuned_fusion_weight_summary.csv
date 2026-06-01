@@ -1,0 +1,10 @@
+run_id,display_name,backbone_combination,fusion_method,backbone,weight,weight_sum
+20260529_173720_finetuned_r50-mnv2_weighted_mlp_s42,r50+mnv2 weighted,resnet50+mobilenet_v2,weighted,resnet50,0.5392111539840698,1.0000000596046448
+20260529_173720_finetuned_r50-mnv2_weighted_mlp_s42,r50+mnv2 weighted,resnet50+mobilenet_v2,weighted,mobilenet_v2,0.4607889056205749,1.0000000596046448
+20260529_173742_finetuned_r50-effb0_weighted_mlp_s42,r50+effb0 weighted,resnet50+efficientnet_b0,weighted,resnet50,0.5067430734634399,1.0
+20260529_173742_finetuned_r50-effb0_weighted_mlp_s42,r50+effb0 weighted,resnet50+efficientnet_b0,weighted,efficientnet_b0,0.49325692653656,1.0
+20260529_173756_finetuned_mnv2-effb0_weighted_mlp_s42,mnv2+effb0 weighted,mobilenet_v2+efficientnet_b0,weighted,mobilenet_v2,0.5092480778694153,1.0
+20260529_173756_finetuned_mnv2-effb0_weighted_mlp_s42,mnv2+effb0 weighted,mobilenet_v2+efficientnet_b0,weighted,efficientnet_b0,0.4907519221305847,1.0
+20260529_173817_finetuned_r50-mnv2-effb0_weighted_mlp_s42,r50+mnv2+effb0 weighted,resnet50+mobilenet_v2+efficientnet_b0,weighted,resnet50,0.3879633545875549,1.0000000298023224
+20260529_173817_finetuned_r50-mnv2-effb0_weighted_mlp_s42,r50+mnv2+effb0 weighted,resnet50+mobilenet_v2+efficientnet_b0,weighted,mobilenet_v2,0.29917773604393,1.0000000298023224
+20260529_173817_finetuned_r50-mnv2-effb0_weighted_mlp_s42,r50+mnv2+effb0 weighted,resnet50+mobilenet_v2+efficientnet_b0,weighted,efficientnet_b0,0.3128589391708374,1.0000000298023224

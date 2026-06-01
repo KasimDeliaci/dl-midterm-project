@@ -23,16 +23,18 @@ from dl_midterm.models.backbones import (
     build_finetuned_feature_extractor,
 )
 from dl_midterm.training.early_stopping import EarlyStopping
+from dl_midterm.training.losses import (
+    build_classification_loss,
+)
+from dl_midterm.training.losses import (
+    class_weights_from_labels as build_class_weights_from_labels,
+)
 
 
 def class_weights_from_labels(labels: list[int], num_classes: int) -> torch.Tensor:
     """Compute inverse-frequency class weights from train labels only."""
 
-    label_tensor = torch.tensor(labels, dtype=torch.long)
-    counts = torch.bincount(label_tensor, minlength=num_classes).float()
-    weights = counts.sum() / (num_classes * counts.clamp_min(1.0))
-    weights[counts == 0] = 0.0
-    return weights
+    return build_class_weights_from_labels(labels, num_classes)
 
 
 def labels_from_loader(loader: DataLoader) -> list[int]:
@@ -60,8 +62,12 @@ def finetune_backbone(
     early_stopping_patience: int,
     policy: str | None,
     mixed_precision: bool,
+    feature_source: str = "finetuned",
     pretrained: bool = True,
     class_weighting: bool = True,
+    loss_config: dict[str, Any] | None = None,
+    backbone_learning_rate: float | None = None,
+    head_learning_rate: float | None = None,
     output_run_root: str | Path = "artifacts/runs",
     experiment_name: str = "sprint4_finetune_backbones",
     limit_per_split: int | None = None,
@@ -77,14 +83,21 @@ def finetune_backbone(
     model.to(device)
 
     train_labels = labels_from_loader(loaders["train"])
-    weights = (
-        class_weights_from_labels(train_labels, len(class_names)).to(device)
-        if class_weighting
-        else None
+    criterion, loss_metadata = build_classification_loss(
+        labels=train_labels,
+        num_classes=len(class_names),
+        class_weighting=class_weighting,
+        loss_config=loss_config,
+        device=device,
     )
-    criterion = nn.CrossEntropyLoss(weight=weights)
     optimizer = torch.optim.AdamW(
-        [parameter for parameter in model.parameters() if parameter.requires_grad],
+        _finetuning_parameter_groups(
+            model,
+            backbone=backbone,
+            learning_rate=learning_rate,
+            backbone_learning_rate=backbone_learning_rate,
+            head_learning_rate=head_learning_rate,
+        ),
         lr=learning_rate,
         weight_decay=weight_decay,
     )
@@ -107,7 +120,8 @@ def finetune_backbone(
     runtime_seconds = perf_counter() - started
     test_metrics = evaluate_image_classifier(model, loaders["test"], class_names, device)
 
-    run_id = f"{backbone_alias(backbone)}_finetune_s{seed}"
+    feature_tag = "" if feature_source == "finetuned" else f"_{feature_source}"
+    run_id = f"{backbone_alias(backbone)}{feature_tag}_finetune_s{seed}"
     run_dir = Path(output_run_root) / "finetune_backbones" / run_id
     checkpoint_path = Path(checkpoint_dir) / f"{backbone}_best.pt"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
@@ -121,7 +135,8 @@ def finetune_backbone(
             "best_val_macro_f1": best_metrics.get("macro_f1"),
             "best_val_epoch": best_metrics.get("best_epoch"),
             "runtime_seconds": runtime_seconds,
-            "feature_source": "finetuned",
+            "feature_source": feature_source,
+            "loss": loss_metadata,
         },
         checkpoint_path,
     )
@@ -130,15 +145,18 @@ def finetune_backbone(
         "run_id": run_id,
         "experiment_name": experiment_name,
         "seed": seed,
-        "feature_source": "finetuned",
+        "feature_source": feature_source,
         "backbone": backbone,
         "backbones": [backbone],
         "backbone_combination": backbone,
         "backbone_count": 1,
         "fusion_method": "finetune_head",
         "class_weighting": class_weighting,
+        "loss": loss_metadata,
         "optimizer": "adamw",
         "learning_rate": learning_rate,
+        "backbone_learning_rate": backbone_learning_rate,
+        "head_learning_rate": head_learning_rate,
         "weight_decay": weight_decay,
         "epochs": epochs,
         "early_stopping_patience": early_stopping_patience,
@@ -154,15 +172,18 @@ def finetune_backbone(
     test_metrics.update(
         {
             "run_id": run_id,
-            "feature_source": "finetuned",
+            "feature_source": feature_source,
             "backbone": backbone,
             "backbones": [backbone],
             "backbone_combination": backbone,
             "backbone_count": 1,
             "fusion_method": "finetune_head",
             "class_weighting": class_weighting,
+            "loss": loss_metadata,
             "optimizer": "adamw",
             "learning_rate": learning_rate,
+            "backbone_learning_rate": backbone_learning_rate,
+            "head_learning_rate": head_learning_rate,
             "weight_decay": weight_decay,
             "best_val_macro_f1": best_metrics.get("macro_f1"),
             "best_val_epoch": best_metrics.get("best_epoch"),
@@ -190,6 +211,7 @@ def extract_finetuned_feature_cache(
     seed: int,
     device: torch.device,
     mixed_precision: bool,
+    feature_source: str = "finetuned",
     config: dict[str, Any] | None = None,
 ) -> list[FeatureCache]:
     """Extract classifier-free features from the best fine-tuned checkpoint."""
@@ -205,7 +227,7 @@ def extract_finetuned_feature_cache(
         loaders=loaders,
         output_dir=output_dir,
         class_names=class_names,
-        feature_source="finetuned",
+        feature_source=feature_source,
         seed=seed,
         device=device,
         mixed_precision=mixed_precision,
@@ -257,6 +279,9 @@ def train_image_classifier(
         train_metrics = compute_classification_metrics(train_true, train_pred, class_names)
         val_metrics = compute_classification_metrics(val_true, val_pred, class_names)
         current_lr = float(optimizer.param_groups[0]["lr"])
+        current_head_lr = (
+            float(optimizer.param_groups[1]["lr"]) if len(optimizer.param_groups) > 1 else None
+        )
         history_rows.append(
             {
                 "epoch": epoch,
@@ -267,6 +292,7 @@ def train_image_classifier(
                 "val_macro_f1": val_metrics["macro_f1"],
                 "val_weighted_f1": val_metrics["weighted_f1"],
                 "learning_rate": current_lr,
+                "head_learning_rate": current_head_lr,
             }
         )
         if stopper.best_score is None or val_metrics["macro_f1"] > stopper.best_score:
@@ -281,6 +307,50 @@ def train_image_classifier(
     history = pd.DataFrame(history_rows)
     best_metrics["best_epoch"] = stopper.best_epoch
     return model, history, best_metrics
+
+
+def _finetuning_parameter_groups(
+    model: nn.Module,
+    *,
+    backbone: str,
+    learning_rate: float,
+    backbone_learning_rate: float | None,
+    head_learning_rate: float | None,
+) -> list[dict[str, Any]] | list[nn.Parameter]:
+    trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
+    if backbone_learning_rate is None and head_learning_rate is None:
+        return trainable
+
+    backbone_lr = float(
+        backbone_learning_rate if backbone_learning_rate is not None else learning_rate
+    )
+    classifier_lr = float(head_learning_rate if head_learning_rate is not None else learning_rate)
+    head_prefixes = _head_parameter_prefixes(backbone)
+    backbone_params: list[nn.Parameter] = []
+    head_params: list[nn.Parameter] = []
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad:
+            continue
+        if any(name.startswith(prefix) for prefix in head_prefixes):
+            head_params.append(parameter)
+        else:
+            backbone_params.append(parameter)
+
+    groups: list[dict[str, Any]] = []
+    if backbone_params:
+        groups.append({"params": backbone_params, "lr": backbone_lr})
+    if head_params:
+        groups.append({"params": head_params, "lr": classifier_lr})
+    return groups
+
+
+def _head_parameter_prefixes(backbone: str) -> tuple[str, ...]:
+    normalized = backbone.lower()
+    if normalized == "resnet50":
+        return ("fc.",)
+    if normalized in {"mobilenet_v2", "efficientnet_b0"}:
+        return ("classifier.",)
+    raise ValueError(f"Unsupported backbone: {backbone}")
 
 
 @torch.no_grad()

@@ -57,6 +57,15 @@ def compute_representation_complementarity(
         for cache in caches
     }
 
+    columns = [
+        "split",
+        "num_samples",
+        "left_backbone",
+        "right_backbone",
+        "representation_similarity",
+        "representation_complementarity",
+        "method",
+    ]
     rows: list[dict[str, float | int | str]] = []
     for left, right in combinations(backbones, 2):
         similarity = _safe_pearson(similarity_vectors[left], similarity_vectors[right])
@@ -71,7 +80,7 @@ def compute_representation_complementarity(
                 "method": "sample_cosine_rsa_pearson",
             }
         )
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=columns)
 
 
 def build_fusion_complementarity_summary(

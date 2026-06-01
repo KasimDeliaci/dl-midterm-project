@@ -126,10 +126,18 @@ def apply_finetuning_policy(
 
     trainable_modules: list[tuple[str, nn.Module]]
     if normalized == "resnet50":
-        if policy not in {None, "layer4"}:
-            raise ValueError("ResNet50 fine-tuning policy must be `layer4`.")
-        trainable_modules = [("layer4", model.layer4), ("fc", model.fc)]
-        resolved_policy = "layer4"
+        if policy not in {None, "layer4", "layer3_layer4"}:
+            raise ValueError("ResNet50 fine-tuning policy must be `layer4` or `layer3_layer4`.")
+        if policy == "layer3_layer4":
+            trainable_modules = [
+                ("layer3", model.layer3),
+                ("layer4", model.layer4),
+                ("fc", model.fc),
+            ]
+            resolved_policy = "layer3_layer4"
+        else:
+            trainable_modules = [("layer4", model.layer4), ("fc", model.fc)]
+            resolved_policy = "layer4"
     elif normalized == "mobilenet_v2":
         if policy not in {None, "last_feature_blocks"}:
             raise ValueError("MobileNetV2 fine-tuning policy must be `last_feature_blocks`.")
