@@ -241,6 +241,7 @@ def run_fusion_experiment(
     training_config: dict[str, Any],
     experiment_name: str,
     feature_source: str,
+    run_tag: str | None = None,
 ) -> Path:
     class_names = list(dataset_config["class_names"])
     backbones = list(run_spec["backbones"])
@@ -316,12 +317,14 @@ def run_fusion_experiment(
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     alias = "-".join(backbone_alias(backbone) for backbone in backbones)
-    run_id = f"{timestamp}_{feature_source}_{alias}_{fusion_method}_mlp_s{seed}"
+    tag = f"_{run_tag}" if run_tag else ""
+    run_id = f"{timestamp}_{feature_source}_{alias}_{fusion_method}_mlp{tag}_s{seed}"
     run_dir = Path(args.run_root) / run_id
     backbone_combination = "+".join(backbones)
     resolved_config = {
         "run_id": run_id,
         "experiment_name": experiment_name,
+        "run_tag": run_tag,
         "seed": seed,
         "dataset": dataset_config["name"],
         "feature_source": feature_source,
@@ -382,6 +385,7 @@ def run_fusion_experiment(
             "dropout": dropout,
             "hidden_dims": hidden_dims,
             "experiment_name": experiment_name,
+            "run_tag": run_tag,
             "best_val_macro_f1": val_metrics.get("macro_f1"),
             "best_val_epoch": val_metrics.get("best_epoch"),
             "learned_fusion_weights": fusion_weights,

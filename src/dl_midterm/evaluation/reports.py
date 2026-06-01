@@ -35,6 +35,12 @@ from dl_midterm.evaluation.plots import (
     save_sprint4b_per_class_gain_heatmap,
     save_sprint4b_test_macro_f1_vs_canonical_plot,
     save_sprint4b_val_macro_f1_screening_plot,
+    save_sprint4c_best_by_combination_plot,
+    save_sprint4c_canonical_vs_tuned_macro_f1_plot,
+    save_sprint4c_concat_vs_weighted_plot,
+    save_sprint4c_runtime_vs_val_macro_f1_plot,
+    save_sprint4c_val_macro_f1_by_candidate_plot,
+    save_sprint4c_val_vs_test_macro_f1_plot,
     save_training_curve_plot,
 )
 from dl_midterm.models.backbones import backbone_alias
@@ -129,6 +135,14 @@ def collect_run_summaries(run_root: str | Path) -> pd.DataFrame:
                     metrics.get("experiment_name"),
                 ),
                 "run_tag": config.get("run_tag", metrics.get("run_tag")),
+                "search_stage": config.get("search_stage", metrics.get("search_stage")),
+                "candidate_name": config.get("candidate_name", metrics.get("candidate_name")),
+                "candidate_profile": config.get(
+                    "candidate_profile",
+                    metrics.get("candidate_profile"),
+                ),
+                "runtime_seconds": config.get("runtime_seconds", metrics.get("runtime_seconds")),
+                "planned_index": config.get("planned_index", metrics.get("planned_index")),
                 "best_val_macro_f1": config.get(
                     "best_val_macro_f1",
                     metrics.get("best_val_macro_f1"),
@@ -270,18 +284,20 @@ def export_frozen_matrix_report_assets(
             {
                 "representation_complementarity_table": complementarity_path,
                 "fusion_complementarity_table": fusion_complementarity_path,
-                "representation_similarity_heatmap": save_representation_similarity_heatmap(
-                    complementarity,
-                    figure_root / f"{source_prefix}_representation_similarity_heatmap.png",
-                ),
-                "fusion_gain_vs_complementarity_plot": (
-                    save_fusion_gain_vs_complementarity_plot(
-                        fusion_complementarity,
-                        figure_root / f"{source_prefix}_fusion_gain_vs_complementarity.png",
-                    )
-                ),
             }
         )
+        if not complementarity.empty:
+            exported["representation_similarity_heatmap"] = save_representation_similarity_heatmap(
+                complementarity,
+                figure_root / f"{source_prefix}_representation_similarity_heatmap.png",
+            )
+        if not fusion_complementarity.empty:
+            exported["fusion_gain_vs_complementarity_plot"] = (
+                save_fusion_gain_vs_complementarity_plot(
+                    fusion_complementarity,
+                    figure_root / f"{source_prefix}_fusion_gain_vs_complementarity.png",
+                )
+            )
     if not weights.empty:
         exported["learned_weights_plot"] = save_learned_fusion_weights_plot(
             weights,
@@ -1056,3 +1072,266 @@ def export_mlp_search_report_assets(
     for index, path in enumerate(copied_plots, start=1):
         exported[f"best_run_plot_{index}"] = path
     return exported
+
+
+def export_sprint4c_hparam_search_report_assets(
+    run_root: str | Path,
+    tables_dir: str | Path,
+    figures_dir: str | Path,
+    *,
+    canonical_run_root: str | Path = "artifacts/runs",
+    feature_source: str = "finetuned",
+    experiment_name: str | None = None,
+) -> dict[str, Path]:
+    """Export report-ready Sprint 4C hyperparameter-search tables and figures."""
+
+    summaries = collect_run_summaries(run_root)
+    if summaries.empty:
+        raise FileNotFoundError(f"No Sprint 4C run metrics found under {run_root}")
+
+    results = summaries[summaries["feature_source"] == feature_source].copy()
+    if experiment_name is not None:
+        results = results[results["experiment_name"] == experiment_name].copy()
+    if results.empty:
+        raise FileNotFoundError(f"No matching Sprint 4C search runs found under {run_root}")
+
+    canonical = collect_run_summaries(canonical_run_root)
+    canonical = canonical[canonical["feature_source"] == feature_source].copy()
+    canonical = canonical[canonical["fusion_method"].isin(["none", "concat", "weighted"])].copy()
+    if canonical.empty:
+        raise FileNotFoundError("Sprint 4C export requires canonical Sprint 4 finetuned runs.")
+
+    table_root = Path(tables_dir)
+    figure_root = Path(figures_dir)
+    table_root.mkdir(parents=True, exist_ok=True)
+    figure_root.mkdir(parents=True, exist_ok=True)
+
+    results = _add_display_columns(_normalize_sprint4c_rows(results))
+    canonical = _add_display_columns(_select_latest_matrix_rows(canonical))
+    results["candidate_name"] = (
+        results["candidate_name"].fillna(results["run_tag"]).fillna(results["run_id"])
+    )
+    results["candidate_profile"] = results["candidate_profile"].fillna(results["candidate_name"])
+    results = results.sort_values("best_val_macro_f1", ascending=False).reset_index(drop=True)
+
+    all_results_path = table_root / "sprint4c_hparam_search_all.csv"
+    results.to_csv(all_results_path, index=False)
+
+    screening_summary = _build_sprint4c_screening_summary(results)
+    screening_summary_path = table_root / "sprint4c_screening_summary.csv"
+    screening_summary.to_csv(screening_summary_path, index=False)
+
+    best_by_combination = (
+        results.sort_values(["best_val_macro_f1", "macro_f1"], ascending=False)
+        .groupby(["backbone_combination", "fusion_method"], as_index=False)
+        .head(1)
+        .sort_values("best_val_macro_f1", ascending=False)
+        .reset_index(drop=True)
+    )
+    best_path = table_root / "sprint4c_best_by_combination.csv"
+    best_by_combination.to_csv(best_path, index=False)
+
+    comparison = _build_sprint4c_vs_canonical(best_by_combination, canonical)
+    comparison_path = table_root / "sprint4c_vs_canonical_summary.csv"
+    comparison.to_csv(comparison_path, index=False)
+
+    concat_vs_weighted = best_by_combination[
+        best_by_combination["fusion_method"].isin(["concat", "weighted"])
+    ].copy()
+    concat_vs_weighted_path = table_root / "sprint4c_concat_vs_weighted_tuned.csv"
+    concat_vs_weighted.to_csv(concat_vs_weighted_path, index=False)
+
+    per_class_gain = _build_sprint4c_per_class_gains(
+        run_root,
+        canonical_run_root,
+        comparison,
+    )
+    per_class_gain_path = table_root / "sprint4c_per_class_f1_gain.csv"
+    per_class_gain.to_csv(per_class_gain_path, index=False)
+
+    weights = _collect_fusion_weights(run_root, results)
+    weights_path = table_root / "sprint4c_weighted_fusion_weights.csv"
+    weights.to_csv(weights_path, index=False)
+
+    exported = {
+        "hparam_search_all": all_results_path,
+        "screening_summary": screening_summary_path,
+        "best_by_combination": best_path,
+        "vs_canonical_summary": comparison_path,
+        "concat_vs_weighted_tuned": concat_vs_weighted_path,
+        "per_class_f1_gain": per_class_gain_path,
+        "weighted_fusion_weights": weights_path,
+        "val_macro_f1_by_candidate_plot": save_sprint4c_val_macro_f1_by_candidate_plot(
+            results,
+            figure_root / "sprint4c_val_macro_f1_by_candidate.png",
+        ),
+        "best_by_combination_plot": save_sprint4c_best_by_combination_plot(
+            best_by_combination,
+            figure_root / "sprint4c_best_by_combination_macro_f1.png",
+        ),
+        "canonical_vs_tuned_plot": save_sprint4c_canonical_vs_tuned_macro_f1_plot(
+            comparison,
+            figure_root / "sprint4c_canonical_vs_tuned_macro_f1.png",
+        ),
+        "concat_vs_weighted_plot": save_sprint4c_concat_vs_weighted_plot(
+            concat_vs_weighted,
+            figure_root / "sprint4c_concat_vs_weighted_after_tuning.png",
+        ),
+        "runtime_vs_val_macro_f1_plot": save_sprint4c_runtime_vs_val_macro_f1_plot(
+            results,
+            figure_root / "sprint4c_runtime_vs_val_macro_f1.png",
+        ),
+        "val_vs_test_macro_f1_plot": save_sprint4c_val_vs_test_macro_f1_plot(
+            best_by_combination,
+            figure_root / "sprint4c_val_vs_test_macro_f1_selected.png",
+        ),
+    }
+    if not per_class_gain.empty:
+        exported["per_class_gain_heatmap"] = save_per_class_fusion_gain_heatmap(
+            per_class_gain,
+            figure_root / "sprint4c_per_class_f1_gain_heatmap.png",
+            title="Per-Class F1 Gain vs Matched Canonical Sprint 4",
+        )
+    best_row = best_by_combination.sort_values("best_val_macro_f1", ascending=False).iloc[0]
+    best_source = Path(run_root) / str(best_row["run_id"]) / "confusion_matrix.png"
+    best_dest = figure_root / "sprint4c_best_confusion_matrix.png"
+    if best_source.exists():
+        shutil.copy2(best_source, best_dest)
+        exported["best_confusion_matrix"] = best_dest
+    if not weights.empty:
+        exported["best_weighted_fusion_weights"] = save_learned_fusion_weights_plot(
+            weights[weights["run_id"].isin(set(best_by_combination["run_id"]))],
+            figure_root / "sprint4c_best_weighted_fusion_weights.png",
+        )
+    return exported
+
+
+def _normalize_sprint4c_rows(results: pd.DataFrame) -> pd.DataFrame:
+    frame = results.copy()
+    frame["backbone_combination"] = frame.apply(_resolve_backbone_combination, axis=1)
+    frame["backbone_combination"] = frame["backbone_combination"].astype(str)
+    frame["backbone_count"] = frame["backbone_combination"].str.count(r"\+") + 1
+    return frame
+
+
+def _build_sprint4c_screening_summary(results: pd.DataFrame) -> pd.DataFrame:
+    grouped = results.groupby(["backbone_combination", "fusion_method"], as_index=False)
+    rows = []
+    for key, group in grouped:
+        combination, method = key
+        best = group.sort_values(["best_val_macro_f1", "macro_f1"], ascending=False).iloc[0]
+        rows.append(
+            {
+                "backbone_combination": combination,
+                "fusion_method": method,
+                "run_count": len(group),
+                "best_run_id": best["run_id"],
+                "best_candidate_name": best["candidate_name"],
+                "best_val_macro_f1": best["best_val_macro_f1"],
+                "best_test_macro_f1": best["macro_f1"],
+                "best_test_accuracy": best["accuracy"],
+                "best_test_weighted_f1": best["weighted_f1"],
+                "median_val_macro_f1": group["best_val_macro_f1"].median(),
+                "min_val_macro_f1": group["best_val_macro_f1"].min(),
+                "max_val_macro_f1": group["best_val_macro_f1"].max(),
+            }
+        )
+    return pd.DataFrame(rows).sort_values("best_val_macro_f1", ascending=False)
+
+
+def _build_sprint4c_vs_canonical(
+    best_by_combination: pd.DataFrame,
+    canonical: pd.DataFrame,
+) -> pd.DataFrame:
+    canonical_cols = [
+        "backbone_combination",
+        "fusion_method",
+        "run_id",
+        "best_val_macro_f1",
+        "accuracy",
+        "macro_f1",
+        "weighted_f1",
+    ]
+    comparison = best_by_combination.merge(
+        canonical[canonical_cols],
+        on=["backbone_combination", "fusion_method"],
+        how="left",
+        suffixes=("", "_canonical"),
+    )
+    comparison = comparison.assign(
+        canonical_run_id=comparison["run_id_canonical"],
+        canonical_best_val_macro_f1=comparison["best_val_macro_f1_canonical"],
+        val_macro_f1_gain=(
+            comparison["best_val_macro_f1"] - comparison["best_val_macro_f1_canonical"]
+        ),
+        canonical_accuracy=comparison["accuracy_canonical"],
+        accuracy_gain=comparison["accuracy"] - comparison["accuracy_canonical"],
+        canonical_macro_f1=comparison["macro_f1_canonical"],
+        macro_f1_gain=comparison["macro_f1"] - comparison["macro_f1_canonical"],
+        canonical_weighted_f1=comparison["weighted_f1_canonical"],
+        weighted_f1_gain=comparison["weighted_f1"] - comparison["weighted_f1_canonical"],
+    )
+    output_cols = [
+        "display_name",
+        "backbone_combination",
+        "fusion_method",
+        "run_id",
+        "candidate_name",
+        "candidate_profile",
+        "canonical_run_id",
+        "best_val_macro_f1",
+        "canonical_best_val_macro_f1",
+        "val_macro_f1_gain",
+        "accuracy",
+        "canonical_accuracy",
+        "accuracy_gain",
+        "macro_f1",
+        "canonical_macro_f1",
+        "macro_f1_gain",
+        "weighted_f1",
+        "canonical_weighted_f1",
+        "weighted_f1_gain",
+        "runtime_seconds",
+    ]
+    return comparison[output_cols].sort_values("val_macro_f1_gain", ascending=False)
+
+
+def _build_sprint4c_per_class_gains(
+    run_root: str | Path,
+    canonical_run_root: str | Path,
+    comparison: pd.DataFrame,
+) -> pd.DataFrame:
+    rows: list[pd.DataFrame] = []
+    for row in comparison.dropna(subset=["canonical_run_id"]).itertuples(index=False):
+        tuned_path = Path(run_root) / row.run_id / "classification_report.csv"
+        canonical_path = (
+            Path(canonical_run_root) / row.canonical_run_id / "classification_report.csv"
+        )
+        if not tuned_path.exists() or not canonical_path.exists():
+            continue
+        tuned = pd.read_csv(tuned_path)
+        canonical = pd.read_csv(canonical_path)[["label", "precision", "recall", "f1"]].rename(
+            columns={
+                "precision": "canonical_precision",
+                "recall": "canonical_recall",
+                "f1": "canonical_f1",
+            }
+        )
+        merged = tuned.merge(canonical, on="label", how="left")
+        merged.insert(0, "run_id", row.run_id)
+        merged.insert(1, "canonical_run_id", row.canonical_run_id)
+        merged.insert(2, "display_name", row.display_name)
+        merged.insert(3, "backbone_combination", row.backbone_combination)
+        merged.insert(4, "fusion_method", row.fusion_method)
+        merged.insert(5, "candidate_name", row.candidate_name)
+        merged.insert(6, "macro_f1_gain", row.macro_f1_gain)
+        merged["f1_gain"] = merged["f1"] - merged["canonical_f1"]
+        merged["precision_gain"] = merged["precision"] - merged["canonical_precision"]
+        merged["recall_gain"] = merged["recall"] - merged["canonical_recall"]
+        rows.append(merged)
+    if not rows:
+        return pd.DataFrame()
+    return pd.concat(rows, ignore_index=True).sort_values(
+        ["macro_f1_gain", "display_name", "label"],
+        ascending=False,
+    )
