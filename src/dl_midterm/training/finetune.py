@@ -299,6 +299,16 @@ def train_image_classifier(
                 "head_learning_rate": current_head_lr,
             }
         )
+        print(
+            "finetune epoch "
+            f"{epoch}/{epochs} "
+            f"train_loss={train_loss:.4f} "
+            f"val_loss={val_loss:.4f} "
+            f"train_acc={train_metrics['accuracy']:.4f} "
+            f"val_acc={val_metrics['accuracy']:.4f} "
+            f"val_macro_f1={val_metrics['macro_f1']:.4f}",
+            flush=True,
+        )
         if stopper.best_score is None or val_metrics["macro_f1"] > stopper.best_score:
             best_state = deepcopy(model.state_dict())
             best_metrics = dict(val_metrics)
