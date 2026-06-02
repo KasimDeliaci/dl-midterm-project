@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from torch.utils.data import DataLoader
 
@@ -20,13 +21,18 @@ def create_image_dataloader(
     split_name: str | None = None,
     max_samples: int | None = None,
     train: bool = False,
+    augmentation: dict[str, Any] | None = None,
 ) -> DataLoader:
     """Create an image dataloader for feature extraction or image-level training."""
 
     dataset = HAM10000ImageDataset(
         split_csv=split_csv,
         class_names=class_names,
-        transform=build_image_transform(image_size=image_size, train=train),
+        transform=build_image_transform(
+            image_size=image_size,
+            train=train,
+            augmentation=augmentation,
+        ),
         split_name=split_name,
         max_samples=max_samples,
     )
@@ -46,6 +52,7 @@ def create_finetuning_loaders(
     batch_size: int = 32,
     num_workers: int = 2,
     max_samples_per_split: int | None = None,
+    augmentation: dict[str, Any] | None = None,
 ) -> dict[str, DataLoader]:
     """Create train/validation/test dataloaders for image-level fine-tuning."""
 
@@ -61,6 +68,7 @@ def create_finetuning_loaders(
             split_name="train",
             max_samples=max_samples_per_split,
             train=True,
+            augmentation=augmentation,
         ),
         "val": create_image_dataloader(
             split_root / "val.csv",

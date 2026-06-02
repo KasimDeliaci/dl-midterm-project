@@ -472,6 +472,57 @@ Canonical Sprint 4 results:
 - Report-ready fine-tuned and frozen-vs-fine-tuned CSV/PNG assets were generated under
   `artifacts/report_assets/`.
 
+### Sprint 4D Extension Status - 2026-06-02
+
+Sprint 4D completed a validation-gated test-time augmentation audit for already selected fine-tuned
+fusion models. It did not retrain CNNs or MLPs and did not change the lesion-aware split.
+
+- Validation screened `identity`, `tta_flip4`, and `tta_rot4` for the regenerated Sprint 4 concat
+  checkpoint and the Sprint 4C weighted checkpoint.
+- Validation selected `tta_rot4` for both test-eligible models.
+- Test was evaluated once after the validation gate:
+  - regenerated Sprint 4 concat: macro-F1 `0.685 -> 0.690`;
+  - Sprint 4C weighted: macro-F1 `0.699 -> 0.733`.
+- Sprint 4D uses a regenerated local Sprint 4 concat MLP checkpoint because the exact May 29
+  `model.pt` was not persisted in the Drive artifact mirror. This is documented as an inference
+  audit artifact, not a replacement for the canonical Sprint 4 result.
+
+### Sprint 4E Extension Status - 2026-06-02
+
+Sprint 4E completed a local cached-feature fusion diagnostic. It used the existing fine-tuned
+feature caches, did not fine-tune CNNs, and did not read raw images during the fusion-stage MLP
+experiments.
+
+- Fourteen three-backbone fusion candidates were trained across concat, global weighted, and
+  per-class weighted fusion variants.
+- The diagnostic tested train-fitted per-backbone standardization, per-backbone L2 normalization,
+  projection capacity, focal loss, and label smoothing.
+- Best validation macro-F1 was `0.683` for `perclass_l2_p512`.
+- The validation gate selected `concat_standardize_base` and `concat_l2_base` for test.
+- Test macro-F1 was `0.691` for `concat_standardize_base` and `0.683` for `concat_l2_base`.
+- Sprint 4E did not beat canonical Sprint 4 concat (`0.706`) or Sprint 4D weighted + `tta_rot4`
+  (`0.733`), but it showed that feature normalization can improve concat validation behavior.
+- Sprint 5 should frame Sprint 4E as a controlled diagnostic: simple fusion-stage normalization and
+  capacity changes were not enough to surpass the stronger fine-tuned/TTA baselines.
+
+### Sprint 4F Extension Status - 2026-06-02
+
+Sprint 4F is planned and implementation scaffolding is in place. It returns to image-level
+fine-tuning because Sprint 4D suggested transformation robustness matters and Sprint 4E showed that
+fusion-stage MLP changes alone were low-impact.
+
+- Feature source: `finetuned_augmented`.
+- Checkpoint directory: `artifacts/checkpoints/finetuned_augmented_backbones/`.
+- Colab runner: `notebooks/04_sprint4f_augmented_finetuning.ipynb`.
+- Initial backbone policy keeps Sprint 4's conservative last-block unfreezing for all three
+  backbones.
+- Augmentation policy adds controlled random resized crop, flips, rotation, mild affine, and mild
+  color jitter.
+- First fusion matrix is intentionally small: 3 single-backbone MLP runs plus three-backbone concat
+  and weighted runs.
+- Drive mirror policy now preserves checkpoints, feature cache `.pt` files, and MLP `model.pt`
+  files; these large artifacts remain gitignored locally.
+
 ### Verification Gates
 
 Sprint 4 is done only if:

@@ -1,0 +1,20 @@
+experiment_matrix:
+  feature_source: finetuned_augmented
+  classifier: mlp
+  seed: 42
+  screening:
+    stop_go_basis: validation_macro_f1
+    expand_pairwise_if_three_backbone_val_macro_f1_gain_at_least: 0.010
+  fusion_methods:
+    - none
+    - concat
+    - weighted
+  combinations:
+    - backbones: [resnet50]
+      fusion_methods: [none]
+    - backbones: [mobilenet_v2]
+      fusion_methods: [none]
+    - backbones: [efficientnet_b0]
+      fusion_methods: [none]
+    - backbones: [resnet50, mobilenet_v2, efficientnet_b0]
+      fusion_methods: [concat, weighted]

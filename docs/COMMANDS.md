@@ -534,6 +534,208 @@ uv run python scripts/run_mlp_hyperparam_search.py \
   --search-id smoke_mlp_search
 ```
 
+## Sprint 4D: Validation-Gated TTA Audit
+
+Sprint 4D is local inference only. It does not retrain CNNs or MLPs. It requires the selected
+gitignored MLP `model.pt` files to exist under their run folders before evaluation.
+
+Validation screen:
+
+```bash
+uv run python scripts/evaluate_tta.py \
+  --config configs/experiments/sprint4d_tta.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --stage validation \
+  --device auto \
+  --batch-size 32
+```
+
+If the validation decision log allows test evaluation, run test once:
+
+```bash
+uv run python scripts/evaluate_tta.py \
+  --config configs/experiments/sprint4d_tta.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --stage test \
+  --device auto \
+  --batch-size 32
+```
+
+Convenience mode, still validation-gated:
+
+```bash
+uv run python scripts/evaluate_tta.py \
+  --config configs/experiments/sprint4d_tta.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --stage all \
+  --device auto \
+  --batch-size 32
+```
+
+Debug smoke test on validation only:
+
+```bash
+uv run python scripts/evaluate_tta.py \
+  --config configs/experiments/sprint4d_tta.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --stage validation \
+  --models sprint4c_weighted \
+  --policies identity \
+  --max-samples 16 \
+  --device auto \
+  --batch-size 4
+```
+
+Expected report assets:
+
+```text
+artifacts/report_assets/tables/sprint4d/sprint4d_validation_results.csv
+artifacts/report_assets/tables/sprint4d/sprint4d_test_results.csv
+artifacts/report_assets/tables/sprint4d/sprint4d_decision_log.csv
+artifacts/report_assets/tables/sprint4d/sprint4d_delta_vs_identity.csv
+artifacts/report_assets/tables/sprint4d/sprint4d_per_class_f1_gain.csv
+artifacts/report_assets/tables/sprint4d/sprint4d_runtime_summary.csv
+artifacts/report_assets/figures/sprint4d/sprint4d_val_policy_comparison.png
+artifacts/report_assets/figures/sprint4d/sprint4d_validation_macro_f1_delta.png
+artifacts/report_assets/figures/sprint4d/sprint4d_test_macro_f1_delta.png
+artifacts/report_assets/figures/sprint4d/sprint4d_per_class_f1_gain_heatmap.png
+artifacts/report_assets/figures/sprint4d/sprint4d_runtime_multiplier.png
+```
+
+Completed local Sprint 4D run, 2026-06-02:
+
+- Validation selected `tta_rot4` for both test-eligible models.
+- Regenerated Sprint 4 concat checkpoint: test macro-F1 `0.685 -> 0.690`.
+- Sprint 4C weighted checkpoint: test macro-F1 `0.699 -> 0.733`.
+- Prediction dumps are under `artifacts/runs/sprint4d_tta/predictions/` and remain gitignored.
+
+## Sprint 4E: Fusion Training Diagnostic
+
+Sprint 4E is local cached-feature training only. It does not fine-tune CNNs and does not read raw
+images during the MLP/fusion diagnostic stage.
+
+Full MVP diagnostic:
+
+```bash
+uv run python scripts/run_fusion_diagnostic.py \
+  --config configs/experiments/sprint4e_fusion_diagnostic.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --device auto \
+  --batch-size 32
+```
+
+Smoke run for script/debug checks:
+
+```bash
+uv run python scripts/run_fusion_diagnostic.py \
+  --config configs/experiments/sprint4e_fusion_diagnostic.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --max-candidates 2 \
+  --epochs 2 \
+  --skip-test \
+  --device auto \
+  --batch-size 32
+```
+
+Resume test/report export from an existing validation selection table:
+
+```bash
+uv run python scripts/run_fusion_diagnostic.py \
+  --config configs/experiments/sprint4e_fusion_diagnostic.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --device auto \
+  --batch-size 32 \
+  --test-only-from-selection
+```
+
+Expected report assets:
+
+```text
+artifacts/report_assets/tables/sprint4e/sprint4e_validation_results.csv
+artifacts/report_assets/tables/sprint4e/sprint4e_selection_log.csv
+artifacts/report_assets/tables/sprint4e/sprint4e_test_results.csv
+artifacts/report_assets/tables/sprint4e/sprint4e_feature_scale_summary.csv
+artifacts/report_assets/tables/sprint4e/sprint4e_concat_weighted_audit.csv
+artifacts/report_assets/tables/sprint4e/sprint4e_per_class_gap_summary.csv
+artifacts/report_assets/figures/sprint4e/sprint4e_feature_norms_by_backbone.png
+artifacts/report_assets/figures/sprint4e/sprint4e_validation_macro_f1_by_candidate.png
+artifacts/report_assets/figures/sprint4e/sprint4e_concat_vs_weighted_gap.png
+artifacts/report_assets/figures/sprint4e/sprint4e_learned_weights_audit.png
+artifacts/report_assets/figures/sprint4e/sprint4e_per_class_f1_gain_heatmap.png
+artifacts/report_assets/figures/sprint4e/sprint4e_best_confusion_matrix.png
+```
+
+Completed local Sprint 4E run, 2026-06-02:
+
+- Full run trained 14 cached-feature fusion candidates from fixed `finetuned` feature caches.
+- Best validation candidate: `perclass_l2_p512`, macro-F1 `0.683`.
+- Validation-gated test candidates:
+  - `concat_standardize_base`: test macro-F1 `0.691`, accuracy `0.790`;
+  - `concat_l2_base`: test macro-F1 `0.683`, accuracy `0.787`.
+- Sprint 4E did not beat canonical Sprint 4 concat test macro-F1 `0.706` or Sprint 4D weighted
+  + `tta_rot4` test macro-F1 `0.733`.
+- Run folders and `model.pt` checkpoints are under `artifacts/runs/sprint4e_fusion_diagnostic/`
+  and remain gitignored.
+
+## Sprint 4F: Augmented Three-Backbone Fine-Tuned Fusion
+
+Sprint 4F is Colab GPU work for image-level fine-tuning. It creates a separate feature source,
+`finetuned_augmented`, and does not overwrite canonical Sprint 4 `finetuned` caches.
+
+Colab runner:
+
+```text
+notebooks/04_sprint4f_augmented_finetuning.ipynb
+```
+
+Backbone fine-tuning and deterministic feature extraction:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --config configs/experiments/sprint4f_augmented_backbones.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_augmented \
+  --batch-size 32
+```
+
+Small high-impact matrix:
+
+```bash
+uv run python scripts/train_mlp.py \
+  --config configs/experiments/sprint4f_augmented_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_augmented \
+  --experiment-name sprint4f_augmented_single_backbone
+
+uv run python scripts/run_experiment_matrix.py \
+  --config configs/experiments/sprint4f_augmented_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_augmented \
+  --experiment-name sprint4f_augmented_feature_matrix
+```
+
+Drive mirror policy:
+
+```bash
+DEST=/content/drive/MyDrive/dl-midterm-artifacts/sprint4f
+mkdir -p "$DEST"/{checkpoints,features,runs,report_assets}
+rsync -a artifacts/checkpoints/finetuned_augmented_backbones/ \
+  "$DEST/checkpoints/finetuned_augmented_backbones/"
+rsync -a artifacts/features/ham10000/finetuned_augmented/ \
+  "$DEST/features/ham10000/finetuned_augmented/"
+rsync -a artifacts/runs/ "$DEST/runs/"
+rsync -a artifacts/report_assets/ "$DEST/report_assets/"
+```
+
+Do not add `--exclude 'model.pt'` or exclude `.pt` caches/checkpoints in the Drive mirror. Large
+artifacts remain gitignored locally, but Drive should preserve the operational run state.
+
 ## Later Command Pattern
 
 ```bash

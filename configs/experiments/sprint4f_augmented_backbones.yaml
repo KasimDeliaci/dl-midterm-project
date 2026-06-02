@@ -1,0 +1,40 @@
+finetuning:
+  experiment_name: sprint4f_augmented_finetuning
+  seed: 42
+  selection_metric: macro_f1
+  checkpoint_dir: artifacts/checkpoints/finetuned_augmented_backbones
+  feature_source: finetuned_augmented
+  backbones:
+    - resnet50
+    - mobilenet_v2
+    - efficientnet_b0
+  unfreeze_policies:
+    resnet50: layer4
+    mobilenet_v2: last_feature_blocks
+    efficientnet_b0: last_feature_blocks
+  epochs: 15
+  batch_size: 32
+  learning_rate: 0.0001
+  backbone_learning_rate: 0.00003
+  head_learning_rate: 0.0001
+  weight_decay: 0.0001
+  early_stopping_patience: 4
+  class_weighting: true
+  loss:
+    name: cross_entropy
+  augmentation:
+    horizontal_flip: true
+    vertical_flip: true
+    rotation_degrees: 30
+    random_resized_crop:
+      scale: [0.85, 1.0]
+      ratio: [0.9, 1.1]
+    random_affine:
+      degrees: 0
+      translate: [0.03, 0.03]
+      scale: [0.95, 1.05]
+    color_jitter:
+      brightness: 0.08
+      contrast: 0.08
+      saturation: 0.05
+      hue: 0.02

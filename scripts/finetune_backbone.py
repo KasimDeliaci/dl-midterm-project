@@ -98,6 +98,7 @@ def main() -> None:
         batch_size=batch_size,
         num_workers=num_workers,
         max_samples_per_split=args.limit_per_split,
+        augmentation=finetune_config.get("augmentation"),
     )
     extraction_loaders = create_feature_extraction_loaders(
         splits_dir=dataset_config["splits_dir"],
@@ -139,6 +140,7 @@ def main() -> None:
                     finetune_config.get("experiment_name", "sprint4_finetune_backbones")
                 ),
                 limit_per_split=args.limit_per_split,
+                augmentation_config=finetune_config.get("augmentation"),
             )
             print(f"Wrote best checkpoint: {checkpoint_path}")
         if not args.skip_feature_extraction:
@@ -167,6 +169,7 @@ def main() -> None:
                     "image_size": image_size,
                     "feature_source": feature_source,
                     "loss": finetune_config.get("loss"),
+                    "augmentation": finetune_config.get("augmentation"),
                     "unfreeze_policy": policy,
                     "learning_rate": learning_rate,
                     "backbone_learning_rate": backbone_learning_rate,
