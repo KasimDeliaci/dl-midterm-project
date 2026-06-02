@@ -549,6 +549,24 @@ feature caches, and did not read raw images.
 - Sprint 4G should be framed as evidence that simple post-hoc model averaging has limited impact
   compared with the validation-gated TTA result.
 
+### Sprint 4H Extension Status - 2026-06-03
+
+Sprint 4H is planned and scaffolded as the next Colab experiment. It targets macro-F1 more directly
+than Sprint 4F by combining deeper ResNet50 fine-tuning with class-balanced focal loss while
+removing the random crop/affine augmentation that likely hurt Sprint 4F.
+
+- Feature source: `finetuned_targeted`.
+- Checkpoint directory: `artifacts/checkpoints/finetuned_targeted_backbones/`.
+- Colab runner: `notebooks/04_sprint4h_targeted_finetuning.ipynb`.
+- ResNet50 policy: `layer3_layer4`.
+- MobileNetV2 and EfficientNetB0 policy: Sprint 4 last feature blocks.
+- Loss: class-balanced focal with sqrt-smoothed clipped train-split class weights.
+- Augmentation: flips, rotation, mild color jitter; no random resized crop or affine in the first
+  pass.
+- Planned matrix: full 11-run fine-tuned cached-feature MLP matrix.
+- Compare against canonical Sprint 4 concat (`0.706`) and Sprint 4D weighted + `tta_rot4`
+  (`0.733`).
+
 ### Verification Gates
 
 Sprint 4 is done only if:

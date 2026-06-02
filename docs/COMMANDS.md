@@ -786,6 +786,73 @@ Completed local Sprint 4G run, 2026-06-03:
   gitignored; compact report assets are under `artifacts/report_assets/tables/sprint4g/` and
   `artifacts/report_assets/figures/sprint4g/`.
 
+## Sprint 4H: Targeted Deeper Class-Aware Fine-Tuning
+
+Sprint 4H is Colab GPU work. It creates a separate `finetuned_targeted` feature source and tests
+deeper ResNet50 fine-tuning with class-balanced focal loss and crop-free augmentation.
+
+Colab runner:
+
+```text
+notebooks/04_sprint4h_targeted_finetuning.ipynb
+```
+
+Backbone fine-tuning and deterministic feature extraction:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --config configs/experiments/sprint4h_targeted_backbones.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_targeted \
+  --batch-size 32
+```
+
+Full 11-run targeted fine-tuned matrix:
+
+```bash
+uv run python scripts/train_mlp.py \
+  --config configs/experiments/sprint4h_targeted_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_targeted \
+  --experiment-name sprint4h_targeted_single_backbone
+
+uv run python scripts/run_experiment_matrix.py \
+  --config configs/experiments/sprint4h_targeted_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_targeted \
+  --experiment-name sprint4h_targeted_feature_matrix
+```
+
+Drive mirror policy:
+
+```bash
+DEST=/content/drive/MyDrive/dl-midterm-artifacts/sprint4h
+mkdir -p \
+  "$DEST/checkpoints/finetuned_targeted_backbones" \
+  "$DEST/features/ham10000/finetuned_targeted" \
+  "$DEST/runs" \
+  "$DEST/report_assets"
+rsync -a artifacts/checkpoints/finetuned_targeted_backbones/ \
+  "$DEST/checkpoints/finetuned_targeted_backbones/"
+rsync -a artifacts/features/ham10000/finetuned_targeted/ \
+  "$DEST/features/ham10000/finetuned_targeted/"
+rsync -a artifacts/runs/ "$DEST/runs/"
+rsync -a artifacts/report_assets/ "$DEST/report_assets/"
+```
+
+Do not exclude `model.pt`, feature `.pt`, or checkpoint `.pt` files from the Drive mirror. These
+large operational artifacts remain gitignored locally.
+
+Pre-Colab verification:
+
+```bash
+uv run ruff check src scripts tests
+uv run pytest tests/test_sprint4h_targeted.py
+```
+
 ## Later Command Pattern
 
 ```bash

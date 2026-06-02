@@ -289,3 +289,14 @@ Reason: A diagnostic random-weight run improved validation macro-F1 slightly but
 that underperformed on test, indicating validation overfit risk. Deterministic soft voting is
 easier to defend scientifically and keeps the local autoresearch extension aligned with the
 validation-gated evaluation protocol.
+
+## 2026-06-03 - Run Sprint 4H as targeted deeper class-aware fine-tuning
+
+Decision: Sprint 4H uses a separate `finetuned_targeted` feature source. It combines ResNet50
+`layer3_layer4` fine-tuning with class-balanced focal loss and conservative crop-free augmentation.
+MobileNetV2 and EfficientNetB0 keep the Sprint 4 last-feature-block policy.
+
+Reason: Sprint 4F showed that stronger random crop/affine training augmentation hurt macro-F1,
+while Sprint 4D showed that deterministic geometry at inference can help. Sprint 4H therefore tests
+a narrower hypothesis: more trainable ResNet50 capacity plus imbalance-aware loss, without changing
+lesion framing through random crops. Keeping a separate feature source preserves auditability.
