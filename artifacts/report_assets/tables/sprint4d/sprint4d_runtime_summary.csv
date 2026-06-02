@@ -1,0 +1,11 @@
+model_key,display_name,split,policy,num_views,runtime_seconds,samples,samples_per_second
+canonical_concat,Sprint 4 concat (local regenerated MLP),val,identity,1,39.35444091586396,1532,38.92826233449154
+canonical_concat,Sprint 4 concat (local regenerated MLP),val,tta_flip4,4,167.87873541610315,1532,9.12563462074452
+canonical_concat,Sprint 4 concat (local regenerated MLP),val,tta_rot4,4,227.2836100407876,1532,6.740477237778263
+sprint4c_weighted,Sprint 4C weighted,val,identity,1,51.25748833408579,1532,29.888315830357087
+sprint4c_weighted,Sprint 4C weighted,val,tta_flip4,4,213.08841491723433,1532,7.189503946495844
+sprint4c_weighted,Sprint 4C weighted,val,tta_rot4,4,228.8385453331284,1532,6.694676361317597
+canonical_concat,Sprint 4 concat (local regenerated MLP),test,identity,1,55.911239583045244,1502,26.86400822448359
+canonical_concat,Sprint 4 concat (local regenerated MLP),test,tta_rot4,4,274.3030539592728,1502,5.475695506558267
+sprint4c_weighted,Sprint 4C weighted,test,identity,1,71.66402333416045,1502,20.958912577324334
+sprint4c_weighted,Sprint 4C weighted,test,tta_rot4,4,279.49141470808536,1502,5.374047004516267

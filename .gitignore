@@ -90,6 +90,8 @@ artifacts/checkpoints/**/*.ckpt
 !artifacts/report_assets/tables/.gitkeep
 !artifacts/report_assets/figures/
 !artifacts/report_assets/figures/.gitkeep
+artifacts/report_assets/tables/sprint4d/sprint4d_smoke*/
+artifacts/report_assets/figures/sprint4d/sprint4d_smoke*/
 !reports/final_report/build/
 !reports/final_report/build/.gitkeep
 !submission/package/.gitkeep

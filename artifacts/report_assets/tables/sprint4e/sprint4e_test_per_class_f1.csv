@@ -1,0 +1,15 @@
+candidate_name,family,fusion_method,normalization,loss,split,label,precision,recall,f1,support
+concat_standardize_base,concat_normalized,concat,standardize_per_backbone,weighted_ce,test,akiec,0.6,0.75,0.6666666666666666,52
+concat_standardize_base,concat_normalized,concat,standardize_per_backbone,weighted_ce,test,bcc,0.6666666666666666,0.704225352112676,0.684931506849315,71
+concat_standardize_base,concat_normalized,concat,standardize_per_backbone,weighted_ce,test,bkl,0.6075949367088608,0.5748502994011976,0.5907692307692308,167
+concat_standardize_base,concat_normalized,concat,standardize_per_backbone,weighted_ce,test,df,0.6842105263157895,0.65,0.6666666666666666,20
+concat_standardize_base,concat_normalized,concat,standardize_per_backbone,weighted_ce,test,nv,0.9295774647887324,0.8545816733067729,0.8905033731188375,1004
+concat_standardize_base,concat_normalized,concat,standardize_per_backbone,weighted_ce,test,mel,0.47107438016528924,0.6826347305389222,0.5574572127139364,167
+concat_standardize_base,concat_normalized,concat,standardize_per_backbone,weighted_ce,test,vasc,0.8,0.7619047619047619,0.7804878048780488,21
+concat_l2_base,concat_normalized,concat,l2_per_backbone,weighted_ce,test,akiec,0.45161290322580644,0.8076923076923077,0.5793103448275863,52
+concat_l2_base,concat_normalized,concat,l2_per_backbone,weighted_ce,test,bcc,0.6341463414634146,0.7323943661971831,0.6797385620915033,71
+concat_l2_base,concat_normalized,concat,l2_per_backbone,weighted_ce,test,bkl,0.6060606060606061,0.5988023952095808,0.6024096385542169,167
+concat_l2_base,concat_normalized,concat,l2_per_backbone,weighted_ce,test,df,0.625,0.75,0.6818181818181818,20
+concat_l2_base,concat_normalized,concat,l2_per_backbone,weighted_ce,test,nv,0.9295010845986985,0.853585657370518,0.8899273104880582,1004
+concat_l2_base,concat_normalized,concat,l2_per_backbone,weighted_ce,test,mel,0.5076142131979695,0.5988023952095808,0.5494505494505495,167
+concat_l2_base,concat_normalized,concat,l2_per_backbone,weighted_ce,test,vasc,0.8421052631578947,0.7619047619047619,0.8,21

@@ -1,0 +1,208 @@
+sprint4e:
+  name: sprint4e_fusion_diagnostic
+  feature_source: finetuned
+  seed: 42
+  selection_metric: best_val_macro_f1
+  run_root: artifacts/runs/sprint4e_fusion_diagnostic
+  tables_dir: artifacts/report_assets/tables/sprint4e
+  figures_dir: artifacts/report_assets/figures/sprint4e
+  feature_root: artifacts/features
+  test_top_k: 2
+
+  backbones:
+    - resnet50
+    - mobilenet_v2
+    - efficientnet_b0
+
+  gate:
+    min_val_macro_f1_gain: 0.010
+    max_accuracy_drop: 0.020
+    max_weighted_f1_drop: 0.020
+
+  baselines:
+    canonical_sprint4_concat_macro_f1: 0.7059113258715694
+    sprint4c_weighted_macro_f1: 0.6988600978787705
+    sprint4d_weighted_tta_rot4_macro_f1: 0.7328571895797479
+
+  candidates:
+    - name: concat_none_base
+      family: concat_baseline
+      fusion_method: concat
+      normalization: none
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.001
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      class_weighting: true
+
+    - name: concat_standardize_base
+      family: concat_normalized
+      fusion_method: concat
+      normalization: standardize_per_backbone
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.001
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      class_weighting: true
+
+    - name: concat_l2_base
+      family: concat_normalized
+      fusion_method: concat
+      normalization: l2_per_backbone
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.001
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      class_weighting: true
+
+    - name: weighted_none_p512_low_lr
+      family: weighted_normalized
+      fusion_method: weighted
+      normalization: none
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 512
+      class_weighting: true
+
+    - name: weighted_standardize_p512_low_lr
+      family: weighted_normalized
+      fusion_method: weighted
+      normalization: standardize_per_backbone
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 512
+      class_weighting: true
+
+    - name: weighted_l2_p512_low_lr
+      family: weighted_normalized
+      fusion_method: weighted
+      normalization: l2_per_backbone
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 512
+      class_weighting: true
+
+    - name: weighted_standardize_p1024_low_lr
+      family: weighted_projection
+      fusion_method: weighted
+      normalization: standardize_per_backbone
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 1024
+      class_weighting: true
+
+    - name: weighted_standardize_p1024_reg
+      family: weighted_projection
+      fusion_method: weighted
+      normalization: standardize_per_backbone
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.5
+      hidden_dims: [512, 256]
+      projection_dim: 1024
+      class_weighting: true
+
+    - name: weighted_l2_p1024_low_lr
+      family: weighted_projection
+      fusion_method: weighted
+      normalization: l2_per_backbone
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 1024
+      class_weighting: true
+
+    - name: perclass_standardize_p512
+      family: per_class_weighted
+      fusion_method: per_class_weighted
+      normalization: standardize_per_backbone
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 512
+      class_weighting: true
+
+    - name: perclass_l2_p512
+      family: per_class_weighted
+      fusion_method: per_class_weighted
+      normalization: l2_per_backbone
+      loss: weighted_ce
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 512
+      class_weighting: true
+
+    - name: weighted_standardize_p512_focal
+      family: loss_variant
+      fusion_method: weighted
+      normalization: standardize_per_backbone
+      loss: focal
+      focal_gamma: 1.0
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 512
+      class_weighting: true
+
+    - name: weighted_standardize_p512_smooth
+      family: loss_variant
+      fusion_method: weighted
+      normalization: standardize_per_backbone
+      loss: label_smoothing
+      label_smoothing: 0.05
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 512
+      class_weighting: true
+
+    - name: perclass_standardize_p512_focal
+      family: loss_variant
+      fusion_method: per_class_weighted
+      normalization: standardize_per_backbone
+      loss: focal
+      focal_gamma: 1.0
+      optimizer: adamw
+      learning_rate: 0.0003
+      weight_decay: 0.0001
+      dropout: 0.3
+      hidden_dims: [512, 256]
+      projection_dim: 512
+      class_weighting: true

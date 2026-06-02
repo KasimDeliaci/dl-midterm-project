@@ -103,3 +103,57 @@ class WeightedFusionMLP(nn.Module):
         """Return the learned softmax weights from the fusion layer."""
 
         return self.fusion.normalized_weights()
+
+
+class PerClassWeightedFusionMLP(nn.Module):
+    """Classifier with class-specific backbone weights over projected logits."""
+
+    def __init__(
+        self,
+        input_dims: Sequence[int],
+        num_classes: int,
+        *,
+        projection_dim: int = 512,
+        hidden_dims: list[int] | tuple[int, ...] = (512, 256),
+        dropout: float = 0.3,
+    ) -> None:
+        super().__init__()
+        if len(input_dims) < 2:
+            raise ValueError("Per-class weighted fusion requires at least two input dimensions.")
+        self.input_dims = tuple(int(dim) for dim in input_dims)
+        self.num_classes = int(num_classes)
+        self.projections = nn.ModuleList(
+            nn.Linear(input_dim, projection_dim) for input_dim in self.input_dims
+        )
+        self.classifier = FeatureMLP(
+            input_dim=projection_dim,
+            num_classes=num_classes,
+            hidden_dims=hidden_dims,
+            dropout=dropout,
+        )
+        self.logits = nn.Parameter(torch.zeros(len(self.input_dims), self.num_classes))
+
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        parts = torch.split(features, self.input_dims, dim=1)
+        if len(parts) != len(self.input_dims):
+            raise ValueError(
+                f"Expected {len(self.input_dims)} feature parts, got {len(parts)}."
+            )
+        per_backbone_logits = []
+        for index, (feature, projection, expected_dim) in enumerate(
+            zip(parts, self.projections, self.input_dims, strict=True)
+        ):
+            if int(feature.shape[1]) != expected_dim:
+                raise ValueError(
+                    f"Feature tensor {index} has dim {int(feature.shape[1])}, "
+                    f"expected {expected_dim}."
+                )
+            per_backbone_logits.append(self.classifier(projection(feature)))
+        stacked = torch.stack(per_backbone_logits, dim=1)
+        weights = self.normalized_weights().unsqueeze(0)
+        return (stacked * weights).sum(dim=1)
+
+    def normalized_weights(self) -> torch.Tensor:
+        """Return softmax-normalized class-specific weights over backbones."""
+
+        return torch.softmax(self.logits, dim=0)

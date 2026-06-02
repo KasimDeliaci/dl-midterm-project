@@ -1,0 +1,34 @@
+[
+  {
+    "model_key":"canonical_concat",
+    "identity_policy":"identity",
+    "selected_policy":"tta_rot4",
+    "identity_val_macro_f1":0.6599202817,
+    "selected_val_macro_f1":0.6949196636,
+    "val_macro_f1_gain":0.034999382,
+    "accuracy_gain":0.0117493473,
+    "weighted_f1_gain":0.0118574347,
+    "test_allowed":true,
+    "reason":"Validation gate passed.",
+    "test_eligible":true,
+    "expected_val_macro_f1":0.6641883447,
+    "identity_sanity_abs_error":0.004268063,
+    "identity_sanity_pass":true
+  },
+  {
+    "model_key":"sprint4c_weighted",
+    "identity_policy":"identity",
+    "selected_policy":"tta_rot4",
+    "identity_val_macro_f1":0.6779474485,
+    "selected_val_macro_f1":0.7065786997,
+    "val_macro_f1_gain":0.0286312511,
+    "accuracy_gain":0.0169712794,
+    "weighted_f1_gain":0.0156736624,
+    "test_allowed":true,
+    "reason":"Validation gate passed.",
+    "test_eligible":true,
+    "expected_val_macro_f1":0.6802763048,
+    "identity_sanity_abs_error":0.0023288563,
+    "identity_sanity_pass":true
+  }
+]

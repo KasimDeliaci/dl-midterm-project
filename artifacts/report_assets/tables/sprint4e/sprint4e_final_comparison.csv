@@ -1,0 +1,6 @@
+source,split,macro_f1,accuracy,weighted_f1
+canonical_sprint4_concat_macro_f1,test,0.7059113258715694,,
+sprint4c_weighted_macro_f1,test,0.6988600978787705,,
+sprint4d_weighted_tta_rot4_macro_f1,test,0.7328571895797479,,
+concat_standardize_base,test,0.6910689230946716,0.7896138482023968,0.7981621728107472
+concat_l2_base,test,0.6832363696042993,0.7869507323568575,0.795385892545074

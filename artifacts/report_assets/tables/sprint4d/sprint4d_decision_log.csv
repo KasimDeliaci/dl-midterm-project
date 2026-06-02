@@ -1,0 +1,3 @@
+model_key,identity_policy,selected_policy,identity_val_macro_f1,selected_val_macro_f1,val_macro_f1_gain,accuracy_gain,weighted_f1_gain,test_allowed,reason,test_eligible,expected_val_macro_f1,identity_sanity_abs_error,identity_sanity_pass
+canonical_concat,identity,tta_rot4,0.6599202816882853,0.694919663639617,0.034999381951331676,0.011749347258485643,0.011857434676031953,True,Validation gate passed.,True,0.6641883446818492,0.004268062993563859,True
+sprint4c_weighted,identity,tta_rot4,0.6779474485248252,0.7065786996632956,0.028631251138470315,0.016971279373368175,0.015673662419877554,True,Validation gate passed.,True,0.6802763048359945,0.002328856311169303,True

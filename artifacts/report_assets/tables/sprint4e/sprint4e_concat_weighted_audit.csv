@@ -1,0 +1,9 @@
+fusion_method,normalization,best_val_macro_f1,mean_val_macro_f1,candidate_count
+per_class_weighted,l2_per_backbone,0.6834300849758462,0.6834300849758462,1
+weighted,none,0.6802763048359945,0.6802763048359945,1
+weighted,l2_per_backbone,0.6755420257574585,0.6612268702093603,2
+weighted,standardize_per_backbone,0.6652890703663966,0.6560153439803261,5
+concat,standardize_per_backbone,0.6618262221281873,0.6618262221281873,1
+concat,l2_per_backbone,0.6617083359799043,0.6617083359799043,1
+per_class_weighted,standardize_per_backbone,0.6588904423424394,0.6571656613769098,2
+concat,none,0.6388917074958013,0.6388917074958013,1
