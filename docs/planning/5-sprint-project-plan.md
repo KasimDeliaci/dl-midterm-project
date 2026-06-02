@@ -507,21 +507,47 @@ experiments.
 
 ### Sprint 4F Extension Status - 2026-06-02
 
-Sprint 4F is planned and implementation scaffolding is in place. It returns to image-level
+Sprint 4F completed a Colab T4 augmented fine-tuning extension. It returned to image-level
 fine-tuning because Sprint 4D suggested transformation robustness matters and Sprint 4E showed that
 fusion-stage MLP changes alone were low-impact.
 
 - Feature source: `finetuned_augmented`.
 - Checkpoint directory: `artifacts/checkpoints/finetuned_augmented_backbones/`.
 - Colab runner: `notebooks/04_sprint4f_augmented_finetuning.ipynb`.
-- Initial backbone policy keeps Sprint 4's conservative last-block unfreezing for all three
+- Backbone policy kept Sprint 4's conservative last-block unfreezing for all three
   backbones.
-- Augmentation policy adds controlled random resized crop, flips, rotation, mild affine, and mild
+- Augmentation policy added controlled random resized crop, flips, rotation, mild affine, and mild
   color jitter.
-- First fusion matrix is intentionally small: 3 single-backbone MLP runs plus three-backbone concat
+- The fusion matrix was intentionally small: 3 single-backbone MLP runs plus three-backbone concat
   and weighted runs.
 - Drive mirror policy now preserves checkpoints, feature cache `.pt` files, and MLP `model.pt`
   files; these large artifacts remain gitignored locally.
+- Test macro-F1 results were below the stronger baselines:
+  - augmented ResNet50 single: `0.589`;
+  - augmented MobileNetV2 single: `0.575`;
+  - augmented EfficientNetB0 single: `0.579`;
+  - augmented three-backbone concat: `0.645`;
+  - augmented three-backbone weighted: `0.615`.
+- Sprint 4F should be reported as a controlled negative result: train-time augmentation did not
+  reproduce Sprint 4D's inference-time TTA gain.
+
+### Sprint 4G Extension Status - 2026-06-03
+
+Sprint 4G completed a local cached-feature autoresearch ensemble over existing checkpointed
+MLP/fusion models from Sprint 4B, 4C, 4E, and 4F. It did not fine-tune CNNs, did not create new
+feature caches, and did not read raw images.
+
+- Candidate discovery required existing `model.pt` and `config_resolved.yaml`.
+- Candidate filtering and ensemble selection used validation macro-F1 only.
+- Random Dirichlet weight search was disabled after a diagnostic run showed validation-overfit
+  risk; the final search uses deterministic uniform/rank-weighted soft voting.
+- Selected ensemble: uniform soft-vote of 3 existing models.
+- Validation macro-F1: `0.725`.
+- Test macro-F1: `0.707`, accuracy `0.806`, weighted-F1 `0.812`.
+- This is a near-tie with canonical Sprint 4 concat (`0.706`) and remains below Sprint 4D weighted
+  + `tta_rot4` (`0.733`).
+- Sprint 4G should be framed as evidence that simple post-hoc model averaging has limited impact
+  compared with the validation-gated TTA result.
 
 ### Verification Gates
 

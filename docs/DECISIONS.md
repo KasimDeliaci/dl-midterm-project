@@ -268,3 +268,24 @@ from the Drive artifact mirror.
 Reason: Sprint 4D was constrained by missing exact MLP checkpoints from the earlier Colab mirror.
 Preserving full operational artifacts on Drive avoids rerunning expensive Colab jobs just to recover
 model weights, while keeping the Git repository small and report-ready.
+
+## 2026-06-03 - Treat Sprint 4F as an informative negative augmentation result
+
+Decision: Sprint 4F remains separate from canonical Sprint 4 and is not promoted as the best
+result. The augmented three-backbone concat model reached test macro-F1 `0.645`, below canonical
+Sprint 4 concat `0.706` and Sprint 4D weighted + `tta_rot4` `0.733`.
+
+Reason: Test-time augmentation improved inference robustness without changing the learned feature
+space, but train-time augmentation changed backbone learning and reduced downstream separability in
+this split. This is useful evidence against uncontrolled augmentation escalation; final reporting
+should describe it as a controlled negative experiment, not as a failed implementation.
+
+## 2026-06-03 - Disable random weight search in Sprint 4G ensemble selection
+
+Decision: Sprint 4G uses deterministic uniform and rank-weighted soft-vote ensembles only. Random
+Dirichlet ensemble weights are disabled in the committed config.
+
+Reason: A diagnostic random-weight run improved validation macro-F1 slightly but selected a model
+that underperformed on test, indicating validation overfit risk. Deterministic soft voting is
+easier to defend scientifically and keeps the local autoresearch extension aligned with the
+validation-gated evaluation protocol.

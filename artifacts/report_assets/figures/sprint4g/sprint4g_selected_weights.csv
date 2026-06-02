@@ -1,0 +1,4 @@
+member,weight
+classaware_r50-mnv2-effb0_weighted,0.3333333432674408
+ft_r50-mnv2-effb0_weighted_w_cw_adamw_low_lr_p512,0.3333333432674408
+classaware_mnv2-effb0_concat,0.3333333432674408

@@ -736,6 +736,56 @@ rsync -a artifacts/report_assets/ "$DEST/report_assets/"
 Do not add `--exclude 'model.pt'` or exclude `.pt` caches/checkpoints in the Drive mirror. Large
 artifacts remain gitignored locally, but Drive should preserve the operational run state.
 
+Completed Sprint 4F Colab run, 2026-06-02:
+
+- Drive mirror contained 3 backbone checkpoints, 9 feature cache `.pt` files, and 5 MLP
+  `model.pt` files.
+- Best Sprint 4F test macro-F1 was three-backbone concat at `0.645`, below canonical Sprint 4 and
+  Sprint 4D.
+
+## Sprint 4G: Local Autoresearch Ensemble
+
+Sprint 4G is local cached-feature inference only. It discovers existing checkpointed MLP/fusion
+models and evaluates validation-gated soft-vote ensembles.
+
+Full run:
+
+```bash
+uv run python scripts/run_autoresearch_ensemble.py \
+  --config configs/experiments/sprint4g_autoresearch_ensemble.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --device auto \
+  --batch-size 128
+```
+
+Smoke/debug run:
+
+```bash
+uv run python scripts/run_autoresearch_ensemble.py \
+  --config configs/experiments/sprint4g_autoresearch_ensemble.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --max-candidates 3 \
+  --skip-test \
+  --device cpu \
+  --batch-size 128
+```
+
+Verification:
+
+```bash
+uv run ruff check scripts/run_autoresearch_ensemble.py tests/test_sprint4g_autoresearch.py
+uv run pytest tests/test_sprint4g_autoresearch.py
+```
+
+Completed local Sprint 4G run, 2026-06-03:
+
+- Selected uniform 3-model ensemble by validation macro-F1.
+- Validation macro-F1: `0.725`.
+- Test macro-F1: `0.707`.
+- Full search table is under `artifacts/runs/sprint4g_autoresearch_ensemble/` and remains
+  gitignored; compact report assets are under `artifacts/report_assets/tables/sprint4g/` and
+  `artifacts/report_assets/figures/sprint4g/`.
+
 ## Later Command Pattern
 
 ```bash

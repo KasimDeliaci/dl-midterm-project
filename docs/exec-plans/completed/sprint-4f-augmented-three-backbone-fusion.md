@@ -339,3 +339,26 @@ Always mention:
 - benchmark dermoscopic image classification,
 - low-support class caution for per-class claims,
 - Sprint 4F artifacts are separate from canonical Sprint 4 unless explicitly promoted.
+
+## Completion - 2026-06-02
+
+Sprint 4F was run on Colab T4 and mirrored to Drive under
+`/content/drive/MyDrive/dl-midterm-artifacts/sprint4f/`. The local project restored the report-ready
+tables/figures plus gitignored operational artifacts needed for auditability:
+
+- 3 backbone checkpoints in `artifacts/checkpoints/finetuned_augmented_backbones/`;
+- 9 deterministic fine-tuned augmented feature cache `.pt` files under
+  `artifacts/features/ham10000/finetuned_augmented/`;
+- 5 MLP `model.pt` files for the Sprint 4F single-backbone and three-backbone fusion runs.
+
+Main test macro-F1 results:
+
+- augmented ResNet50 single-backbone: `0.589`;
+- augmented MobileNetV2 single-backbone: `0.575`;
+- augmented EfficientNetB0 single-backbone: `0.579`;
+- augmented three-backbone concat: `0.645`;
+- augmented three-backbone weighted: `0.615`.
+
+Sprint 4F did not improve over canonical Sprint 4 concat (`0.706`) or Sprint 4D weighted +
+`tta_rot4` (`0.733`). It is retained as a negative but informative augmentation experiment rather
+than promoted to the project best result.

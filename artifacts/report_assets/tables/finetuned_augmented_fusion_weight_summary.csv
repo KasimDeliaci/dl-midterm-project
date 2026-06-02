@@ -1,0 +1,4 @@
+run_id,display_name,backbone_combination,fusion_method,backbone,weight,weight_sum
+20260602_202954_finetuned_augmented_r50-mnv2-effb0_weighted_mlp_s42,r50+mnv2+effb0 weighted,resnet50+mobilenet_v2+efficientnet_b0,weighted,resnet50,0.3218523263931274,1.0
+20260602_202954_finetuned_augmented_r50-mnv2-effb0_weighted_mlp_s42,r50+mnv2+effb0 weighted,resnet50+mobilenet_v2+efficientnet_b0,weighted,mobilenet_v2,0.3168322741985321,1.0
+20260602_202954_finetuned_augmented_r50-mnv2-effb0_weighted_mlp_s42,r50+mnv2+effb0 weighted,resnet50+mobilenet_v2+efficientnet_b0,weighted,efficientnet_b0,0.3613153994083404,1.0

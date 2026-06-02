@@ -1,0 +1,36 @@
+sprint4g:
+  name: sprint4g_autoresearch_ensemble
+  seed: 42
+  run_root: artifacts/runs
+  feature_root: artifacts/features
+  tables_dir: artifacts/report_assets/tables/sprint4g
+  figures_dir: artifacts/report_assets/figures/sprint4g
+  full_results_dir: artifacts/runs/sprint4g_autoresearch_ensemble
+  eligible_feature_sources:
+    - finetuned
+    - finetuned_classaware
+    - finetuned_deeper
+    - finetuned_augmented
+  eligible_fusion_methods:
+    - none
+    - concat
+    - weighted
+    - per_class_weighted
+  candidate_pool:
+    min_val_macro_f1: 0.600
+    top_n_by_validation: 14
+  ensemble_search:
+    min_size: 2
+    max_size: 5
+    include_uniform: true
+    include_rank_weighted: true
+    random_weight_top_n: 0
+    random_weight_samples: 0
+  selection:
+    metric: macro_f1
+    test_top_k: 1
+  report:
+    max_ensemble_rows: 100
+  baselines:
+    canonical_sprint4_concat_macro_f1: 0.7059113258715694
+    sprint4d_weighted_tta_rot4_macro_f1: 0.7328571895797479
