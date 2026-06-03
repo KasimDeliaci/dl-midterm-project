@@ -987,6 +987,10 @@ Thin Colab runner:
 notebooks/04_sprint4k_image_balanced_sampler.ipynb
 ```
 
+Completed diagnostic result: ResNet50 reached best validation macro-F1 `0.672`, test accuracy
+`0.756`, test macro-F1 `0.657`, and test weighted-F1 `0.772`. The result did not meet the gate for
+the optional full matrix.
+
 Initial ResNet50 diagnostic:
 
 ```bash

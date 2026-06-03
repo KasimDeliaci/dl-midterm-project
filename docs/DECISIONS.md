@@ -344,3 +344,13 @@ Reason: Sprint 4J only changed cached-feature MLP sampling and could not alter t
 representation. Image-level sampling can change the fine-tuned feature space, so it is the more
 appropriate place to test this idea. Class weights are disabled because sampler and loss weighting
 together would likely overcompensate minority classes.
+
+## 2026-06-03 - Do not escalate Sprint 4K to full matrix
+
+Decision: Sprint 4K remains a ResNet50-only negative diagnostic and should not be promoted to the
+full three-backbone MLP/fusion matrix.
+
+Reason: The Colab diagnostic reached validation macro-F1 `0.672`, but test macro-F1 was only
+`0.657` with weighted-F1 `0.772`. This is below the canonical Sprint 4 matrix and far below the
+Sprint 4D TTA result, so the validation improvement did not translate into a stronger held-out test
+result.
