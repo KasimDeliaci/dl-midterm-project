@@ -333,3 +333,14 @@ Reason: The class-balanced sampler avoided SMOTE and did not create synthetic sa
 not improve final test macro-F1. The three-backbone concat diagnostic reached validation macro-F1
 `0.660` and test macro-F1 `0.690`, below canonical Sprint 4 concat (`0.706`). The weighted
 diagnostic reached test macro-F1 `0.668`, also below Sprint 4C weighted identity (`0.699`).
+
+## 2026-06-03 - Run Sprint 4K as image-level balanced-sampler diagnostic
+
+Decision: Sprint 4K tests class-balanced sampling during image-level fine-tuning before any further
+full matrix expansion. The first run should fine-tune ResNet50 with `layer3_layer4`, plain
+cross-entropy, class weights disabled, and low discriminative learning rates.
+
+Reason: Sprint 4J only changed cached-feature MLP sampling and could not alter the CNN
+representation. Image-level sampling can change the fine-tuned feature space, so it is the more
+appropriate place to test this idea. Class weights are disabled because sampler and loss weighting
+together would likely overcompensate minority classes.

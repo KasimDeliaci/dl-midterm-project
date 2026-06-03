@@ -602,6 +602,22 @@ discussion but avoided synthetic images or synthetic features.
 - The result is below canonical Sprint 4 concat (`0.706`) and Sprint 4C weighted identity
   (`0.699`), so balanced sampling should not be escalated to Colab image-level fine-tuning.
 
+### Sprint 4K Extension Status - Pending Colab
+
+Sprint 4K is prepared as the final image-level balanced-sampler diagnostic. Unlike Sprint 4J, this
+tests balanced sampling during CNN fine-tuning, where the representation itself can change.
+
+- Feature source: `finetuned_balanced_sampler`.
+- Initial run: ResNet50 only.
+- ResNet50 policy: `layer3_layer4`.
+- Loss: plain cross-entropy.
+- Class weights: disabled.
+- Train sampler: class-balanced `WeightedRandomSampler`.
+- Learning rates: low backbone LR with higher classifier-head LR.
+- Local smoke test passed with `--limit-per-split 4`, `--epochs 1`, and `--no-pretrained`.
+- Full Colab result is pending; do not promote or report this as a result until restored and
+  audited.
+
 ### Verification Gates
 
 Sprint 4 is done only if:

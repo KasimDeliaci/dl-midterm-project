@@ -976,6 +976,78 @@ Completed local Sprint 4J run, 2026-06-03:
 - Balanced weighted: best validation macro-F1 `0.663`, test macro-F1 `0.668`.
 - Result: not promising enough to escalate to Colab image-level fine-tuning.
 
+## Sprint 4K: Image-Level Balanced Sampler Diagnostic
+
+Sprint 4K is Colab GPU work. It tests whether class-balanced sampling helps during image-level
+backbone fine-tuning, where the CNN representation can actually change.
+
+Initial ResNet50 diagnostic:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --config configs/experiments/sprint4k_image_balanced_sampler_backbones.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --backbone resnet50 \
+  --feature-source finetuned_balanced_sampler \
+  --batch-size 32
+```
+
+If ResNet50 validation macro-F1 is promising, train all three backbones and extract feature caches:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --config configs/experiments/sprint4k_image_balanced_sampler_backbones.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_balanced_sampler \
+  --batch-size 32
+```
+
+Optional cached-feature MLP matrix after all three feature caches exist:
+
+```bash
+uv run python scripts/train_mlp.py \
+  --config configs/experiments/sprint4k_balanced_sampler_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_balanced_sampler \
+  --experiment-name sprint4k_balanced_sampler_single_backbone
+
+uv run python scripts/run_experiment_matrix.py \
+  --config configs/experiments/sprint4k_balanced_sampler_feature_matrix.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned_balanced_sampler \
+  --experiment-name sprint4k_balanced_sampler_feature_matrix
+```
+
+Local smoke verification:
+
+```bash
+uv run python scripts/finetune_backbone.py \
+  --config configs/experiments/sprint4k_image_balanced_sampler_backbones.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --backbone resnet50 \
+  --run-root artifacts/runs/sprint4k_smoke \
+  --checkpoint-dir artifacts/checkpoints/sprint4k_smoke \
+  --limit-per-split 4 \
+  --epochs 1 \
+  --batch-size 2 \
+  --num-workers 0 \
+  --no-pretrained \
+  --no-mixed-precision \
+  --skip-feature-extraction
+```
+
+Verification:
+
+```bash
+uv run ruff check src/dl_midterm/data/dataloaders.py src/dl_midterm/training/finetune.py scripts/finetune_backbone.py tests/test_sprint4k_balanced_sampler.py
+uv run pytest tests/test_sprint4k_balanced_sampler.py
+```
+
 ## Later Command Pattern
 
 ```bash

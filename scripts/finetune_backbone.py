@@ -88,6 +88,10 @@ def main() -> None:
     checkpoint_dir = Path(args.checkpoint_dir or finetune_config["checkpoint_dir"])
     backbones = _selected_backbones(args, finetune_config)
     feature_source = str(args.feature_source or finetune_config.get("feature_source", "finetuned"))
+    class_weighting = (
+        bool(finetune_config.get("class_weighting", True)) and not args.no_class_weights
+    )
+    sampler_config = finetune_config.get("sampler", {"name": "none"})
 
     class_names = list(dataset_config["class_names"])
     image_size = int(dataset_config.get("image_size", 224))
@@ -99,6 +103,8 @@ def main() -> None:
         num_workers=num_workers,
         max_samples_per_split=args.limit_per_split,
         augmentation=finetune_config.get("augmentation"),
+        train_sampler=sampler_config,
+        seed=seed,
     )
     extraction_loaders = create_feature_extraction_loaders(
         splits_dir=dataset_config["splits_dir"],
@@ -131,7 +137,7 @@ def main() -> None:
                 mixed_precision=mixed_precision,
                 feature_source=feature_source,
                 pretrained=not args.no_pretrained,
-                class_weighting=not args.no_class_weights,
+                class_weighting=class_weighting,
                 loss_config=finetune_config.get("loss"),
                 backbone_learning_rate=backbone_learning_rate,
                 head_learning_rate=head_learning_rate,
@@ -141,6 +147,7 @@ def main() -> None:
                 ),
                 limit_per_split=args.limit_per_split,
                 augmentation_config=finetune_config.get("augmentation"),
+                sampler_config=sampler_config,
             )
             print(f"Wrote best checkpoint: {checkpoint_path}")
         if not args.skip_feature_extraction:
@@ -170,6 +177,8 @@ def main() -> None:
                     "feature_source": feature_source,
                     "loss": finetune_config.get("loss"),
                     "augmentation": finetune_config.get("augmentation"),
+                    "sampler": sampler_config,
+                    "class_weighting": class_weighting,
                     "unfreeze_policy": policy,
                     "learning_rate": learning_rate,
                     "backbone_learning_rate": backbone_learning_rate,

@@ -72,6 +72,7 @@ def finetune_backbone(
     experiment_name: str = "sprint4_finetune_backbones",
     limit_per_split: int | None = None,
     augmentation_config: dict[str, Any] | None = None,
+    sampler_config: dict[str, Any] | None = None,
 ) -> tuple[Path, Path]:
     """Fine-tune one backbone and write a best-validation checkpoint plus run report."""
 
@@ -139,6 +140,7 @@ def finetune_backbone(
             "feature_source": feature_source,
             "loss": loss_metadata,
             "augmentation": augmentation_config,
+            "sampler": sampler_config,
         },
         checkpoint_path,
     )
@@ -166,6 +168,7 @@ def finetune_backbone(
         "pretrained": pretrained,
         "limit_per_split": limit_per_split,
         "augmentation": augmentation_config,
+        "sampler": sampler_config,
         "checkpoint_path": str(checkpoint_path),
         "unfreeze_policy": policy_summary,
         "best_val_macro_f1": best_metrics.get("macro_f1"),
@@ -192,6 +195,7 @@ def finetune_backbone(
             "best_val_epoch": best_metrics.get("best_epoch"),
             "runtime_seconds": runtime_seconds,
             "augmentation": augmentation_config,
+            "sampler": sampler_config,
         }
     )
     write_run_report(
