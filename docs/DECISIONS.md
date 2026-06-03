@@ -312,3 +312,14 @@ Reason: The image-level targeted ResNet50 head reached test macro-F1 `0.647`, bu
 feature-cache MLP/fusion matrix did not preserve or amplify that improvement. This suggests that
 class-balanced focal loss plus deeper ResNet50 fine-tuning increased minority-class recall but
 reduced overall representation quality for the cached-feature fusion setup.
+
+## 2026-06-03 - Keep Sprint 4I as a geometry-safe TTA refinement, not a new best
+
+Decision: Sprint 4I evaluates deterministic full-frame D4 test-time augmentation on the strongest
+Sprint 4C weighted fusion model. It is validation-gated and does not change training, data splits,
+or model selection by test metrics. The D4 policy is not promoted over Sprint 4D `tta_rot4`.
+
+Reason: D4 TTA improved the Sprint 4C weighted model over identity on validation macro-F1
+(`0.678` to `0.717`) and test macro-F1 (`0.699` to `0.727`). However, it remained slightly below
+the earlier Sprint 4D weighted + `tta_rot4` result (`0.733`). This shows that deterministic
+geometry-safe averaging helps, but more TTA views are not automatically better.

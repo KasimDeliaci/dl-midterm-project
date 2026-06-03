@@ -574,6 +574,20 @@ removing the random crop/affine augmentation that likely hurt Sprint 4F.
   (`0.733`), so it should be reported as an informative negative targeted-training result rather
   than a new best.
 
+### Sprint 4I Extension Status - 2026-06-03
+
+Sprint 4I completed a local inference-only geometry-safe TTA refinement. It reused the strongest
+Sprint 4C weighted fusion model and the canonical Sprint 4 fine-tuned backbone checkpoints.
+
+- No new CNN training, feature caches, or data splits were created.
+- Policy selection remained validation-gated; test was not used to choose the TTA policy.
+- Tested policy: full-frame deterministic D4 TTA (`identity`, rotations, and mirrored rotations).
+- Validation macro-F1 improved from `0.678` with identity to `0.717` with D4 TTA.
+- Test macro-F1 improved from `0.699` with identity to `0.727` with D4 TTA.
+- Sprint 4I remained slightly below Sprint 4D weighted + `tta_rot4` (`0.733`), so the best result
+  remains Sprint 4D. Sprint 4I is useful evidence that geometry-safe averaging helps, while also
+  showing that more TTA views are not necessarily better than the simpler rot4 policy.
+
 ### Verification Gates
 
 Sprint 4 is done only if:

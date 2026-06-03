@@ -1,0 +1,5 @@
+model_key,display_name,split,policy,num_views,runtime_seconds,samples,samples_per_second
+sprint4c_weighted,Sprint 4C weighted,val,identity,1,36.63088479079306,1532,41.822631605804354
+sprint4c_weighted,Sprint 4C weighted,val,tta_d4_8,8,330.5080263754353,1532,4.635288337172632
+sprint4c_weighted,Sprint 4C weighted,test,identity,1,30.583876292221248,1502,49.11084473559753
+sprint4c_weighted,Sprint 4C weighted,test,tta_d4_8,8,237.49588675005361,1502,6.324320056880568

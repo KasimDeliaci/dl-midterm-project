@@ -1,0 +1,2 @@
+model_key,identity_policy,selected_policy,identity_val_macro_f1,selected_val_macro_f1,val_macro_f1_gain,accuracy_gain,weighted_f1_gain,test_allowed,reason,test_eligible,expected_val_macro_f1,identity_sanity_abs_error,identity_sanity_pass
+sprint4c_weighted,identity,tta_d4_8,0.6779474485248252,0.7166952771929547,0.038747828668129425,0.021540469973890364,0.02034332271751682,True,Validation gate passed.,True,0.6802763048359945,0.002328856311169303,True

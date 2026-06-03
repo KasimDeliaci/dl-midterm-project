@@ -862,6 +862,53 @@ Completed Sprint 4H Colab run, 2026-06-03:
 - Best image-level fine-tuned head was ResNet50 at test macro-F1 `0.647`, but the downstream MLP
   matrix did not turn that into a new best.
 
+## Sprint 4I: Geometry-Safe TTA Refinement
+
+Sprint 4I is a local inference-only experiment. It reuses existing Sprint 4 fine-tuned backbone
+checkpoints and the Sprint 4C weighted MLP checkpoint; it does not train or extract new feature
+caches.
+
+Smoke verification:
+
+```bash
+uv run python scripts/evaluate_tta.py \
+  --config configs/experiments/sprint4i_geometry_safe_tta.yaml \
+  --stage validation \
+  --models canonical_concat \
+  --policies identity tta_d4_8 \
+  --max-samples 8 \
+  --device auto \
+  --batch-size 4 \
+  --num-workers 0
+```
+
+Completed targeted run, 2026-06-03:
+
+```bash
+uv run python scripts/evaluate_tta.py \
+  --config configs/experiments/sprint4i_geometry_safe_tta.yaml \
+  --stage all \
+  --models sprint4c_weighted \
+  --policies identity tta_d4_8 \
+  --device auto \
+  --batch-size 64 \
+  --num-workers 0
+```
+
+Verification:
+
+```bash
+uv run ruff check src/dl_midterm/evaluation/tta.py scripts/evaluate_tta.py tests/test_sprint4d_tta.py
+uv run pytest tests/test_sprint4d_tta.py
+```
+
+Report assets:
+
+- `artifacts/report_assets/tables/sprint4i/`
+- `artifacts/report_assets/figures/sprint4i/`
+
+Ignored prediction CSVs are under `artifacts/runs/sprint4i_tta_refinement/predictions/`.
+
 ## Later Command Pattern
 
 ```bash

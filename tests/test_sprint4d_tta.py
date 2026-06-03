@@ -14,8 +14,20 @@ from dl_midterm.evaluation.tta import (
 
 def test_tta_policy_expansion_is_deterministic_and_conservative() -> None:
     assert expand_tta_policy("identity") == ["identity"]
+    assert expand_tta_policy("tta_hflip2") == ["identity", "hflip"]
+    assert expand_tta_policy("tta_vflip2") == ["identity", "vflip"]
     assert expand_tta_policy("tta_flip4") == ["identity", "hflip", "vflip", "hvflip"]
     assert expand_tta_policy("tta_rot4") == ["identity", "rot90", "rot180", "rot270"]
+    assert expand_tta_policy("tta_d4_8") == [
+        "identity",
+        "rot90",
+        "rot180",
+        "rot270",
+        "hflip",
+        "hflip_rot90",
+        "hflip_rot180",
+        "hflip_rot270",
+    ]
 
 
 def test_average_probabilities_preserves_shape_and_normalization() -> None:
@@ -106,3 +118,24 @@ def test_sprint4d_config_pre_registers_only_two_test_eligible_models() -> None:
         "tta_flip4",
         "tta_rot4",
     ]
+
+
+def test_sprint4i_config_pre_registers_geometry_safe_tta_refinement() -> None:
+    config = load_yaml("configs/experiments/sprint4i_geometry_safe_tta.yaml")["sprint4i"]
+
+    eligible = [
+        key for key, model in config["models"].items() if bool(model.get("test_eligible", False))
+    ]
+
+    assert eligible == ["canonical_concat", "sprint4c_weighted"]
+    assert config["artifact_prefix"] == "sprint4i"
+    assert config["gate"]["min_macro_f1_gain"] == 0.005
+    for model in config["models"].values():
+        assert model["validation_policies"] == [
+            "identity",
+            "tta_hflip2",
+            "tta_vflip2",
+            "tta_flip4",
+            "tta_rot4",
+            "tta_d4_8",
+        ]

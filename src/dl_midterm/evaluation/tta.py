@@ -9,8 +9,21 @@ import torch
 
 TTA_VIEW_REGISTRY: dict[str, list[str]] = {
     "identity": ["identity"],
+    "tta_hflip2": ["identity", "hflip"],
+    "tta_vflip2": ["identity", "vflip"],
+    "tta_hvflip2": ["identity", "hvflip"],
     "tta_flip4": ["identity", "hflip", "vflip", "hvflip"],
     "tta_rot4": ["identity", "rot90", "rot180", "rot270"],
+    "tta_d4_8": [
+        "identity",
+        "rot90",
+        "rot180",
+        "rot270",
+        "hflip",
+        "hflip_rot90",
+        "hflip_rot180",
+        "hflip_rot270",
+    ],
 }
 
 

@@ -1,0 +1,57 @@
+sprint4i:
+  name: sprint4i_geometry_safe_tta_refinement
+  artifact_prefix: sprint4i
+  display_prefix: "Sprint 4I"
+  seed: 42
+  aggregation: mean_probability
+  selection_split: val
+  test_split: test
+  selection_metric: macro_f1
+  no_test_selection: true
+  output_run_root: artifacts/runs/sprint4i_tta_refinement
+  tables_dir: artifacts/report_assets/tables/sprint4i
+  figures_dir: artifacts/report_assets/figures/sprint4i
+  predictions_dir: artifacts/runs/sprint4i_tta_refinement/predictions
+
+  gate:
+    min_macro_f1_gain: 0.005
+    max_accuracy_drop: 0.020
+    max_weighted_f1_drop: 0.020
+    identity_sanity_tolerance: 0.030
+
+  policies:
+    identity:
+      views: [identity]
+    tta_hflip2:
+      views: [identity, hflip]
+    tta_vflip2:
+      views: [identity, vflip]
+    tta_flip4:
+      views: [identity, hflip, vflip, hvflip]
+    tta_rot4:
+      views: [identity, rot90, rot180, rot270]
+    tta_d4_8:
+      views: [identity, rot90, rot180, rot270, hflip, hflip_rot90, hflip_rot180, hflip_rot270]
+
+  models:
+    canonical_concat:
+      display_name: "Sprint 4 concat"
+      test_eligible: true
+      run_dir: artifacts/runs/sprint4d_restore_matrix/20260602_095314_finetuned_r50-mnv2-effb0_concat_mlp_restore_matrix_replay_s42
+      expected_val_macro_f1: 0.6641883446818492
+      checkpoint_paths:
+        resnet50: artifacts/checkpoints/finetuned_backbones/resnet50_best.pt
+        mobilenet_v2: artifacts/checkpoints/finetuned_backbones/mobilenet_v2_best.pt
+        efficientnet_b0: artifacts/checkpoints/finetuned_backbones/efficientnet_b0_best.pt
+      validation_policies: [identity, tta_hflip2, tta_vflip2, tta_flip4, tta_rot4, tta_d4_8]
+
+    sprint4c_weighted:
+      display_name: "Sprint 4C weighted"
+      test_eligible: true
+      run_dir: artifacts/runs/sprint4c_hparam_search/sprint4c_stage_b/20260531_213529_finetuned_r50-mnv2-effb0_weighted_mlp_w_cw_adamw_low_lr_p512_s42
+      expected_val_macro_f1: 0.6802763048359945
+      checkpoint_paths:
+        resnet50: artifacts/checkpoints/finetuned_backbones/resnet50_best.pt
+        mobilenet_v2: artifacts/checkpoints/finetuned_backbones/mobilenet_v2_best.pt
+        efficientnet_b0: artifacts/checkpoints/finetuned_backbones/efficientnet_b0_best.pt
+      validation_policies: [identity, tta_hflip2, tta_vflip2, tta_flip4, tta_rot4, tta_d4_8]

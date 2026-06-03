@@ -1,4 +1,4 @@
-"""Evaluate Sprint 4D validation-gated test-time augmentation."""
+"""Evaluate validation-gated test-time augmentation experiments."""
 
 from __future__ import annotations
 
@@ -40,6 +40,14 @@ from dl_midterm.utils.seed import seed_everything
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", default="configs/experiments/sprint4d_tta.yaml")
+    parser.add_argument(
+        "--experiment-key",
+        default=None,
+        help=(
+            "Top-level YAML key to read. Defaults to 'sprint4d' when present, "
+            "otherwise the only top-level key."
+        ),
+    )
     parser.add_argument("--dataset-config", default="configs/dataset/selected_dataset.yaml")
     parser.add_argument("--stage", choices=["validation", "test", "all"], default="validation")
     parser.add_argument("--models", nargs="+", default=None)
@@ -53,7 +61,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    config = load_yaml(args.config)["sprint4d"]
+    config = _load_experiment_config(args.config, args.experiment_key)
     config = _with_smoke_output_dirs(config, args.max_samples)
     dataset_config = load_yaml(args.dataset_config)["dataset"]
     seed = int(config.get("seed", dataset_config.get("seed", 42)))
@@ -78,10 +86,10 @@ def main() -> None:
             output_dirs=output_dirs,
         )
         decisions = _write_decision_log(config, validation_rows, output_dirs["tables"])
-        _write_validation_figures(validation_rows, decisions, output_dirs["figures"])
+        _write_validation_figures(config, validation_rows, decisions, output_dirs["figures"])
         _write_combined_outputs(config, output_dirs)
     else:
-        decisions = _read_decision_log(output_dirs["tables"])
+        decisions = _read_decision_log(config, output_dirs["tables"])
 
     if args.stage in {"test", "all"}:
         selected = _selected_test_pairs(decisions)
@@ -104,6 +112,26 @@ def main() -> None:
             output_dirs=output_dirs,
         )
         _write_combined_outputs(config, output_dirs)
+
+
+def _load_experiment_config(path: str | Path, experiment_key: str | None) -> dict[str, Any]:
+    raw = load_yaml(path)
+    if experiment_key is None:
+        experiment_key = "sprint4d" if "sprint4d" in raw else None
+    if experiment_key is None:
+        keys = list(raw)
+        if len(keys) != 1:
+            raise ValueError(
+                "Config contains multiple top-level keys; pass --experiment-key explicitly."
+            )
+        experiment_key = str(keys[0])
+    try:
+        config = dict(raw[experiment_key])
+    except KeyError as exc:
+        raise KeyError(f"Config {path!s} does not contain key {experiment_key!r}.") from exc
+    config.setdefault("artifact_prefix", str(experiment_key))
+    config.setdefault("display_prefix", str(experiment_key).upper())
+    return config
 
 
 def run_validation_stage(
@@ -261,6 +289,12 @@ class TTAViewTransform:
             transformed = image.transpose(Image.Transpose.ROTATE_180)
         elif self.view == "rot270":
             transformed = image.transpose(Image.Transpose.ROTATE_270)
+        elif self.view == "hflip_rot90":
+            transformed = ImageOps.mirror(image).transpose(Image.Transpose.ROTATE_90)
+        elif self.view == "hflip_rot180":
+            transformed = ImageOps.mirror(image).transpose(Image.Transpose.ROTATE_180)
+        elif self.view == "hflip_rot270":
+            transformed = ImageOps.mirror(image).transpose(Image.Transpose.ROTATE_270)
         else:
             raise ValueError(f"Unsupported TTA view: {self.view}")
         return self.post(transformed)
@@ -515,7 +549,7 @@ def _load_classifier(
         raise ValueError(f"Unsupported fusion method for TTA: {fusion_method}")
     if not model_path.exists():
         raise FileNotFoundError(
-            f"MLP model checkpoint is required for Sprint 4D TTA but was not found: "
+            f"MLP model checkpoint is required for TTA evaluation but was not found: "
             f"{model_path}. Restore this gitignored run artifact before evaluating this model."
         )
     state_dict = _torch_load(model_path)
@@ -549,13 +583,21 @@ def _prepare_output_dirs(config: dict[str, Any]) -> dict[str, Path]:
     return dirs
 
 
+def _artifact_prefix(config: dict[str, Any]) -> str:
+    return str(config.get("artifact_prefix", "sprint4d"))
+
+
+def _display_prefix(config: dict[str, Any]) -> str:
+    return str(config.get("display_prefix", "Sprint 4D"))
+
+
 def _with_smoke_output_dirs(config: dict[str, Any], max_samples: int | None) -> dict[str, Any]:
-    """Route max-sample smoke outputs away from canonical Sprint 4D assets."""
+    """Route max-sample smoke outputs away from canonical report assets."""
 
     if max_samples is None:
         return dict(config)
     routed = dict(config)
-    suffix = f"sprint4d_smoke_n{max_samples}"
+    suffix = f"{_artifact_prefix(config)}_smoke_n{max_samples}"
     routed["tables_dir"] = str(Path(config["tables_dir"]) / suffix)
     routed["figures_dir"] = str(Path(config["figures_dir"]) / suffix)
     routed["predictions_dir"] = str(Path(config["predictions_dir"]) / suffix)
@@ -576,7 +618,7 @@ def _selected_model_items(
         ]
     missing = sorted(set(requested) - set(models))
     if missing:
-        raise ValueError(f"Unknown Sprint 4D model keys: {missing}")
+        raise ValueError(f"Unknown TTA model keys: {missing}")
     return [(key, models[key]) for key in requested]
 
 
@@ -593,7 +635,7 @@ def _validate_requested_artifacts(config: dict[str, Any], requested: list[str] |
                 missing.append(f"{model_key}/{backbone}: {path}")
     if missing:
         raise FileNotFoundError(
-            "Sprint 4D TTA requires gitignored model/checkpoint artifacts that are missing:\n"
+            "TTA evaluation requires gitignored model/checkpoint artifacts that are missing:\n"
             + "\n".join(f"- {item}" for item in missing)
         )
 
@@ -607,16 +649,17 @@ def _write_stage_outputs(
     config: dict[str, Any],
     output_dirs: dict[str, Path],
 ) -> None:
+    artifact_prefix = _artifact_prefix(config)
     prefix = "validation" if split == "val" else split
     pd.DataFrame(rows).to_csv(
-        output_dirs["tables"] / f"sprint4d_{prefix}_results.csv",
+        output_dirs["tables"] / f"{artifact_prefix}_{prefix}_results.csv",
         index=False,
     )
     pd.DataFrame(per_class_rows).to_csv(
-        output_dirs["tables"] / f"sprint4d_{prefix}_per_class_f1.csv",
+        output_dirs["tables"] / f"{artifact_prefix}_{prefix}_per_class_f1.csv",
         index=False,
     )
-    runtime_path = output_dirs["tables"] / "sprint4d_runtime_summary.csv"
+    runtime_path = output_dirs["tables"] / f"{artifact_prefix}_runtime_summary.csv"
     runtime = pd.DataFrame(runtime_rows)
     if runtime_path.exists():
         existing = pd.read_csv(runtime_path)
@@ -677,15 +720,15 @@ def _write_decision_log(
             row["reason"] = f"Validation-only diagnostic; {row['reason']}"
         decisions.append(row)
     frame = pd.DataFrame(decisions)
-    frame.to_csv(tables_dir / "sprint4d_decision_log.csv", index=False)
+    frame.to_csv(tables_dir / f"{_artifact_prefix(config)}_decision_log.csv", index=False)
     return frame
 
 
-def _read_decision_log(tables_dir: Path) -> pd.DataFrame:
-    path = tables_dir / "sprint4d_decision_log.csv"
+def _read_decision_log(config: dict[str, Any], tables_dir: Path) -> pd.DataFrame:
+    path = tables_dir / f"{_artifact_prefix(config)}_decision_log.csv"
     if not path.exists():
         raise FileNotFoundError(
-            "Sprint 4D test stage requires a validation decision log. "
+            "TTA test stage requires a validation decision log. "
             f"Missing: {path}"
         )
     return pd.read_csv(path)
@@ -702,16 +745,17 @@ def _selected_test_pairs(decisions: pd.DataFrame) -> list[dict[str, str]]:
 
 def _write_combined_outputs(config: dict[str, Any], output_dirs: dict[str, Path]) -> None:
     tables_dir = output_dirs["tables"]
-    validation = pd.read_csv(tables_dir / "sprint4d_validation_results.csv")
-    test_path = tables_dir / "sprint4d_test_results.csv"
+    artifact_prefix = _artifact_prefix(config)
+    validation = pd.read_csv(tables_dir / f"{artifact_prefix}_validation_results.csv")
+    test_path = tables_dir / f"{artifact_prefix}_test_results.csv"
     test = pd.read_csv(test_path) if test_path.exists() else pd.DataFrame()
     combined = pd.concat([validation, test], ignore_index=True)
     delta = _build_delta_vs_identity(combined)
-    delta.to_csv(tables_dir / "sprint4d_delta_vs_identity.csv", index=False)
-    _write_per_class_gain(tables_dir, output_dirs["figures"])
-    _write_test_figures(delta, output_dirs["figures"])
-    _write_delta_figure(delta, output_dirs["figures"])
-    _write_runtime_figure(tables_dir, output_dirs["figures"])
+    delta.to_csv(tables_dir / f"{artifact_prefix}_delta_vs_identity.csv", index=False)
+    _write_per_class_gain(config, tables_dir, output_dirs["figures"])
+    _write_test_figures(config, delta, output_dirs["figures"])
+    _write_delta_figure(config, delta, output_dirs["figures"])
+    _write_runtime_figure(config, tables_dir, output_dirs["figures"])
 
 
 def _build_delta_vs_identity(results: pd.DataFrame) -> pd.DataFrame:
@@ -744,10 +788,16 @@ def _build_delta_vs_identity(results: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _write_per_class_gain(tables_dir: Path, figures_dir: Path) -> None:
+def _write_per_class_gain(
+    config: dict[str, Any],
+    tables_dir: Path,
+    figures_dir: Path,
+) -> None:
+    artifact_prefix = _artifact_prefix(config)
+    display_prefix = _display_prefix(config)
     frames = []
     for prefix in ("validation", "test"):
-        path = tables_dir / f"sprint4d_{prefix}_per_class_f1.csv"
+        path = tables_dir / f"{artifact_prefix}_{prefix}_per_class_f1.csv"
         if path.exists():
             frame = pd.read_csv(path)
             frame["stage"] = prefix
@@ -777,7 +827,7 @@ def _write_per_class_gain(tables_dir: Path, figures_dir: Path) -> None:
             merged["recall_gain"] = merged["recall"] - merged["identity_recall"]
             rows.append(merged)
     output = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
-    output.to_csv(tables_dir / "sprint4d_per_class_f1_gain.csv", index=False)
+    output.to_csv(tables_dir / f"{artifact_prefix}_per_class_f1_gain.csv", index=False)
     if output.empty:
         return
     selected_stage = "test" if "test" in set(output["stage"]) else "validation"
@@ -788,10 +838,10 @@ def _write_per_class_gain(tables_dir: Path, figures_dir: Path) -> None:
     sns.heatmap(pivot, annot=True, fmt="+.3f", cmap="coolwarm", center=0)
     plt.xlabel("Model / policy")
     plt.ylabel("Class")
-    plt.title(f"Sprint 4D {selected_stage.title()} Per-Class F1 Gain vs Identity")
+    plt.title(f"{display_prefix} {selected_stage.title()} Per-Class F1 Gain vs Identity")
     plt.tight_layout()
     figures_dir.mkdir(parents=True, exist_ok=True)
-    plt.savefig(figures_dir / "sprint4d_per_class_f1_gain_heatmap.png", dpi=200)
+    plt.savefig(figures_dir / f"{artifact_prefix}_per_class_f1_gain_heatmap.png", dpi=200)
     plt.close()
 
 
@@ -833,11 +883,12 @@ def _write_confusion_matrix(
         metrics["confusion_matrix"],
         class_names,
         path,
-        title=f"Sprint 4D {split} {model_key} {policy}",
+        title=f"{_display_prefix(config)} {split} {model_key} {policy}",
     )
 
 
 def _write_validation_figures(
+    config: dict[str, Any],
     validation_rows: list[dict[str, Any]],
     decisions: pd.DataFrame,
     figures_dir: Path,
@@ -845,35 +896,47 @@ def _write_validation_figures(
     frame = pd.DataFrame(validation_rows)
     if frame.empty:
         return
-    path = figures_dir / "sprint4d_val_policy_comparison.png"
+    artifact_prefix = _artifact_prefix(config)
+    display_prefix = _display_prefix(config)
+    path = figures_dir / f"{artifact_prefix}_val_policy_comparison.png"
     plt.figure(figsize=(10, 5.5))
     ax = sns.barplot(data=frame, x="display_name", y="macro_f1", hue="policy")
     ax.set_ylim(0, 1)
     ax.set_xlabel("Model")
     ax.set_ylabel("Validation macro-F1")
-    ax.set_title("Sprint 4D Validation TTA Policy Comparison")
+    ax.set_title(f"{display_prefix} Validation TTA Policy Comparison")
     for container in ax.containers:
         ax.bar_label(container, fmt="%.3f", padding=2, fontsize=8)
     plt.tight_layout()
     path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(path, dpi=200)
     plt.close()
-    decisions.to_json(figures_dir / "sprint4d_decision_log.json", orient="records", indent=2)
+    decisions.to_json(
+        figures_dir / f"{artifact_prefix}_decision_log.json",
+        orient="records",
+        indent=2,
+    )
 
 
-def _write_test_figures(delta: pd.DataFrame, figures_dir: Path) -> None:
+def _write_test_figures(
+    config: dict[str, Any],
+    delta: pd.DataFrame,
+    figures_dir: Path,
+) -> None:
     if delta.empty:
         return
     test = delta[delta["split"] == "test"].copy()
     if test.empty:
         return
-    path = figures_dir / "sprint4d_test_macro_f1_delta.png"
+    artifact_prefix = _artifact_prefix(config)
+    display_prefix = _display_prefix(config)
+    path = figures_dir / f"{artifact_prefix}_test_macro_f1_delta.png"
     plt.figure(figsize=(8, 5))
     ax = sns.barplot(data=test, x="display_name", y="macro_f1_gain", hue="policy")
     ax.axhline(0, color="black", linewidth=1)
     ax.set_xlabel("Model")
     ax.set_ylabel("Test macro-F1 gain vs identity")
-    ax.set_title("Sprint 4D Test Macro-F1 Delta")
+    ax.set_title(f"{display_prefix} Test Macro-F1 Delta")
     for container in ax.containers:
         ax.bar_label(container, fmt="%+.3f", padding=2, fontsize=8)
     plt.tight_layout()
@@ -881,19 +944,25 @@ def _write_test_figures(delta: pd.DataFrame, figures_dir: Path) -> None:
     plt.close()
 
 
-def _write_delta_figure(delta: pd.DataFrame, figures_dir: Path) -> None:
+def _write_delta_figure(
+    config: dict[str, Any],
+    delta: pd.DataFrame,
+    figures_dir: Path,
+) -> None:
     if delta.empty:
         return
     validation = delta[delta["split"] == "val"].copy()
     if validation.empty:
         return
-    path = figures_dir / "sprint4d_validation_macro_f1_delta.png"
+    artifact_prefix = _artifact_prefix(config)
+    display_prefix = _display_prefix(config)
+    path = figures_dir / f"{artifact_prefix}_validation_macro_f1_delta.png"
     plt.figure(figsize=(9, 5))
     ax = sns.barplot(data=validation, x="display_name", y="macro_f1_gain", hue="policy")
     ax.axhline(0, color="black", linewidth=1)
     ax.set_xlabel("Model")
     ax.set_ylabel("Validation macro-F1 gain vs identity")
-    ax.set_title("Sprint 4D Validation Macro-F1 Delta")
+    ax.set_title(f"{display_prefix} Validation Macro-F1 Delta")
     for container in ax.containers:
         ax.bar_label(container, fmt="%+.3f", padding=2, fontsize=8)
     plt.tight_layout()
@@ -901,8 +970,14 @@ def _write_delta_figure(delta: pd.DataFrame, figures_dir: Path) -> None:
     plt.close()
 
 
-def _write_runtime_figure(tables_dir: Path, figures_dir: Path) -> None:
-    path = tables_dir / "sprint4d_runtime_summary.csv"
+def _write_runtime_figure(
+    config: dict[str, Any],
+    tables_dir: Path,
+    figures_dir: Path,
+) -> None:
+    artifact_prefix = _artifact_prefix(config)
+    display_prefix = _display_prefix(config)
+    path = tables_dir / f"{artifact_prefix}_runtime_summary.csv"
     if not path.exists():
         return
     runtime = pd.read_csv(path)
@@ -912,10 +987,10 @@ def _write_runtime_figure(tables_dir: Path, figures_dir: Path) -> None:
     ax = sns.barplot(data=runtime, x="display_name", y="runtime_seconds", hue="policy")
     ax.set_xlabel("Model")
     ax.set_ylabel("Runtime seconds")
-    ax.set_title("Sprint 4D Runtime by TTA Policy")
+    ax.set_title(f"{display_prefix} Runtime by TTA Policy")
     ax.tick_params(axis="x", rotation=15)
     plt.tight_layout()
-    plt.savefig(figures_dir / "sprint4d_runtime_multiplier.png", dpi=200)
+    plt.savefig(figures_dir / f"{artifact_prefix}_runtime_multiplier.png", dpi=200)
     plt.close()
 
 

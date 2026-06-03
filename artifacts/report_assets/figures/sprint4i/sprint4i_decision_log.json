@@ -1,0 +1,18 @@
+[
+  {
+    "model_key":"sprint4c_weighted",
+    "identity_policy":"identity",
+    "selected_policy":"tta_d4_8",
+    "identity_val_macro_f1":0.6779474485,
+    "selected_val_macro_f1":0.7166952772,
+    "val_macro_f1_gain":0.0387478287,
+    "accuracy_gain":0.02154047,
+    "weighted_f1_gain":0.0203433227,
+    "test_allowed":true,
+    "reason":"Validation gate passed.",
+    "test_eligible":true,
+    "expected_val_macro_f1":0.6802763048,
+    "identity_sanity_abs_error":0.0023288563,
+    "identity_sanity_pass":true
+  }
+]
