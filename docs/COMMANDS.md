@@ -853,6 +853,15 @@ uv run ruff check src scripts tests
 uv run pytest tests/test_sprint4h_targeted.py
 ```
 
+Completed Sprint 4H Colab run, 2026-06-03:
+
+- Operational artifacts restored locally from Drive: 3 backbone checkpoints, 9 feature cache `.pt`
+  files, 11 MLP `model.pt` files, and 14 metrics files.
+- Best Sprint 4H cached-feature matrix result was three-backbone concat at test macro-F1 `0.643`,
+  below canonical Sprint 4 (`0.706`) and Sprint 4D TTA (`0.733`).
+- Best image-level fine-tuned head was ResNet50 at test macro-F1 `0.647`, but the downstream MLP
+  matrix did not turn that into a new best.
+
 ## Later Command Pattern
 
 ```bash

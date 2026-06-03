@@ -1,0 +1,4 @@
+split,num_samples,left_backbone,right_backbone,representation_similarity,representation_complementarity,method
+test,1500,resnet50,mobilenet_v2,0.5787033503665375,0.42129664963346247,sample_cosine_rsa_pearson
+test,1500,resnet50,efficientnet_b0,0.49663995825088847,0.5033600417491115,sample_cosine_rsa_pearson
+test,1500,mobilenet_v2,efficientnet_b0,0.613764391921153,0.38623560807884705,sample_cosine_rsa_pearson

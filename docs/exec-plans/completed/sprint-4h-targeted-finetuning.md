@@ -97,3 +97,22 @@ After Colab:
 - confirm 11 MLP `model.pt` files on Drive for the full matrix;
 - download/sync report-ready CSV/PNG outputs locally;
 - update report notes and move this plan to `completed/`.
+
+## Outcome
+
+Sprint 4H completed on Colab T4 and was restored locally from Drive. The artifact audit passed:
+
+- 3 backbone checkpoints;
+- 9 fine-tuned feature cache `.pt` files;
+- 11 MLP `model.pt` files;
+- 14 `metrics.json` files;
+- 4H-specific report-ready CSV/PNG outputs.
+
+The best cached-feature matrix result was ResNet50 + MobileNetV2 + EfficientNetB0 concat with test
+macro-F1 `0.643`, accuracy `0.768`, and weighted-F1 `0.779`. The best image-level fine-tuned head
+was targeted ResNet50 with test macro-F1 `0.647`.
+
+Sprint 4H did not beat canonical Sprint 4 concat (`0.706`) or Sprint 4D weighted + `tta_rot4`
+(`0.733`). It should be reported as an informative negative result: deeper/class-aware targeted
+training improved minority-class recall in places, but did not improve the downstream
+cached-feature fusion objective.

@@ -300,3 +300,15 @@ Reason: Sprint 4F showed that stronger random crop/affine training augmentation 
 while Sprint 4D showed that deterministic geometry at inference can help. Sprint 4H therefore tests
 a narrower hypothesis: more trainable ResNet50 capacity plus imbalance-aware loss, without changing
 lesion framing through random crops. Keeping a separate feature source preserves auditability.
+
+## 2026-06-03 - Keep Sprint 4H as an informative negative targeted-training result
+
+Decision: Sprint 4H is not promoted as the best model family. The best cached-feature matrix result
+was three-backbone concat with test macro-F1 `0.643`, below canonical Sprint 4 concat (`0.706`) and
+Sprint 4D weighted + `tta_rot4` (`0.733`). The separate `finetuned_targeted` artifacts remain useful
+for audit and discussion.
+
+Reason: The image-level targeted ResNet50 head reached test macro-F1 `0.647`, but the downstream
+feature-cache MLP/fusion matrix did not preserve or amplify that improvement. This suggests that
+class-balanced focal loss plus deeper ResNet50 fine-tuning increased minority-class recall but
+reduced overall representation quality for the cached-feature fusion setup.
