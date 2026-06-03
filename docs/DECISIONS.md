@@ -323,3 +323,13 @@ Reason: D4 TTA improved the Sprint 4C weighted model over identity on validation
 (`0.678` to `0.717`) and test macro-F1 (`0.699` to `0.727`). However, it remained slightly below
 the earlier Sprint 4D weighted + `tta_rot4` result (`0.733`). This shows that deterministic
 geometry-safe averaging helps, but more TTA views are not automatically better.
+
+## 2026-06-03 - Do not escalate balanced sampling to Colab fine-tuning
+
+Decision: Sprint 4J keeps balanced sampling as a local cached-feature diagnostic and does not move
+it to image-level Colab fine-tuning.
+
+Reason: The class-balanced sampler avoided SMOTE and did not create synthetic samples, but it did
+not improve final test macro-F1. The three-backbone concat diagnostic reached validation macro-F1
+`0.660` and test macro-F1 `0.690`, below canonical Sprint 4 concat (`0.706`). The weighted
+diagnostic reached test macro-F1 `0.668`, also below Sprint 4C weighted identity (`0.699`).

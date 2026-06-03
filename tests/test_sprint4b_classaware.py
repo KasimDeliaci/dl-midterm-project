@@ -117,6 +117,22 @@ def test_sprint4b_optional_full_classaware_matrix_has_eleven_runs() -> None:
     assert {run["feature_source"] for run in fusions} == {"finetuned_classaware"}
 
 
+def test_sprint4j_balanced_sampler_matrix_is_targeted_to_three_backbone_fusion() -> None:
+    run_matrix = _load_run_matrix_module()
+    config = load_yaml("configs/experiments/sprint4j_balanced_sampler_mlp.yaml")[
+        "experiment_matrix"
+    ]
+
+    fusions = run_matrix.expand_fusion_run_matrix(config, feature_source="finetuned")
+
+    assert len(fusions) == 2
+    assert {run["fusion_method"] for run in fusions} == {"concat", "weighted"}
+    assert all(
+        run["backbones"] == ["resnet50", "mobilenet_v2", "efficientnet_b0"]
+        for run in fusions
+    )
+
+
 def test_limited_smoke_cache_can_verify_split_prefix(tmp_path: Path) -> None:
     split_csv = tmp_path / "train.csv"
     split_csv.write_text(

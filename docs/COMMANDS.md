@@ -909,6 +909,73 @@ Report assets:
 
 Ignored prediction CSVs are under `artifacts/runs/sprint4i_tta_refinement/predictions/`.
 
+## Sprint 4J: Balanced Sampler Diagnostic
+
+Sprint 4J is a local cached-feature MLP diagnostic. It tests class-balanced train sampling without
+SMOTE, synthetic images, synthetic features, or split changes.
+
+Concat diagnostic:
+
+```bash
+uv run python scripts/run_experiment_matrix.py \
+  --config configs/experiments/sprint4j_balanced_sampler_mlp.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned \
+  --run-root artifacts/runs/sprint4j_balanced_sampler \
+  --tables-dir artifacts/report_assets/tables/sprint4j \
+  --figures-dir artifacts/report_assets/figures/sprint4j \
+  --experiment-name sprint4j_balanced_sampler_concat \
+  --fusion-methods concat \
+  --train-sampling class_balanced \
+  --no-class-weights \
+  --optimizer adamw \
+  --learning-rate 0.001 \
+  --weight-decay 0.0001 \
+  --hidden-dims 512 256 \
+  --dropout 0.3 \
+  --batch-size 32 \
+  --skip-export
+```
+
+Weighted diagnostic:
+
+```bash
+uv run python scripts/run_experiment_matrix.py \
+  --config configs/experiments/sprint4j_balanced_sampler_mlp.yaml \
+  --default-config configs/default.yaml \
+  --dataset-config configs/dataset/selected_dataset.yaml \
+  --feature-source finetuned \
+  --run-root artifacts/runs/sprint4j_balanced_sampler \
+  --tables-dir artifacts/report_assets/tables/sprint4j \
+  --figures-dir artifacts/report_assets/figures/sprint4j \
+  --experiment-name sprint4j_balanced_sampler_weighted \
+  --fusion-methods weighted \
+  --train-sampling class_balanced \
+  --no-class-weights \
+  --optimizer adamw \
+  --learning-rate 0.0003 \
+  --weight-decay 0.0001 \
+  --projection-dim 512 \
+  --hidden-dims 512 256 \
+  --dropout 0.3 \
+  --batch-size 32 \
+  --skip-export
+```
+
+Verification:
+
+```bash
+uv run ruff check src/dl_midterm/features/cache.py scripts/train_mlp.py scripts/run_experiment_matrix.py tests/test_sprint2_features.py tests/test_sprint4b_classaware.py
+uv run pytest tests/test_sprint2_features.py tests/test_sprint4b_classaware.py
+```
+
+Completed local Sprint 4J run, 2026-06-03:
+
+- Balanced concat: best validation macro-F1 `0.660`, test macro-F1 `0.690`.
+- Balanced weighted: best validation macro-F1 `0.663`, test macro-F1 `0.668`.
+- Result: not promising enough to escalate to Colab image-level fine-tuning.
+
 ## Later Command Pattern
 
 ```bash

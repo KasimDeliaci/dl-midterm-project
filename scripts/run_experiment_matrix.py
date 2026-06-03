@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 import yaml
 from torch import nn
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, WeightedRandomSampler
 
 from dl_midterm.config.load_config import load_yaml
 from dl_midterm.evaluation.reports import (
@@ -28,6 +28,7 @@ from dl_midterm.features.cache import (
     class_weights_from_cache,
     feature_cache_path,
     load_feature_cache,
+    sample_weights_from_cache,
     verify_cache_matches_split,
 )
 from dl_midterm.models.backbones import backbone_alias, expected_feature_dim
@@ -60,10 +61,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--hidden-dims", nargs="+", type=int, default=None)
     parser.add_argument("--projection-dim", type=int, default=None)
     parser.add_argument("--no-class-weights", action="store_true")
+    parser.add_argument(
+        "--train-sampling",
+        choices=["shuffle", "class_balanced"],
+        default="shuffle",
+        help="Train-set sampling strategy for cached-feature MLP training.",
+    )
     parser.add_argument("--fusion-methods", nargs="+", choices=["concat", "weighted"], default=None)
     parser.add_argument("--backbones", nargs="+", default=None)
     parser.add_argument("--max-runs", type=int, default=None)
     parser.add_argument("--experiment-name", default=None)
+    parser.add_argument(
+        "--skip-export",
+        action="store_true",
+        help="Skip report-asset export for targeted diagnostic runs.",
+    )
     return parser.parse_args()
 
 
@@ -159,6 +171,7 @@ def main() -> None:
             hidden_dims=hidden_dims,
             projection_dim=projection_dim,
             class_weighting=class_weighting,
+            train_sampling=args.train_sampling,
             training_config=training_config,
             experiment_name=experiment_name,
             feature_source=feature_source,
@@ -176,6 +189,10 @@ def main() -> None:
         "completed_runs": completed_runs,
     }
     manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    if args.skip_export:
+        print(f"Wrote experiment manifest: {manifest_path}")
+        print("Skipped report-asset export.")
+        return
 
     exported = export_frozen_matrix_report_assets(
         args.run_root,
@@ -238,6 +255,7 @@ def run_fusion_experiment(
     hidden_dims: list[int],
     projection_dim: int,
     class_weighting: bool,
+    train_sampling: str,
     training_config: dict[str, Any],
     experiment_name: str,
     feature_source: str,
@@ -260,11 +278,13 @@ def run_fusion_experiment(
     datasets = {
         split: _build_concat_tensor_dataset(caches) for split, caches in caches_by_split.items()
     }
-    train_loader = DataLoader(
+    train_loader = _build_train_loader(
         datasets["train"],
+        train_cache=caches_by_split["train"][0],
+        num_classes=len(class_names),
         batch_size=batch_size,
-        shuffle=True,
-        generator=torch.Generator().manual_seed(seed),
+        seed=seed,
+        train_sampling=train_sampling,
     )
     val_loader = DataLoader(datasets["val"], batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(datasets["test"], batch_size=batch_size, shuffle=False)
@@ -338,6 +358,7 @@ def run_fusion_experiment(
         "input_dims": dict(zip(backbones, input_dims, strict=True)),
         "projection_dim": projection_dim if fusion_method == "weighted" else None,
         "class_weighting": class_weighting,
+        "train_sampling": train_sampling,
         "batch_size": batch_size,
         "epochs": epochs,
         "optimizer": optimizer_name,
@@ -379,6 +400,7 @@ def run_fusion_experiment(
             "fusion_output_dim": fusion_output_dim,
             "projection_dim": projection_dim if fusion_method == "weighted" else None,
             "class_weighting": class_weighting,
+            "train_sampling": train_sampling,
             "optimizer": optimizer_name,
             "learning_rate": learning_rate,
             "weight_decay": weight_decay,
@@ -453,6 +475,29 @@ def _build_concat_tensor_dataset(caches: list[FeatureCache]) -> TensorDataset:
     features = torch.cat([cache.features.float() for cache in caches], dim=1)
     labels = caches[0].labels.long()
     return TensorDataset(features, labels)
+
+
+def _build_train_loader(
+    dataset: TensorDataset,
+    *,
+    train_cache: FeatureCache,
+    num_classes: int,
+    batch_size: int,
+    seed: int,
+    train_sampling: str,
+) -> DataLoader:
+    generator = torch.Generator().manual_seed(seed)
+    if train_sampling == "class_balanced":
+        sampler = WeightedRandomSampler(
+            weights=sample_weights_from_cache(train_cache, num_classes),
+            num_samples=len(dataset),
+            replacement=True,
+            generator=generator,
+        )
+        return DataLoader(dataset, batch_size=batch_size, sampler=sampler)
+    if train_sampling == "shuffle":
+        return DataLoader(dataset, batch_size=batch_size, shuffle=True, generator=generator)
+    raise ValueError(f"Unsupported train sampling strategy: {train_sampling}")
 
 
 def _extract_fusion_weights(model: nn.Module, backbones: list[str]) -> dict[str, float] | None:

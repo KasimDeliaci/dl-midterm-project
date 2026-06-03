@@ -186,6 +186,16 @@ def class_weights_from_cache(cache: FeatureCache, num_classes: int) -> torch.Ten
     return weights
 
 
+def sample_weights_from_cache(cache: FeatureCache, num_classes: int) -> torch.Tensor:
+    """Return per-sample inverse-frequency weights for balanced train sampling."""
+
+    counts = torch.bincount(cache.labels.long(), minlength=num_classes).float()
+    class_weights = torch.zeros(num_classes, dtype=torch.float)
+    observed = counts > 0
+    class_weights[observed] = 1.0 / counts[observed]
+    return class_weights[cache.labels.long()]
+
+
 def _write_split_manifest(path: Path, payload: dict[str, Any]) -> None:
     frame = pd.DataFrame(
         {

@@ -1,0 +1,5 @@
+experiment,comparison_label,fusion_method,train_sampling,class_weighting,best_val_macro_f1,accuracy,macro_precision,macro_recall,macro_f1,weighted_f1,run_id
+Sprint 4 canonical,Canonical concat,concat,shuffle,True,0.6552454467854106,0.810918774966711,0.7241185568929719,0.7024527574366987,0.7059113258715694,0.8128550545674091,20260529_173806_finetuned_r50-mnv2-effb0_concat_mlp_s42
+Sprint 4C hparam,Weighted identity,weighted,shuffle,True,0.6802763048359945,0.8029294274300932,0.6785942219580378,0.7247757049045755,0.6988600978787705,0.8090906695426477,20260531_213529_finetuned_r50-mnv2-effb0_weighted_mlp_w_cw_adamw_low_lr_p512_s42
+Sprint 4J diagnostic,Balanced sampler concat,concat,class_balanced,False,0.6598532295936235,0.8035952063914781,0.706325600519589,0.6865915852218814,0.6904778989744182,0.808522228749725,20260603_090603_finetuned_r50-mnv2-effb0_concat_mlp_s42
+Sprint 4J diagnostic,Balanced sampler weighted,weighted,class_balanced,False,0.6626829855589714,0.7989347536617842,0.7181196844077687,0.6341546805463041,0.6680127777325664,0.7974108480202968,20260603_090710_finetuned_r50-mnv2-effb0_weighted_mlp_s42

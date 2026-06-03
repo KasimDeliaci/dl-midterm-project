@@ -588,6 +588,20 @@ Sprint 4C weighted fusion model and the canonical Sprint 4 fine-tuned backbone c
   remains Sprint 4D. Sprint 4I is useful evidence that geometry-safe averaging helps, while also
   showing that more TTA views are not necessarily better than the simpler rot4 policy.
 
+### Sprint 4J Extension Status - 2026-06-03
+
+Sprint 4J completed a local cached-feature balanced-sampler diagnostic. It was motivated by SMOTE
+discussion but avoided synthetic images or synthetic features.
+
+- Feature source: canonical Sprint 4 `finetuned`.
+- Train sampling: class-balanced `WeightedRandomSampler`.
+- Class weights were disabled to avoid double-compensating minority classes.
+- Validation/test splits and distributions were unchanged.
+- Balanced concat: best validation macro-F1 `0.660`, test macro-F1 `0.690`.
+- Balanced weighted: best validation macro-F1 `0.663`, test macro-F1 `0.668`.
+- The result is below canonical Sprint 4 concat (`0.706`) and Sprint 4C weighted identity
+  (`0.699`), so balanced sampling should not be escalated to Colab image-level fine-tuning.
+
 ### Verification Gates
 
 Sprint 4 is done only if:

@@ -10,6 +10,7 @@ from dl_midterm.data.transforms import IMAGENET_MEAN, IMAGENET_STD, build_image_
 from dl_midterm.features.cache import (
     class_weights_from_cache,
     load_feature_cache,
+    sample_weights_from_cache,
     save_feature_cache,
     verify_cache_matches_split,
 )
@@ -51,6 +52,27 @@ def test_feature_cache_roundtrip_and_split_alignment(tmp_path: Path) -> None:
     assert cache.image_ids == ["img1", "img2"]
     verify_cache_matches_split(cache, split_csv)
     assert class_weights_from_cache(cache, num_classes=2).tolist() == [1.0, 1.0]
+
+
+def test_sample_weights_from_cache_equalizes_class_sampling_mass(tmp_path: Path) -> None:
+    cache_path = tmp_path / "train.pt"
+    cache = save_feature_cache(
+        cache_path,
+        features=torch.ones(6, 4),
+        labels=torch.tensor([0, 0, 0, 0, 1, 1]),
+        image_ids=[f"img{i}" for i in range(6)],
+        label_names=["nv"] * 4 + ["mel"] * 2,
+        split="train",
+        backbone="resnet50",
+        class_names=["nv", "mel"],
+        feature_source="frozen",
+        seed=42,
+    )
+
+    weights = sample_weights_from_cache(cache, num_classes=2)
+
+    assert torch.isclose(weights[cache.labels == 0].sum(), weights[cache.labels == 1].sum())
+    assert weights[4] > weights[0]
 
 
 def test_frozen_backbone_output_dimensions_without_pretrained_weights() -> None:
