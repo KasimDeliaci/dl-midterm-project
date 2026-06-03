@@ -57,10 +57,13 @@ Sprint 4C weighted checkpoint için:
 
 - test macro-F1: `0.699 -> 0.733` (`+0.034`)
 - accuracy: `0.803 -> 0.815`
+- macro precision: `0.679 -> 0.727`
+- macro recall: `0.725 -> 0.743`
 - weighted-F1: `0.809 -> 0.818`
 
 Bu sonuç Sprint 4D’nin en güçlü bulgusudur. Validation gate ile seçilen `tta_rot4`, Sprint 4C
-weighted fusion modelinde test macro-F1’i belirgin biçimde artırdı.
+weighted fusion modelinde test macro-F1’i belirgin biçimde artırdı. Artış yalnızca recall
+genişlemesi değildir; macro precision, accuracy ve weighted-F1 de birlikte yükselmiştir.
 
 ## Per-Class Yorum
 

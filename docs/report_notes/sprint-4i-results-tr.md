@@ -31,6 +31,10 @@ artırdı. Ancak Sprint 4D'deki daha basit `tta_rot4` policy hâlâ en iyi sonu�
 | Sprint 4I weighted + `tta_d4_8` | `0.727` |
 | Sprint 4C weighted identity | `0.699` |
 
+Accuracy ve weighted-F1 tarafında da D4 TTA identity inference'ın üstündedir: test accuracy
+`0.803 -> 0.813`, macro precision `0.679 -> 0.720`, macro recall `0.725 -> 0.737` ve weighted-F1
+`0.809 -> 0.816`.
+
 ## Sınıf Bazlı Etki
 
 Test split üzerinde D4 TTA özellikle bazı az örnekli sınıflarda F1'i artırdı:

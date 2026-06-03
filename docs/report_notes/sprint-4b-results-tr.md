@@ -50,9 +50,9 @@ ResNet50 için daha umut verici olduğu görülüyor.
 
 En iyi class-aware full matrix sonucu:
 
-| Model | Accuracy | Macro-F1 | Weighted-F1 |
-|---|---:|---:|---:|
-| `r50+mnv2 concat` | 0.8209 | 0.6946 | 0.8164 |
+| Model | Accuracy | Macro precision | Macro recall | Macro-F1 | Weighted-F1 |
+|---|---:|---:|---:|---:|---:|
+| `r50+mnv2 concat` | 0.8209 | 0.7063 | 0.6909 | 0.6946 | 0.8164 |
 
 Canonical Sprint 4 ile matched fusion karşılaştırmasında önemli satırlar:
 

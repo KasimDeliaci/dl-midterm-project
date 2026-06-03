@@ -30,6 +30,11 @@ Validation macro-F1 epoch 14'te `0.672` seviyesine çıktı. Ancak test macro-F1
 weighted-F1 `0.772` seviyesinde kaldı. Bu sonuç, önceki en güçlü Sprint 4 çizgisinin altında olduğu
 için deney full üç-backbone matrix'e eskale edilmedi.
 
+Not: Colab çıktısından restore edilen kısa özet accuracy, macro-F1 ve weighted-F1 içeriyor; macro
+precision/recall değerleri lokal report table olarak henüz bulunmadığı için bu notta sayısal olarak
+raporlanmadı. Final tabloda bu iki alan ya Colab metrics dosyası restore edilerek tamamlanmalı ya da
+"not available in restored summary" şeklinde işaretlenmelidir.
+
 ## Karşılaştırmalı Yorum
 
 | Deney | Test macro-F1 |

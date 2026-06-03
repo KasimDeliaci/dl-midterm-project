@@ -41,10 +41,10 @@ normalizasyon adaylarını test'e taşıdı.
 
 Validation-gated test sonuçları:
 
-| Aday | Test accuracy | Test macro-F1 | Test weighted-F1 |
-|---|---:|---:|---:|
-| `concat_standardize_base` | `0.790` | `0.691` | `0.798` |
-| `concat_l2_base` | `0.787` | `0.683` | `0.795` |
+| Aday | Test accuracy | Macro precision | Macro recall | Test macro-F1 | Test weighted-F1 |
+|---|---:|---:|---:|---:|---:|
+| `concat_standardize_base` | `0.790` | `0.680` | `0.711` | `0.691` | `0.798` |
+| `concat_l2_base` | `0.787` | `0.657` | `0.729` | `0.683` | `0.795` |
 
 Bu sonuçlar canonical Sprint 4 concat test macro-F1 `0.706` ve Sprint 4D weighted + `tta_rot4`
 test macro-F1 `0.733` seviyelerini geçmedi.

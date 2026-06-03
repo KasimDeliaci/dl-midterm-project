@@ -23,9 +23,9 @@ report assetleri rapor üretimi için uygundur.
 
 En iyi Sprint 4H cached-feature matrix sonucu:
 
-| Koşu | Test macro-F1 | Accuracy | Weighted-F1 |
-|---|---:|---:|---:|
-| ResNet50 + MobileNetV2 + EfficientNetB0 concat | `0.643` | `0.768` | `0.779` |
+| Koşu | Accuracy | Macro precision | Macro recall | Test macro-F1 | Weighted-F1 |
+|---|---:|---:|---:|---:|---:|
+| ResNet50 + MobileNetV2 + EfficientNetB0 concat | `0.768` | `0.593` | `0.714` | `0.643` | `0.779` |
 
 Karşılaştırma:
 

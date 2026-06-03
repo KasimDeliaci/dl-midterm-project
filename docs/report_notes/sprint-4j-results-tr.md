@@ -17,12 +17,12 @@ bindirilmedi.
 
 ## Sonuçlar
 
-| Koşu | Train sampling | Class weighting | Best val macro-F1 | Test accuracy | Test macro-F1 | Test weighted-F1 |
-|---|---|---:|---:|---:|---:|---:|
-| Sprint 4 canonical concat | shuffle | true | `0.655` | `0.811` | `0.706` | `0.813` |
-| Sprint 4C weighted identity | shuffle | true | `0.680` | `0.803` | `0.699` | `0.809` |
-| Sprint 4J balanced concat | class-balanced | false | `0.660` | `0.804` | `0.690` | `0.809` |
-| Sprint 4J balanced weighted | class-balanced | false | `0.663` | `0.799` | `0.668` | `0.797` |
+| Koşu | Train sampling | Class weighting | Best val macro-F1 | Test accuracy | Macro precision | Macro recall | Test macro-F1 | Test weighted-F1 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Sprint 4 canonical concat | shuffle | true | `0.655` | `0.811` | `0.724` | `0.702` | `0.706` | `0.813` |
+| Sprint 4C weighted identity | shuffle | true | `0.680` | `0.803` | `0.679` | `0.725` | `0.699` | `0.809` |
+| Sprint 4J balanced concat | class-balanced | false | `0.660` | `0.804` | `0.706` | `0.687` | `0.690` | `0.809` |
+| Sprint 4J balanced weighted | class-balanced | false | `0.663` | `0.799` | `0.718` | `0.634` | `0.668` | `0.797` |
 
 ## Yorum
 

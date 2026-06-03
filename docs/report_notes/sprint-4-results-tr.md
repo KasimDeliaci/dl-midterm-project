@@ -76,21 +76,21 @@ Yerel cross-check:
 
 Single-backbone fine-tuned sonuçlarında en güçlü model ResNet50 olmuştur:
 
-| Backbone | Accuracy | Macro-F1 | Weighted-F1 |
-| --- | ---: | ---: | ---: |
-| ResNet50 | `0.776` | `0.658` | `0.785` |
-| EfficientNetB0 | `0.749` | `0.596` | `0.760` |
-| MobileNetV2 | `0.734` | `0.575` | `0.750` |
+| Backbone | Accuracy | Macro precision | Macro recall | Macro-F1 | Weighted-F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| ResNet50 | `0.776` | `0.642` | `0.685` | `0.658` | `0.785` |
+| EfficientNetB0 | `0.749` | `0.586` | `0.623` | `0.596` | `0.760` |
+| MobileNetV2 | `0.734` | `0.534` | `0.645` | `0.575` | `0.750` |
 
 Fine-tuned fusion matrix içinde en iyi sonuç üç-backbone concatenation modelinden gelmiştir:
 
-| Model | Accuracy | Macro-F1 | Weighted-F1 |
-| --- | ---: | ---: | ---: |
-| `r50+mnv2+effb0 concat` | `0.811` | `0.706` | `0.813` |
-| `r50+effb0 weighted` | `0.794` | `0.698` | `0.802` |
-| `r50+mnv2+effb0 weighted` | `0.800` | `0.687` | `0.802` |
-| `r50+mnv2 concat` | `0.786` | `0.685` | `0.795` |
-| `r50+effb0 concat` | `0.792` | `0.679` | `0.798` |
+| Model | Accuracy | Macro precision | Macro recall | Macro-F1 | Weighted-F1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `r50+mnv2+effb0 concat` | `0.811` | `0.724` | `0.702` | `0.706` | `0.813` |
+| `r50+effb0 weighted` | `0.794` | `0.696` | `0.709` | `0.698` | `0.802` |
+| `r50+mnv2+effb0 weighted` | `0.800` | `0.702` | `0.684` | `0.687` | `0.802` |
+| `r50+mnv2 concat` | `0.786` | `0.678` | `0.712` | `0.685` | `0.795` |
+| `r50+effb0 concat` | `0.792` | `0.680` | `0.688` | `0.679` | `0.798` |
 
 Bu sonuçlar iki ana bulgu verir. Birincisi, fine-tuning genel olarak frozen feature extraction'a
 göre daha güçlü temsil üretmiştir. İkincisi, Sprint 3 frozen matrix'te en iyi kombinasyon pairwise
@@ -185,23 +185,24 @@ hangi tür katkı verdiğini anlamak için kullanıldı. Ana performans iddiası
 test-audit protokolüne göre seçilen Sprint 4D TTA sonucuna dayanmalıdır; diğer deneyler bu sonucu
 açıklayan veya sınırlarını gösteren ablation/diagnostic çalışmalarıdır.
 
-| Deney | En güçlü raporlanabilir koşu | Accuracy | Macro-F1 | Weighted-F1 | Rapor yorumu |
-|---|---|---:|---:|---:|---|
-| Sprint 4 canonical | Three-backbone concat | `0.811` | `0.706` | `0.813` | Fine-tuning + concat, frozen fusion'a göre ana kazanım. |
-| Sprint 4B | Class-aware `r50+mnv2 concat` | `0.821` | `0.695` | `0.816` | Class-aware loss bazı modelleri iyileştirdi ama canonical best'i geçmedi. |
-| Sprint 4C | Validation-selected weighted fusion | `0.802` | `0.699` | `0.808` | MLP/fusion tuning etkili, fakat test-selected olmayan adayları best saymıyoruz. |
-| Sprint 4D | Weighted fusion + `tta_rot4` | `0.815` | `0.733` | `0.818` | En iyi genel sonuç; inference maliyeti artıyor. |
-| Sprint 4E | `concat_standardize_base` | `0.790` | `0.691` | `0.798` | Fusion davranışını açıkladı; skor artışı getirmedi. |
-| Sprint 4F | Augmented three-backbone concat | `0.786` | `0.645` | `0.790` | Train-time augmentation bu pipeline'da feature space'i zayıflattı. |
-| Sprint 4G | Uniform soft-vote ensemble | `0.806` | `0.707` | `0.812` | Ensemble sinyali çok küçük; ana sonucu değiştirmiyor. |
-| Sprint 4H | Targeted three-backbone concat | `0.768` | `0.643` | `0.779` | Minority recall artsa da genel denge bozuldu. |
-| Sprint 4I | Weighted fusion + `tta_d4_8` | `0.813` | `0.727` | `0.816` | TTA faydasını doğruladı; daha fazla view rot4'ü geçmedi. |
-| Sprint 4J | Cached-feature balanced concat | `0.804` | `0.690` | `0.809` | MLP-stage balanced sampling genelleme sağlamadı. |
-| Sprint 4K | ResNet50 image-level balanced sampler | `0.756` | `0.657` | `0.772` | Image-level oversampling de tek başına yeterli olmadı. |
+| Deney | En güçlü raporlanabilir koşu | Accuracy | Macro precision | Macro recall | Macro-F1 | Weighted-F1 | Rapor yorumu |
+|---|---|---:|---:|---:|---:|---:|---|
+| Sprint 4 canonical | Three-backbone concat | `0.811` | `0.724` | `0.702` | `0.706` | `0.813` | Fine-tuning + concat, frozen fusion'a göre ana kazanım. |
+| Sprint 4B | Class-aware `r50+mnv2 concat` | `0.821` | `0.706` | `0.691` | `0.695` | `0.816` | Class-aware loss bazı modelleri iyileştirdi ama canonical best'i geçmedi. |
+| Sprint 4C | Validation-selected weighted fusion | `0.802` | `0.679` | `0.724` | `0.699` | `0.808` | MLP/fusion tuning özellikle recall'ı artırdı, fakat best'i geçmedi. |
+| Sprint 4D | Weighted fusion + `tta_rot4` | `0.815` | `0.727` | `0.743` | `0.733` | `0.818` | En iyi genel sonuç; precision ve recall birlikte yükseldi. |
+| Sprint 4E | `concat_standardize_base` | `0.790` | `0.680` | `0.711` | `0.691` | `0.798` | Fusion davranışını açıkladı; skor artışı getirmedi. |
+| Sprint 4F | Augmented three-backbone concat | `0.786` | `0.643` | `0.661` | `0.645` | `0.790` | Train-time augmentation bu pipeline'da feature space'i zayıflattı. |
+| Sprint 4G | Uniform soft-vote ensemble | `0.806` | `0.695` | `0.725` | `0.707` | `0.812` | Ensemble recall'ı destekledi, ama kazanç çok küçük kaldı. |
+| Sprint 4H | Targeted three-backbone concat | `0.768` | `0.593` | `0.714` | `0.643` | `0.779` | Recall artsa da precision/accuracy dengesi bozuldu. |
+| Sprint 4I | Weighted fusion + `tta_d4_8` | `0.813` | `0.720` | `0.737` | `0.727` | `0.816` | TTA faydasını doğruladı; daha fazla view rot4'ü geçmedi. |
+| Sprint 4J | Cached-feature balanced concat | `0.804` | `0.706` | `0.687` | `0.690` | `0.809` | MLP-stage balanced sampling genelleme sağlamadı. |
+| Sprint 4K | ResNet50 image-level balanced sampler | `0.756` | n/a | n/a | `0.657` | `0.772` | Image-level oversampling de tek başına yeterli olmadı. |
 
-Bu tablo raporun tartışma bölümünde üç ana mesajı destekler. Birincisi, macro-F1 ile weighted-F1
-birlikte okunmalıdır: weighted-F1 çoğunluk sınıfı `nv` nedeniyle daha yüksek kalır, macro-F1 ise az
-sınıflardaki hataları görünür yapar. İkincisi, literatürdeki fusion/ensemble başarıları bizim
+Bu tablo raporun tartışma bölümünde üç ana mesajı destekler. Birincisi, accuracy, macro precision,
+macro recall, macro-F1 ve weighted-F1 birlikte okunmalıdır. Weighted-F1 çoğunluk sınıfı `nv`
+nedeniyle daha yüksek kalır; macro recall az sınıfları yakalama eğilimini, macro precision ise bu
+yakalamanın ne kadar temiz olduğunu gösterir. İkincisi, literatürdeki fusion/ensemble başarıları bizim
 sonuçlarımızı motive eder ama birebir garanti etmez; bizim kontrollü ablation'larda en güvenilir
 fusion operatörü concat, en güvenilir ek iyileştirme ise TTA olmuştur. Üçüncüsü, class-aware loss,
 balanced sampling ve train-time augmentation gibi makul fikirler validation'da sinyal verebilse de

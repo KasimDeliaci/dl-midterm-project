@@ -17,9 +17,9 @@ edildi, ancak aday seçimi için kullanılmadı.
 
 Canonical Sprint 4 referansı:
 
-| Model | Accuracy | Macro-F1 | Weighted-F1 |
-|---|---:|---:|---:|
-| `r50+mnv2+effb0 concat` | 0.811 | 0.706 | 0.813 |
+| Model | Accuracy | Macro precision | Macro recall | Macro-F1 | Weighted-F1 |
+|---|---:|---:|---:|---:|---:|
+| `r50+mnv2+effb0 concat` | 0.811 | 0.724 | 0.702 | 0.706 | 0.813 |
 
 ## Stage A: Screening
 
@@ -31,9 +31,9 @@ Stage A, 72 lokal cached-feature MLP/fusion run olarak tamamlandı:
 
 Stage A'nın en iyi validation-selected sonucu:
 
-| Combination | Candidate | Val macro-F1 | Test macro-F1 | Accuracy | Weighted-F1 |
-|---|---|---:|---:|---:|---:|
-| `r50+mnv2+effb0 weighted` | `w_cw_adamw_low_lr_p512` | 0.680 | 0.699 | 0.802 | 0.808 |
+| Combination | Candidate | Val macro-F1 | Accuracy | Macro precision | Macro recall | Test macro-F1 | Weighted-F1 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `r50+mnv2+effb0 weighted` | `w_cw_adamw_low_lr_p512` | 0.680 | 0.802 | 0.679 | 0.724 | 0.699 | 0.808 |
 
 Bu aday matched canonical weighted baseline'a göre validation macro-F1'i `+0.034` artırdı. Bu,
 önceden belirlenen Stage B eşiğini geçtiği için full-matrix expansion çalıştırıldı.
@@ -54,12 +54,12 @@ tamamlandı:
 
 Stage B validation-selected sıralamasında en iyi aday yine üç-backbone weighted fusion oldu:
 
-| Combination | Candidate | Val macro-F1 | Test macro-F1 | Accuracy | Weighted-F1 |
-|---|---|---:|---:|---:|---:|
-| `r50+mnv2+effb0 weighted` | `w_cw_adamw_low_lr_p512` | 0.680 | 0.699 | 0.802 | 0.808 |
-| `r50+mnv2+effb0 concat` | `nocw_adamw_base` | 0.660 | 0.688 | 0.812 | 0.807 |
-| `r50+effb0 concat` | `cw_adamw_small` | 0.659 | 0.675 | 0.788 | 0.794 |
-| `r50` | `nocw_adamw_base` | 0.653 | 0.684 | 0.807 | 0.798 |
+| Combination | Candidate | Val macro-F1 | Accuracy | Macro precision | Macro recall | Test macro-F1 | Weighted-F1 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `r50+mnv2+effb0 weighted` | `w_cw_adamw_low_lr_p512` | 0.680 | 0.802 | 0.679 | 0.724 | 0.699 | 0.808 |
+| `r50+mnv2+effb0 concat` | `nocw_adamw_base` | 0.660 | 0.812 | 0.712 | 0.675 | 0.688 | 0.807 |
+| `r50+effb0 concat` | `cw_adamw_small` | 0.659 | 0.788 | 0.654 | 0.711 | 0.675 | 0.794 |
+| `r50` | `nocw_adamw_base` | 0.653 | 0.807 | 0.734 | 0.652 | 0.684 | 0.798 |
 
 Matched canonical karşılaştırmada en önemli validation gain'ler:
 

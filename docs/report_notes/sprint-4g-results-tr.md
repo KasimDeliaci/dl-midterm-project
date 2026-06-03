@@ -23,6 +23,8 @@ Validation-selected ensemble:
 - candidate count: 3;
 - validation macro-F1: `0.725`;
 - test accuracy: `0.806`;
+- test macro precision: `0.695`;
+- test macro recall: `0.725`;
 - test macro-F1: `0.707`;
 - test weighted-F1: `0.812`.
 

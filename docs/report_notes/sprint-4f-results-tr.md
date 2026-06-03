@@ -21,13 +21,13 @@ Sprint 4F matrix'i bilinçli olarak küçük tutuldu:
 
 ## Ana Sonuçlar
 
-| Model | Test accuracy | Test macro-F1 | Test weighted-F1 |
-|---|---:|---:|---:|
-| ResNet50 single | `0.746` | `0.589` | `0.761` |
-| MobileNetV2 single | `0.730` | `0.575` | `0.743` |
-| EfficientNetB0 single | `0.721` | `0.579` | `0.739` |
-| Three-backbone concat | `0.786` | `0.645` | `0.790` |
-| Three-backbone weighted | `0.776` | `0.615` | `0.775` |
+| Model | Test accuracy | Macro precision | Macro recall | Test macro-F1 | Test weighted-F1 |
+|---|---:|---:|---:|---:|---:|
+| ResNet50 single | `0.746` | `0.561` | `0.648` | `0.589` | `0.761` |
+| MobileNetV2 single | `0.730` | `0.551` | `0.619` | `0.575` | `0.743` |
+| EfficientNetB0 single | `0.721` | `0.537` | `0.648` | `0.579` | `0.739` |
+| Three-backbone concat | `0.786` | `0.643` | `0.661` | `0.645` | `0.790` |
+| Three-backbone weighted | `0.776` | `0.599` | `0.639` | `0.615` | `0.775` |
 
 Bu sonuçlar canonical Sprint 4 three-backbone concat macro-F1 `0.706` ve Sprint 4D weighted +
 `tta_rot4` macro-F1 `0.733` seviyelerinin altında kaldı.
