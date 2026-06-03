@@ -981,6 +981,12 @@ Completed local Sprint 4J run, 2026-06-03:
 Sprint 4K is Colab GPU work. It tests whether class-balanced sampling helps during image-level
 backbone fine-tuning, where the CNN representation can actually change.
 
+Thin Colab runner:
+
+```text
+notebooks/04_sprint4k_image_balanced_sampler.ipynb
+```
+
 Initial ResNet50 diagnostic:
 
 ```bash
