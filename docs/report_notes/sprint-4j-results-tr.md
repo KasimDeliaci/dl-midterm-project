@@ -33,3 +33,16 @@ test macro-F1 `0.706`'dan `0.690`'a düştü. Weighted koşuda düşüş daha be
 Bu nedenle Sprint 4J, Colab'da image-level balanced-sampler fine-tuning'e geçmek için yeterince
 promising değildir. SMOTE yapmama kararı korunmalı; balanced sampling ise final raporda kısa bir
 diagnostic negatif sonuç olarak anılabilir.
+
+## Literatürle Bağlantı
+
+Class imbalance literatürde gerçek bir problemdir; Gessert et al. balanced sampling ve
+class-specific weighting gibi stratejileri tartışır. Bu yüzden Sprint 4J'nin sorusu doğrudur. Ancak
+Sprint 4J'de sampling yalnızca cached-feature MLP aşamasında değiştirildi; CNN feature'ları zaten
+sabit olduğu için az sınıflara ait yeni görsel temsil öğrenilemedi.
+
+Sonuç bu sınırlamayı gösterir. Balanced sampler validation macro-F1'i biraz oynattı, fakat test
+macro-F1 ve weighted-F1'i düşürdü. Bu, minority class örneklerini daha sık göstermek ile gerçek
+genelleme arasında fark olduğunu gösterir. SMOTE benzeri sentetik yaklaşımlara mesafeli durmak da
+bu nedenle savunulabilir: HAM10000'de az sınıflar hem küçük hem görsel olarak heterojendir; sentetik
+veya aşırı tekrar edilen feature'lar validation'a uyum sağlayıp testte genelleşmeyebilir.

@@ -49,6 +49,24 @@ yorumlanması gerektiğini gösterir.
 Final raporda Sprint 4G, literatüre yaklaşmak için denenmiş kontrollü bir model-combination
 extension olarak kullanılabilir; fakat ana performans iddiası Sprint 4D TTA sonucuna dayanmalıdır.
 
+## Literatürle Bağlantı
+
+Liu et al. (2024), HAM10000 üzerinde pretrained model voting/stacking yaklaşımlarının single
+backbone'lara göre accuracy artışı sağlayabildiğini raporlar. Sprint 4G bu literatür fikrini bizim
+artifact setimize uyarladı: yeni CNN eğitmeden, mevcut MLP/fusion modellerinin soft-vote ortalaması
+denendi.
+
+Sonuç literatürle tutarlı ama sınırlıdır. Ensemble validation macro-F1'i yükseltti, fakat test
+macro-F1 yalnızca `0.706` seviyesindeki canonical concat'ten `0.707` seviyesine çıktı. Bu, ensemble'ın
+farklı modellerdeki tamamlayıcı sinyali bir miktar kullandığını ama aynı validation split üzerinde
+çok fazla model seçmenin overfit riski taşıdığını gösterir. Akter et al. (2023)'te stacking'in güçlü
+single modellerden düşük kalabilmesi de aynı uyarıyı destekler: ensemble/fusion faydalı olabilir,
+ama yanlış selection veya zayıf tamamlayıcılık varsa kazanç sınırlı kalır.
+
+Bu nedenle Sprint 4G raporda "skoru dramatik yükselten yöntem" değil, literatürdeki ensemble
+motivasyonunu kontrollü ve leakage'siz biçimde test eden, küçük pozitif fakat ana sonucu değiştirmeyen
+bir çalışma olarak yazılmalıdır.
+
 ## Üretilen Çıktılar
 
 Başlıca tablolar:

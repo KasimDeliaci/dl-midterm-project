@@ -81,6 +81,25 @@ düşük-support sınıfa dayanmıyor; `akiec`, `bcc` ve `bkl` gibi daha farklı
 Bu nedenle Sprint 4D sonucu performans/maliyet trade-off’u olarak raporlanmalıdır: daha yüksek
 macro-F1, ama daha pahalı inference.
 
+## Literatürle Bağlantı ve Yorum
+
+Sprint 4D'nin en güçlü sonucu, yeni bir model eğitmeden macro-F1'i `0.699`'dan `0.733`'e
+taşımasıdır. Bu, augmentation fikrinin bu projede en faydalı biçiminin training-time perturbation
+değil, inference-time geometry averaging olduğunu düşündürür. Dermoskopik görüntülerde lezyon
+orientasyonu çoğu zaman sınıf etiketinin kendisi değildir; bu yüzden rotation tabanlı TTA farklı
+görünümlerdeki tahmin gürültüsünü azaltabilir.
+
+Bu bulgu literatürdeki ensemble/fusion sonuçlarıyla da uyumludur. Liu et al. (2024), farklı modellerin
+oylama/stacking ile sınırlı ama gerçek kazançlar sağlayabildiğini raporlar. Sprint 4D'de ise ensemble
+model seviyesinde değil, aynı modelin farklı geometrik görünümleri seviyesinde yapılmıştır. Bu daha
+ucuz ve daha kontrollü bir ensemble türüdür: training split değişmez, yeni checkpoint üretilmez,
+yalnızca inference maliyeti artar.
+
+Yine de Sprint 4D sonucu state-of-the-art iddiası değildir. Roy et al. (2024) ve Haque et al. (2026)
+daha yüksek F1/macro-F1 değerleri raporlar; ancak custom attention/fusion mimarileri ve farklı
+eğitim protokolleri kullanırlar. Sprint 4D'nin rapordaki değeri, fixed-CNN-feature projesinde
+validation-gated TTA'nın en tutarlı macro-F1 iyileştirmesini sağlamasıdır.
+
 ## Report-ready Artifactler
 
 Ana tablolar:

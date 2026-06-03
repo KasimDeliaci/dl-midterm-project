@@ -152,6 +152,61 @@ Weighted fusion run'larında öğrenilen backbone ağırlıkları tek bir backbo
 Bu dağılım, weighted fusion'ın her backbone'dan sinyal kullandığını gösterir. Ancak concatenation
 fusion, tam feature vektörlerini koruduğu için Sprint 4'te en güçlü final operator olarak kalmıştır.
 
+## Literatürle Konumlandırma
+
+Sprint 4 sonucu literatürdeki yüksek HAM10000 skorlarıyla doğrudan "daha iyi/daha kötü" şeklinde
+okunmamalıdır. Hu ve Yang (2023), Roy et al. (2024) ve Haque et al. (2026) gibi çalışmalar daha
+yüksek accuracy/F1 değerleri raporlar; ancak bunlar çoğunlukla özel attention modülleri, custom
+mimariler, daha ağır augmentation/balancing stratejileri veya farklı backbone aileleri kullanır.
+Birçok güncel preprintte split ayrıntısı ve lesion-level leakage kontrolü de bizim protokolümüz
+kadar açık değildir. Bu nedenle Sprint 4'ün güçlü tarafı state-of-the-art iddiası değil, aynı
+lesion-aware split üzerinde frozen, fine-tuned, concat ve weighted fusion koşullarını kontrollü
+karşılaştırmasıdır.
+
+Bu bağlamda Sprint 4'ün macro-F1 `0.706`, weighted-F1 `0.813` ve accuracy `0.811` sonucu kötü bir
+benchmark sonucu değildir. Liu et al. (2024), pretrained model ensemble'larında yaklaşık `0.82-0.83`
+accuracy bandına çıktıklarını raporlar; bizim en iyi canonical fine-tuned concat modelimiz accuracy
+olarak bu banda yaklaşır, fakat macro-F1'i ayrıca raporladığı için sınıf dengesizliğini daha açık
+gösterir. Haque et al. (2026) gibi daha yeni çalışmalar macro-F1 de raporladığından iyi bir güncel
+bağlam sağlar; ancak EfficientNetV2-L/attention/XAI gibi daha güçlü ve farklı bir sistem kullandığı
+için birebir baseline değildir.
+
+Fusion yorumu da literatürle uyumludur. Roy et al. (2024) ve Mahbod et al. (2025) farklı temsil
+kaynaklarını birleştirmenin faydalı olabileceğini desteklerken, Akter et al. (2023) stacking/fusion
+modellerinin güçlü tekil backbonelardan daha düşük kalabildiğini gösterir. Bizim sonuçlarımız bu iki
+tarafı birlikte doğrular: fine-tuned üç-backbone concat en iyi sonucu üretmiştir, ancak weighted
+fusion ve sonraki fusion diagnostic'leri "daha fazla model" veya "öğrenilen ağırlık" eklemenin tek
+başına garanti iyileştirme sağlamadığını göstermiştir.
+
+## Sprint 4A-K Genel Sentez
+
+Sprint 4 sonrasında yapılan A-K extension çizgisi, tek bir skoru kovalamaktan çok hangi müdahalenin
+hangi tür katkı verdiğini anlamak için kullanıldı. Ana performans iddiası hâlâ validation-gated ve
+test-audit protokolüne göre seçilen Sprint 4D TTA sonucuna dayanmalıdır; diğer deneyler bu sonucu
+açıklayan veya sınırlarını gösteren ablation/diagnostic çalışmalarıdır.
+
+| Deney | En güçlü raporlanabilir koşu | Accuracy | Macro-F1 | Weighted-F1 | Rapor yorumu |
+|---|---|---:|---:|---:|---|
+| Sprint 4 canonical | Three-backbone concat | `0.811` | `0.706` | `0.813` | Fine-tuning + concat, frozen fusion'a göre ana kazanım. |
+| Sprint 4B | Class-aware `r50+mnv2 concat` | `0.821` | `0.695` | `0.816` | Class-aware loss bazı modelleri iyileştirdi ama canonical best'i geçmedi. |
+| Sprint 4C | Validation-selected weighted fusion | `0.802` | `0.699` | `0.808` | MLP/fusion tuning etkili, fakat test-selected olmayan adayları best saymıyoruz. |
+| Sprint 4D | Weighted fusion + `tta_rot4` | `0.815` | `0.733` | `0.818` | En iyi genel sonuç; inference maliyeti artıyor. |
+| Sprint 4E | `concat_standardize_base` | `0.790` | `0.691` | `0.798` | Fusion davranışını açıkladı; skor artışı getirmedi. |
+| Sprint 4F | Augmented three-backbone concat | `0.786` | `0.645` | `0.790` | Train-time augmentation bu pipeline'da feature space'i zayıflattı. |
+| Sprint 4G | Uniform soft-vote ensemble | `0.806` | `0.707` | `0.812` | Ensemble sinyali çok küçük; ana sonucu değiştirmiyor. |
+| Sprint 4H | Targeted three-backbone concat | `0.768` | `0.643` | `0.779` | Minority recall artsa da genel denge bozuldu. |
+| Sprint 4I | Weighted fusion + `tta_d4_8` | `0.813` | `0.727` | `0.816` | TTA faydasını doğruladı; daha fazla view rot4'ü geçmedi. |
+| Sprint 4J | Cached-feature balanced concat | `0.804` | `0.690` | `0.809` | MLP-stage balanced sampling genelleme sağlamadı. |
+| Sprint 4K | ResNet50 image-level balanced sampler | `0.756` | `0.657` | `0.772` | Image-level oversampling de tek başına yeterli olmadı. |
+
+Bu tablo raporun tartışma bölümünde üç ana mesajı destekler. Birincisi, macro-F1 ile weighted-F1
+birlikte okunmalıdır: weighted-F1 çoğunluk sınıfı `nv` nedeniyle daha yüksek kalır, macro-F1 ise az
+sınıflardaki hataları görünür yapar. İkincisi, literatürdeki fusion/ensemble başarıları bizim
+sonuçlarımızı motive eder ama birebir garanti etmez; bizim kontrollü ablation'larda en güvenilir
+fusion operatörü concat, en güvenilir ek iyileştirme ise TTA olmuştur. Üçüncüsü, class-aware loss,
+balanced sampling ve train-time augmentation gibi makul fikirler validation'da sinyal verebilse de
+lesion-aware test split üzerinde genelleme sağlamadığında ana sonuç olarak sunulmamalıdır.
+
 ## Yorum Sınırları
 
 - Sonuçlar single-seed (`seed=42`) çalıştırmalardır. Bu nedenle küçük model farkları kesin mimari

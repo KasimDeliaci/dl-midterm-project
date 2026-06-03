@@ -93,6 +93,24 @@ Bu nedenle raporda Sprint 4B için en savunulabilir sonuç:
 > three-backbone concat fusion'ı geçemedi. Better standalone macro-F1 is not sufficient for better
 > fusion; representation complementarity and calibration remain important.
 
+## Literatürle Bağlantı
+
+Class imbalance, HAM10000 literatüründe merkezi bir problemdir. Gessert et al. gibi çalışmalar
+class-specific weighting, balanced sampling ve class-sensitive metriklerin önemini vurgular; Hu ve
+Yang (2023) de imbalance-aware eğitim ve augmentation ile yüksek F1 raporlar. Sprint 4B bu çizgiyle
+uyumludur: class-aware objective denemek metodolojik olarak doğru bir sorudur.
+
+Ancak Sprint 4B'nin sonucu, imbalance-aware loss'un otomatik olarak daha iyi final fusion üretmediğini
+gösterir. Bu da literatürdeki yüksek skorların yalnızca "class balancing var" diye açıklanamayacağını
+hatırlatır. Custom attention, mimari kapasite, preprocessing, augmentation, split protokolü ve
+metadata kullanımı gibi etkenler de sonuçları belirler. Bizim kontrollü protokolümüzde class-aware
+loss bazı single/backbone kombinasyonlarında macro-F1'i artırdı, fakat üç-backbone concat'in
+tamamlayıcı feature dengesini bozmuş olabilir.
+
+Rapor dili bu yüzden şöyle olmalıdır: Sprint 4B, literatürdeki imbalance-aware motivasyonu test
+eder; fakat bu proje koşullarında class-aware objective'in macro-F1/weighted-F1 dengesini canonical
+Sprint 4'ten daha iyi hale getirmediğini gösterir.
+
 ## Artifact'ler
 
 Senkronize edilen büyük artifact grupları:
@@ -137,4 +155,3 @@ Lokal doğrulama:
   - `sprint4b_deeper_all_results.csv`: 1
 - `uv run ruff check src scripts tests` geçti.
 - `uv run pytest` geçti: 32 test.
-

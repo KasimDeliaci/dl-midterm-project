@@ -68,3 +68,17 @@ zayıflatmış olabileceğini düşündürür.
 
 Final raporda Sprint 4H, literatüre yaklaşmak için denenmiş kontrollü bir training-policy extension
 olarak konumlandırılabilir. Ana performans iddiası hâlâ Sprint 4D TTA sonucuna dayanmalıdır.
+
+## Literatürle Bağlantı
+
+Haque et al. (2026) ve Hu ve Yang (2023) gibi daha yüksek HAM10000 sonuçları raporlayan çalışmalar,
+daha güçlü EfficientNet varyantları, attention modülleri, class-aware training veya explainability
+eklentileriyle gelir. Sprint 4H bu literatür yönünü daha kontrollü bir şekilde denedi: ResNet50'de
+daha fazla block açıldı, loss class-balanced focal loss'a çevrildi ve augmentation Sprint 4F'e göre
+daha sınırlı tutuldu.
+
+Sonucun canonical Sprint 4'ün altında kalması, literatürdeki yüksek skorların tek bir bileşenden
+gelmediğini gösterir. Daha fazla layer açmak ve focal loss kullanmak az sınıfların recall'ını
+artırabilir; fakat aynı anda majority class precision/weighted-F1 dengesini ve feature fusion
+tamamlayıcılığını bozabilir. Sprint 4H bu trade-off'u görünür kıldığı için değerlidir: minority
+recall artışı tek başına final macro-F1 veya weighted-F1 artışı garantilemez.

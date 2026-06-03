@@ -58,3 +58,17 @@ dayanmalıdır.
 
 Sprint 4I'nin rapordaki değeri, inference-time geometry averaging'in faydalı olduğunu ikinci kez
 göstermesi ve aynı zamanda TTA politikasının validation-gated seçilmesi gerektiğini vurgulamasıdır.
+
+## Literatürle Bağlantı
+
+Sprint 4I, literatürdeki ensemble mantığının inference-time augmentation karşılığı olarak
+yorumlanabilir. Liu et al. (2024)'te model-level ensemble sınırlı ama gerçek accuracy artışı
+sağlarken, Sprint 4I aynı modelin farklı deterministik görünümlerini ortalayarak macro-F1'i artırdı.
+Bu, training-time augmentation'dan farklıdır: yeni temsil öğrenmek yerine karar sınırındaki görüntü
+dönüşümü kaynaklı oynaklığı azaltır.
+
+Ancak D4'ün `tta_rot4`'ten düşük kalması da önemlidir. Daha fazla view, daha fazla bilgi anlamına
+gelmeyebilir; bazı mirrored dönüşümler modelin öğrendiği dermoskopik ipuçlarını stabilize etmek
+yerine belirsizleştirebilir. Bu yüzden raporda TTA sonucu "augmentation her zaman iyidir" şeklinde
+değil, "validation ile seçilmiş geometry-safe averaging bu pipeline'da en iyi iyileştirmeyi verdi"
+şeklinde yazılmalıdır.

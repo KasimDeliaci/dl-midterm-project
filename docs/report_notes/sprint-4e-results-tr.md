@@ -66,6 +66,26 @@ değişimleri birkaç örnekten güçlü biçimde etkilenebilir. Bu yüzden sın
 tabloları genel eğilimi desteklemek için kullanılmalı, tek başına klinik ya da güçlü sınıf bazlı
 sonuç iddiasına dönüştürülmemelidir.
 
+## Fusion Neden Beklendiği Kadar İyi Gelmedi?
+
+Literatür fusion'ı destekler ama garanti etmez. Roy et al. (2024) gibi çalışmalar custom
+attention/fusion bloklarıyla yüksek F1 raporlar; Mahbod et al. (2025) frozen/fine-tuned feature
+ve prediction fusion'ın faydalı olabileceğini gösterir. Buna karşılık Akter et al. (2023) stacking
+modellerinin güçlü single backbonelardan düşük kalabildiğini raporlar. Sprint 4E tam bu ikinci
+uyarıyı açıklamaya yardımcı oldu.
+
+Bizim weighted fusion tasarımımız global backbone ağırlıkları öğrenir. Bu, yorumlanabilir ve kompakt
+bir temsil sağlar; ancak HAM10000'de hata örüntüleri sınıf bazlı değişebilir. Bir backbone `vasc`
+veya `bcc` için faydalı olurken başka bir backbone `mel` veya `bkl` için daha iyi olabilir. Global
+ağırlık bu sınıf bazlı tamamlayıcılığı tam temsil edemez. Per-class weighting validation'da küçük
+sinyal verdi, fakat testte canonical concat'i geçemedi; bu da daha esnek fusion'ın küçük validation
+setine overfit olabileceğini gösterir.
+
+Bu nedenle "fusion neden iyi gelmedi?" sorusunun cevabı skor düşüklüğü değil, kapasite ve
+genelleme trade-off'udur. Concat daha yüksek boyutlu ve daha az sıkıştırılmış feature bilgisini MLP'ye
+bırakır. Weighted fusion ise daha düzenli ve yorumlanabilir ama bilgi sıkıştırır. Bizim single-seed,
+lesion-aware protokolümüzde macro-F1 için en iyi denge concat tarafında kaldı.
+
 ## Üretilen Çıktılar
 
 Başlıca tablolar:

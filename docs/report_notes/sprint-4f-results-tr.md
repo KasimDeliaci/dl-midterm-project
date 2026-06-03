@@ -44,6 +44,24 @@ Bu nedenle Sprint 4F negatif ama değerli bir sonuçtur: "daha fazla augmentatio
 macro-F1'i yükseltmedi. Sonraki deneyler için daha kontrollü policy, validation-gated TTA,
 multi-seed doğrulama veya mimari/loss düzeyinde daha belirgin değişiklikler daha mantıklıdır.
 
+## Literatürle Bağlantı
+
+Hu ve Yang (2023) gibi HAM10000 çalışmalarında augmentation ve imbalance-aware training yüksek F1
+sonuçlarıyla birlikte raporlanır. Ancak bu, augmentation'ın her protokolde otomatik iyileşme
+sağlayacağı anlamına gelmez. O çalışmalarda augmentation, custom mimari ve training recipe ile
+birlikte değerlendirilir; bizim Sprint 4F deneyimizde ise backbone seti ve cached-feature fusion
+protokolü sabit tutuldu.
+
+Bu ayrım raporda özellikle belirtilmelidir. Sprint 4F'nin düşüşü, "augmentation işe yaramaz" değil,
+"bu lezyon-aware split ve bu fixed-backbone/fusion pipeline içinde random resized crop + affine
+tarzı train-time augmentation feature space'i bozmuş olabilir" anlamına gelir. Dermoskopik
+görüntülerde renk tonu, sınır, asimetri ve küçük dokusal ipuçları sınıflar için önemlidir; agresif
+geometrik veya crop tabanlı değişimler minority-class sinyalini azaltabilir.
+
+Bu yüzden Sprint 4D/4I TTA ile Sprint 4F aynı kefeye konmamalıdır. TTA, modeli değiştirmeden
+tahminleri stabilize eder; Sprint 4F ise modeli augmentation altında yeniden optimize eder. Bizim
+sonuçlarımızda birincisi macro-F1'i artırmış, ikincisi düşürmüştür.
+
 ## Üretilen Çıktılar
 
 Başlıca tablolar:

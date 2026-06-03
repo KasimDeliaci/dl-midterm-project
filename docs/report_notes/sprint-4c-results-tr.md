@@ -124,6 +124,20 @@ Bu nedenle Sprint 4C'nin rapor sonucu şudur:
 > tuning bazı matched kombinasyonlarda önemli iyileşme sağlıyor, fakat genel en iyi Sprint 4 concat
 > fusion sonucunu validation-selected ve test-audit protokolü altında güvenilir biçimde aşmıyor.
 
+## Literatürle Bağlantı
+
+Mahbod et al. (2025), frozen veya sabit feature temsilleri üzerine MLP/probe eğitmenin dermoskopik
+sınıflandırmada ciddi bir baseline olabileceğini gösterdiği için Sprint 4C'nin sorusu literatürle
+doğrudan uyumludur: feature extractor sabitken classifier ve fusion head ayarları sonucu ne kadar
+değiştirir? Bizim bulgumuz, MLP/fusion tuning'in özellikle validation macro-F1 üzerinde etkili
+olduğunu, ancak testte canonical concat sonucunu güvenilir biçimde geçmediğini gösterir.
+
+Bu sonuç final raporda iki açıdan değerlidir. Birincisi, yüksek literatür skorları yalnızca backbone
+seçiminden değil, classifier head, regularization, validation protokolü ve selection discipline
+gibi ayrıntılardan da etkilenir. İkincisi, testte daha yüksek görünen ama validation-selected olmayan
+bir adayın "best" seçilmemesi, bizim protokolümüzün test-set shopping yapmadığını gösterir. Bu
+nokta, split ayrıntıları belirsiz preprintlerle kıyas yaparken önemli bir metodolojik üstünlüktür.
+
 ## Artifact'ler
 
 Stage A:

@@ -55,3 +55,16 @@ fine-tuning aşamasında da canonical Sprint 4 / Sprint 4D sonucunu geçmedi.
 Bu sonuç SMOTE yapmama kararını destekler. Az örnekli sınıflara daha fazla ağırlık vermek tek
 başına yeterli olmadı; bu projede en güvenilir iyileşme train-time oversampling yerine
 geometry-safe inference-time averaging, yani Sprint 4D TTA çizgisinden geldi.
+
+## Literatürle Bağlantı
+
+Sprint 4K, Gessert et al. çizgisindeki balanced sampling fikrini daha güçlü bir noktada, yani
+image-level fine-tuning sırasında test etti. Bu, Sprint 4J'den metodolojik olarak daha anlamlıydı;
+çünkü backbone representation'ı değişebilirdi. Buna rağmen test macro-F1 `0.657` seviyesinde kaldı.
+
+Bu sonuç literatürle çelişmek zorunda değildir. Hu ve Yang (2023) veya Haque et al. (2026) gibi
+yüksek sonuçlar, sadece balanced sampling değil, mimari, attention, augmentation, preprocessing ve
+muhtemelen farklı split protokollerinin birleşimiyle elde edilir. Bizim deneyimizde tek değişken
+daha dengeli sampling ve daha açık ResNet block'larıydı. Bu kontrollü ablation, "class imbalance
+önemlidir" bulgusunu reddetmez; yalnızca bu pipeline'da image-level oversampling'in tek başına
+yeterli olmadığını gösterir.
